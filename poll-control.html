@@ -133,10 +133,14 @@ function save() {
 }
 
 function loadSaved() {
-  const k = localStorage.getItem('yt_api_key');
-  const c = localStorage.getItem('yt_channel_id');
-  if(k){ $('apiKey').value=k; $('savedApi').style.display='block'; }
-  if(c){ $('channelId').value=c; $('savedCh').style.display='block'; }
+  const k = localStorage.getItem('yt_api_key') || 'AIzaSyCeQDuKLiY8G5GO0Vezm0tfZwsezfLpdME';
+  const c = localStorage.getItem('yt_channel_id') || 'UCDGB5gLCJ7QAEpt5DXRai-w';
+  $('apiKey').value = k;
+  $('channelId').value = c;
+  $('savedApi').style.display = 'block';
+  $('savedCh').style.display = 'block';
+  localStorage.setItem('yt_api_key', k);
+  localStorage.setItem('yt_channel_id', c);
 }
 
 function setLive(on) {
