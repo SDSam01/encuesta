@@ -13,8 +13,8 @@ body{background:transparent;font-family:'Inter',sans-serif;width:600px;overflow:
 
 .battle{height:180px;border-radius:10px;overflow:hidden;display:flex;position:relative;gap:2px;background:rgba(255,255,255,0.03);}
 .side{display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;min-width:0;position:relative;transition:width 0.85s cubic-bezier(0.34,1.08,0.64,1);gap:2px;backdrop-filter:blur(3px);}
-#sideA{width:50%;background:rgba(255,185,0,0.28);border:1px solid rgba(255,185,0,0.38);border-right:none;border-radius:10px 0 0 10px;}
-#sideB{flex:1;background:rgba(220,30,10,0.28);border:1px solid rgba(220,30,10,0.38);border-left:none;border-radius:0 10px 10px 0;}
+#sideA{width:50%;background:rgba(255,185,0,0.54);border:1px solid rgba(255,185,0,0.65);border-right:none;border-radius:10px 0 0 10px;}
+#sideB{flex:1;background:rgba(220,30,10,0.54);border:1px solid rgba(220,30,10,0.65);border-left:none;border-radius:0 10px 10px 0;}
 .side-name{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90%;text-align:center;}
 .side-pct{font-size:58px;font-weight:900;color:#fff;line-height:1;letter-spacing:-3px;font-variant-numeric:tabular-nums;transition:font-size 0.5s cubic-bezier(0.34,1.1,0.64,1);white-space:nowrap;}
 .side-votes{font-size:10px;font-weight:500;color:rgba(255,255,255,0.45);font-variant-numeric:tabular-nums;}
@@ -27,8 +27,7 @@ body{background:transparent;font-family:'Inter',sans-serif;width:600px;overflow:
 </head>
 <body>
 <div id="pollOverlay" style="display:none;">
-  <div class="poll-lbl">encuesta en vivo</div>
-  <div class="poll-q" id="dQ"></div>
+ <div class="poll-q" id="dQ">¿Qué eligen?</div>
   <div class="battle">
     <div class="side" id="sideA">
       <div class="side-name" id="dnA"></div>
