@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Poll Control</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0f0f0f;font-family:'Inter',sans-serif;color:#fff;min-height:100vh;padding:24px;max-width:520px;margin:0 auto;}
+
+h1{font-size:16px;font-weight:700;margin-bottom:4px;}
+.sub{font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:24px;}
+
+.section{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:14px;}
+.section-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:12px;}
+
+label{display:block;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:4px;margin-top:10px;}
+label:first-of-type{margin-top:0;}
+input[type=text],input[type=password]{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;}
+input[type=text]:focus,input[type=password]:focus{border-color:rgba(255,185,0,0.4);}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+.big-btn{width:100%;padding:12px;border-radius:10px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:.5px;transition:all .15s;border:1px solid;}
+.btn-start{background:rgba(255,185,0,0.13);border-color:rgba(255,185,0,0.35);color:#FFD000;}
+.btn-start:hover{background:rgba(255,185,0,0.22);}
+.btn-demo{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);font-size:12px;padding:9px;margin-top:8px;}
+.btn-demo:hover{background:rgba(255,255,255,0.08);}
+.btn-stop{background:rgba(220,30,10,0.1);border-color:rgba(220,30,10,0.3);color:#f87171;margin-top:8px;}
+.btn-stop:hover{background:rgba(220,30,10,0.2);}
+
+.status{margin-top:10px;font-size:11px;text-align:center;min-height:16px;color:rgba(255,255,255,0.3);}
+.status.ok{color:#4ade80;} .status.err{color:#f87171;} .status.loading{color:rgba(255,185,0,0.7);}
+
+.vote-row{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;margin-bottom:8px;}
+.opt-tag{font-size:12px;font-weight:600;color:rgba(255,255,255,0.6);}
+.vbtn{width:32px;height:32px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;font-size:17px;color:#fff;display:flex;align-items:center;justify-content:center;transition:background .1s;user-select:none;}
+.vbtn:hover{background:rgba(255,255,255,0.12);}
+.vbtn:active{transform:scale(0.93);}
+.vcount{font-size:15px;font-weight:700;min-width:36px;text-align:center;font-variant-numeric:tabular-nums;}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;}
+
+.live-indicator{display:none;align-items:center;gap:8px;background:rgba(255,185,0,0.08);border:1px solid rgba(255,185,0,0.2);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:12px;color:rgba(255,185,0,0.8);}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#FFD000;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+.help-link{color:rgba(255,185,0,0.4);font-size:10px;text-decoration:none;display:inline-block;margin-top:3px;}
+.saved-note{font-size:10px;color:rgba(255,185,0,0.5);margin-top:3px;display:none;}
+</style>
+</head>
+<body>
+
+<h1>🎯 Poll Control</h1>
+<div class="sub">Panel privado — solo tú lo ves. OBS muestra solo el overlay.</div>
+
+<div class="live-indicator" id="liveBar">
+  <span class="live-dot"></span>
+  <span>Encuesta activa — el overlay está visible en OBS</span>
+</div>
+
+<!-- CREDENCIALES -->
+<div class="section" id="credsSection">
+  <div class="section-title">Credenciales YouTube</div>
+  <label>API Key</label>
+  <input type="password" id="apiKey" placeholder="AIzaSy...">
+  <div class="saved-note" id="savedApi">✓ Guardada</div>
+  <label>Channel ID</label>
+  <input type="password" id="channelId" placeholder="UCxxxxxxx...">
+  <div class="saved-note" id="savedCh">✓ Guardado</div>
+  <a class="help-link" href="https://www.youtube.com/account_advanced" target="_blank">→ Encontrar Channel ID</a>
+</div>
+
+<!-- ENCUESTA -->
+<div class="section">
+  <div class="section-title">Encuesta</div>
+  <label>Pregunta</label>
+  <input type="text" id="question" value="¿Quién ganaría en una pelea?">
+  <div class="two-col" style="margin-top:10px;">
+    <div>
+      <label><span class="dot" style="background:#FFB800;"></span>Opción 1 (chat escribe 1)</label>
+      <input type="text" id="nameA" value="HOMER">
+    </div>
+    <div>
+      <label><span class="dot" style="background:#CC1100;"></span>Opción 2 (chat escribe 2)</label>
+      <input type="text" id="nameB" value="BART">
+    </div>
+  </div>
+</div>
+
+<!-- VOTOS EN VIVO -->
+<div class="section" id="votesSection" style="display:none;">
+  <div class="section-title">Votos en tiempo real</div>
+  <div class="vote-row">
+    <span class="opt-tag"><span class="dot" style="background:#FFB800;"></span><span id="labelA">HOMER</span></span>
+    <button class="vbtn" onclick="cv('A',-1)">−</button>
+    <span class="vcount" id="vcA">0</span>
+    <button class="vbtn" onclick="cv('A',1)">+</button>
+  </div>
+  <div class="vote-row">
+    <span class="opt-tag"><span class="dot" style="background:#CC1100;"></span><span id="labelB">BART</span></span>
+    <button class="vbtn" onclick="cv('B',-1)">−</button>
+    <span class="vcount" id="vcB">0</span>
+    <button class="vbtn" onclick="cv('B',1)">+</button>
+  </div>
+</div>
+
+<!-- ACCIONES -->
+<button class="big-btn btn-start" id="startBtn" onclick="startPoll()">▶ Detectar stream y comenzar</button>
+<button class="big-btn btn-demo" onclick="startDemo()">🧪 Modo prueba (sin stream)</button>
+<button class="big-btn btn-stop" id="stopBtn" style="display:none;" onclick="stopPoll()">■ Detener y ocultar overlay</button>
+<div class="status" id="statusBar">Ingresa tus datos y presiona el botón</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const KEY = 'poll_state';
+
+const state = {
+  apiKey:'', channelId:'',
+  liveChatId:'', nextPageToken:'',
+  voters:{}, votes:{A:0,B:0},
+  interval:null, delay:5000, active:false
+};
+
+function save() {
+  localStorage.setItem(KEY, JSON.stringify({
+    active: state.active,
+    question: $('question').value,
+    nameA: $('nameA').value,
+    nameB: $('nameB').value,
+    vA: state.votes.A,
+    vB: state.votes.B
+  }));
+}
+
+function loadSaved() {
+  const k = localStorage.getItem('yt_api_key');
+  const c = localStorage.getItem('yt_channel_id');
+  if(k){ $('apiKey').value=k; $('savedApi').style.display='block'; }
+  if(c){ $('channelId').value=c; $('savedCh').style.display='block'; }
+}
+
+function setLive(on) {
+  state.active = on;
+  $('liveBar').style.display    = on ? 'flex' : 'none';
+  $('stopBtn').style.display    = on ? 'block' : 'none';
+  $('startBtn').style.display   = on ? 'none' : 'block';
+  $('votesSection').style.display = on ? 'block' : 'none';
+  if(on) {
+    $('labelA').textContent = $('nameA').value.toUpperCase();
+    $('labelB').textContent = $('nameB').value.toUpperCase();
+  }
+}
+
+function cv(side, d) {
+  state.votes[side] = Math.max(0, state.votes[side]+d);
+  $('vc'+side).textContent = state.votes[side];
+  save();
+}
+
+async function startPoll() {
+  const apiKey    = $('apiKey').value.trim();
+  const channelId = $('channelId').value.trim();
+  if(!apiKey||!channelId){ setStatus('⚠️ Necesitas la API Key y tu Channel ID','err'); return; }
+
+  $('startBtn').disabled = true;
+  setStatus('🔍 Buscando tu stream en vivo...','loading');
+
+  try {
+    const sRes  = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`);
+    const sData = await sRes.json();
+    if(sData.error) throw new Error(sData.error.message);
+    if(!sData.items?.length) throw new Error('No hay stream en vivo ahora. ¿Ya iniciaste el broadcast?');
+
+    const videoId = sData.items[0].id.videoId;
+    setStatus('✅ Stream detectado — conectando chat...','loading');
+
+    const vRes  = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${apiKey}`);
+    const vData = await vRes.json();
+    if(vData.error) throw new Error(vData.error.message);
+    const chatId = vData?.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
+    if(!chatId) throw new Error('No se pudo obtener el chat en vivo.');
+
+    localStorage.setItem('yt_api_key', apiKey);
+    localStorage.setItem('yt_channel_id', channelId);
+
+    state.apiKey=apiKey; state.liveChatId=chatId;
+    state.votes={A:0,B:0}; state.voters={}; state.nextPageToken='';
+
+    setLive(true);
+    save();
+    setStatus('🟢 Conectado — leyendo chat','ok');
+
+    await fetchMessages();
+    state.interval = setInterval(fetchMessages, state.delay);
+
+  } catch(e) {
+    setStatus('❌ '+e.message,'err');
+    $('startBtn').disabled=false;
+  }
+}
+
+async function fetchMessages() {
+  try {
+    let url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${state.liveChatId}&part=snippet,authorDetails&maxResults=200&key=${state.apiKey}`;
+    if(state.nextPageToken) url+='&pageToken='+state.nextPageToken;
+    const res=await fetch(url); const data=await res.json();
+    if(data.error){console.error(data.error.message);return;}
+    if(data.pollingIntervalMillis){
+      const nd=Math.max(data.pollingIntervalMillis,3000);
+      if(nd!==state.delay){state.delay=nd;clearInterval(state.interval);state.interval=setInterval(fetchMessages,state.delay);}
+    }
+    state.nextPageToken=data.nextPageToken||'';
+    let updated=false;
+    (data.items||[]).forEach(item=>{
+      const uid=item.authorDetails?.channelId;
+      const txt=(item.snippet?.displayMessage||'').trim();
+      if(!uid||state.voters[uid])return;
+      if(txt==='1'||txt==='!1'){state.voters[uid]='A';state.votes.A++;updated=true;}
+      else if(txt==='2'||txt==='!2'){state.voters[uid]='B';state.votes.B++;updated=true;}
+    });
+    if(updated){$('vcA').textContent=state.votes.A;$('vcB').textContent=state.votes.B;save();}
+  } catch(e){console.error(e);}
+}
+
+function startDemo() {
+  state.votes={A:0,B:0}; state.voters={};
+  setLive(true); save();
+  setStatus('🧪 Modo prueba activo','ok');
+  let tick=0;
+  const dv=['A','B','A','A','B','A','B','B','A','A','B','A','A','B','A','B','A','A','B','A'];
+  const di=setInterval(()=>{
+    if(tick>=dv.length){clearInterval(di);return;}
+    state.votes[dv[tick++]]++;
+    $('vcA').textContent=state.votes.A;
+    $('vcB').textContent=state.votes.B;
+    save();
+  },600);
+}
+
+function stopPoll() {
+  clearInterval(state.interval);
+  state.active=false;
+  localStorage.setItem(KEY, JSON.stringify({active:false}));
+  setLive(false);
+  $('startBtn').disabled=false;
+  setStatus('Encuesta detenida','');
+}
+
+function setStatus(msg,type){const el=$('statusBar');el.textContent=msg;el.className='status '+(type||'');}
+
+loadSaved();
+</script>
+</body>
+</html>
