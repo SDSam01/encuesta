@@ -133,8 +133,8 @@ function save() {
 }
 
 function loadSaved() {
-  const k = localStorage.getItem('yt_api_key') || 'AIzaSyCeQDuKLiY8G5GO0Vezm0tfZwsezfLpdME';
-  const c = localStorage.getItem('yt_channel_id') || 'UCDGB5gLCJ7QAEpt5DXRai-w';
+  const k = localStorage.getItem('yt_api_key') || '';
+  const c = localStorage.getItem('yt_channel_id') || '';
   $('apiKey').value = k;
   $('channelId').value = c;
   $('savedApi').style.display = 'block';
