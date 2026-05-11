@@ -7,28 +7,51 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:transparent;font-family:'Inter',sans-serif;width:600px;overflow:hidden;}
-
-.poll-lbl{font-size:9px;font-weight:700;letter-spacing:3.5px;color:rgba(255,255,255,0.35);text-transform:uppercase;text-align:center;margin-bottom:8px;}
-.poll-q{font-size:15px;font-weight:700;color:rgba(255,255,255,0.9);text-align:center;margin-bottom:14px;letter-spacing:-0.2px;line-height:1.3;text-shadow:0 1px 8px rgba(0,0,0,0.6);}
-
+ 
+#pollOverlay{width:100%;display:none;}
+ 
+.poll-q{font-size:15px;font-weight:700;color:rgba(255,255,255,0.9);text-align:center;margin-bottom:10px;letter-spacing:-0.2px;line-height:1.3;text-shadow:0 1px 8px rgba(0,0,0,0.6);}
+ 
 .battle{height:180px;border-radius:10px;overflow:hidden;display:flex;position:relative;gap:2px;background:rgba(255,255,255,0.03);}
+ 
 .side{display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;min-width:0;position:relative;transition:width 0.85s cubic-bezier(0.34,1.08,0.64,1);gap:2px;backdrop-filter:blur(3px);}
-#sideA{width:50%;background:rgba(255,185,0,0.54);border:1px solid rgba(255,185,0,0.65);border-right:none;border-radius:10px 0 0 10px;}
-#sideB{flex:1;background:rgba(220,30,10,0.54);border:1px solid rgba(220,30,10,0.65);border-left:none;border-radius:0 10px 10px 0;}
+ 
+#sideA{width:50%;background:rgba(255,185,0,0.45);border:1px solid rgba(255,185,0,0.55);border-right:none;border-radius:10px 0 0 10px;}
+#sideB{flex:1;background:rgba(220,30,10,0.45);border:1px solid rgba(220,30,10,0.55);border-left:none;border-radius:0 10px 10px 0;}
+ 
 .side-name{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90%;text-align:center;}
 .side-pct{font-size:58px;font-weight:900;color:#fff;line-height:1;letter-spacing:-3px;font-variant-numeric:tabular-nums;transition:font-size 0.5s cubic-bezier(0.34,1.1,0.64,1);white-space:nowrap;}
 .side-votes{font-size:10px;font-weight:500;color:rgba(255,255,255,0.45);font-variant-numeric:tabular-nums;}
 .glow-a{text-shadow:0 0 12px rgba(255,200,0,0.7),0 0 28px rgba(255,150,0,0.35);}
 .glow-b{text-shadow:0 0 12px rgba(255,60,60,0.7),0 0 28px rgba(220,0,0,0.35);}
+ 
 .divider-glow{position:absolute;top:0;bottom:0;width:3px;margin-left:-1.5px;pointer-events:none;background:rgba(255,255,255,0.07);box-shadow:0 0 8px 2px rgba(255,200,0,0.15),0 0 8px 2px rgba(255,50,0,0.15);transition:left 0.85s cubic-bezier(0.34,1.08,0.64,1);z-index:10;}
-.vote-hint{display:flex;justify-content:center;gap:24px;margin-top:10px;}
+ 
+.vote-hint{display:flex;justify-content:center;gap:24px;margin-top:8px;}
 .hint-pill{font-size:10px;font-weight:600;letter-spacing:1px;padding:3px 10px;border-radius:99px;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(4px);background:rgba(0,0,0,0.2);}
+ 
+.bottom-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:0 2px;}
+.total-votes{font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);letter-spacing:0.5px;}
+.timer{font-size:13px;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:1px;font-variant-numeric:tabular-nums;}
+.timer.urgent{color:#ff4040;animation:blink 0.5s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.4;}}
+ 
+/* Winner effect */
+.winner-overlay{display:none;position:absolute;inset:0;border-radius:10px;align-items:center;justify-content:center;z-index:20;flex-direction:column;gap:8px;}
+.winner-overlay.show{display:flex;animation:winnerIn 0.5s ease;}
+@keyframes winnerIn{from{opacity:0;transform:scale(0.9);}to{opacity:1;transform:scale(1);}}
+.winner-name{font-size:32px;font-weight:900;color:#fff;text-align:center;letter-spacing:-1px;text-shadow:0 0 30px currentColor;}
+.winner-label{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.6);}
+.winner-pct{font-size:18px;font-weight:700;color:rgba(255,255,255,0.8);}
+ 
+.confetti-piece{position:absolute;width:8px;height:8px;border-radius:2px;animation:confettiFall 1.5s ease-in forwards;}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(200px) rotate(720deg);opacity:0;}}
 </style>
 </head>
 <body>
-<div id="pollOverlay" style="display:none;">
- <div class="poll-q" id="dQ">¿Qué eligen?</div>
-  <div class="battle">
+<div id="pollOverlay">
+  <div class="poll-q" id="dQ">¿Qué eligen?</div>
+  <div class="battle" id="battleArea">
     <div class="side" id="sideA">
       <div class="side-name" id="dnA"></div>
       <div class="side-pct glow-a" id="dpA">50%</div>
@@ -40,55 +63,114 @@ body{background:transparent;font-family:'Inter',sans-serif;width:600px;overflow:
       <div class="side-votes" id="dvB">0 votos</div>
     </div>
     <div class="divider-glow" id="divGlow"></div>
+    <div class="winner-overlay" id="winnerOverlay">
+      <div class="winner-label">¡GANADOR!</div>
+      <div class="winner-name" id="winnerName"></div>
+      <div class="winner-pct" id="winnerPct"></div>
+    </div>
+  </div>
+  <div class="bottom-row">
+    <span class="total-votes" id="totalVotes">0 votos totales</span>
+    <span class="timer" id="timerDisplay"></span>
   </div>
   <div class="vote-hint">
     <span class="hint-pill" id="hintA">escribe 1 para votar</span>
     <span class="hint-pill" id="hintB">escribe 2 para votar</span>
   </div>
 </div>
-
+ 
 <script>
 const $ = id => document.getElementById(id);
 const KEY = 'poll_state';
-
+let winnerShown = false;
+ 
 function pA(a,b){ const t=a+b; return t===0?50:Math.round((a/t)*100); }
-
-function render(data) {
-  if (!data || !data.active) { document.getElementById('pollOverlay').style.display='none'; return; }
-  document.getElementById('pollOverlay').style.display='block';
-
+ 
+function spawnConfetti(color) {
+  const area = $('battleArea');
+  for(let i=0;i<20;i++){
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = `left:${Math.random()*100}%;top:0;background:${color};animation-delay:${Math.random()*0.5}s;animation-duration:${1+Math.random()}s;`;
+    area.appendChild(el);
+    setTimeout(()=>el.remove(), 2000);
+  }
+}
+ 
+function showWinner(data) {
+  if(winnerShown) return;
+  winnerShown = true;
   const pa = pA(data.vA, data.vB), pb = 100-pa;
-  $('dQ').textContent  = data.question  || '';
-  $('dnA').textContent = (data.nameA || 'A').toUpperCase();
-  $('dnB').textContent = (data.nameB || 'B').toUpperCase();
-  $('hintA').textContent = '1 → ' + (data.nameA || 'A');
-  $('hintB').textContent = '2 → ' + (data.nameB || 'B');
-  $('dpA').textContent = pa + '%';
-  $('dpB').textContent = pb + '%';
-  $('dvA').textContent = data.vA + (data.vA===1?' voto':' votos');
-  $('dvB').textContent = data.vB + (data.vB===1?' voto':' votos');
-
-  const t = data.vA + data.vB;
+  const isA = pa >= pb;
+  const name = isA ? data.nameA : data.nameB;
+  const pct  = isA ? pa : pb;
+  const color = isA ? '#FFB800' : '#CC1100';
+  const bg    = isA ? 'rgba(255,185,0,0.85)' : 'rgba(200,20,10,0.85)';
+ 
+  $('winnerName').textContent = name;
+  $('winnerName').style.color = '#fff';
+  $('winnerName').style.textShadow = `0 0 30px ${color}`;
+  $('winnerPct').textContent = pct + '% de los votos';
+  $('winnerOverlay').style.background = bg;
+  $('winnerOverlay').classList.add('show');
+  spawnConfetti(color);
+  setTimeout(()=>spawnConfetti('#fff'), 300);
+}
+ 
+function formatTime(sec) {
+  const m = Math.floor(sec/60), s = sec%60;
+  return m+':'+(s<10?'0':'')+s;
+}
+ 
+function render(data) {
+  if(!data||!data.active){ $('pollOverlay').style.display='none'; winnerShown=false; return; }
+  $('pollOverlay').style.display='block';
+ 
+  const pa=pA(data.vA,data.vB), pb=100-pa, t=data.vA+data.vB;
+  $('dQ').textContent  = data.question||'¿Qué eligen?';
+  $('dnA').textContent = (data.nameA||'A').toUpperCase();
+  $('dnB').textContent = (data.nameB||'B').toUpperCase();
+  $('hintA').textContent = '1 → '+(data.nameA||'A');
+  $('hintB').textContent = '2 → '+(data.nameB||'B');
+  $('dpA').textContent = pa+'%';
+  $('dpB').textContent = pb+'%';
+  $('dvA').textContent = data.vA+(data.vA===1?' voto':' votos');
+  $('dvB').textContent = data.vB+(data.vB===1?' voto':' votos');
+  $('totalVotes').textContent = t+' votos totales';
+ 
   if(t===0){$('dpA').style.fontSize='58px';$('dpB').style.fontSize='58px';}
   else if(pa>pb){$('dpA').style.fontSize='66px';$('dpB').style.fontSize='44px';}
   else if(pb>pa){$('dpB').style.fontSize='66px';$('dpA').style.fontSize='44px';}
   else{$('dpA').style.fontSize='58px';$('dpB').style.fontSize='58px';}
-
+ 
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     $('sideA').style.width  = pa+'%';
     $('divGlow').style.left = pa+'%';
   }));
+ 
+  // Timer
+  if(data.timerEnd && data.timerEnd > 0) {
+    const remaining = Math.max(0, Math.ceil((data.timerEnd - Date.now())/1000));
+    $('timerDisplay').textContent = remaining > 0 ? '⏱ '+formatTime(remaining) : '';
+    $('timerDisplay').className = 'timer'+(remaining<=10&&remaining>0?' urgent':'');
+    if(remaining===0 && !winnerShown && t>0) showWinner(data);
+    if(remaining===0 && winnerShown===false && t===0) $('timerDisplay').textContent='';
+  } else {
+    $('timerDisplay').textContent='';
+  }
+ 
+  if(!data.active) { winnerShown=false; $('winnerOverlay').classList.remove('show'); }
 }
-
+ 
 function sync() {
   try {
     const raw = localStorage.getItem(KEY);
     render(raw ? JSON.parse(raw) : null);
   } catch(e){}
 }
-
+ 
 sync();
-setInterval(sync, 1000);
+setInterval(sync, 500);
 </script>
 </body>
 </html>
