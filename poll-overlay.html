@@ -150,6 +150,9 @@ function showWinner(data) {
 
   // Hide voting hints during winner
   $('voteHint').style.opacity = '0';
+  $('sideA').style.opacity = '0';
+$('sideB').style.opacity = '0';
+$('divGlow').style.opacity = '0';
 
   // Animate in
   $('winnerPanel').classList.remove('exit');
@@ -167,6 +170,9 @@ function hideWinner() {
   panel.classList.add('exit');
   setTimeout(()=>{
     panel.classList.remove('exit');
+    $('sideA').style.opacity = '1';
+$('sideB').style.opacity = '1';
+$('divGlow').style.opacity = '1';
     panel.style.transform = 'translateY(100%)';
     panel.style.opacity = '0';
     $('voteHint').style.opacity = '1';
