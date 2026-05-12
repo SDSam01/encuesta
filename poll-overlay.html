@@ -8,66 +8,67 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:transparent;font-family:'Inter',sans-serif;width:600px;overflow:hidden;}
 
-#pollOverlay{width:100%;display:none;}
+#pollOverlay{width:100%;display:none;opacity:0;transform:translateY(40px);transition:opacity 0.5s ease, transform 0.5s cubic-bezier(0.34,1.1,0.64,1);}
+#pollOverlay.visible{opacity:1;transform:translateY(0);}
+#pollOverlay.hiding{opacity:0;transform:translateY(40px);}
 
 .poll-q{font-size:15px;font-weight:700;color:rgba(255,255,255,0.9);text-align:center;margin-bottom:10px;letter-spacing:-0.2px;line-height:1.3;text-shadow:0 1px 8px rgba(0,0,0,0.6);}
 
 .battle{height:180px;border-radius:10px;overflow:hidden;display:flex;position:relative;gap:2px;background:rgba(255,255,255,0.03);}
 
-.side{display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;min-width:0;position:relative;transition:width 0.85s cubic-bezier(0.34,1.08,0.64,1);gap:2px;backdrop-filter:blur(3px);}
+.side{display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;min-width:0;position:relative;transition:width 0.85s cubic-bezier(0.34,1.08,0.64,1), opacity 0.3s;gap:2px;backdrop-filter:blur(3px);}
 
 #sideA{width:50%;background:rgba(255,185,0,0.45);border:1px solid rgba(255,185,0,0.55);border-right:none;border-radius:10px 0 0 10px;}
 #sideB{flex:1;background:rgba(220,30,10,0.45);border:1px solid rgba(220,30,10,0.55);border-left:none;border-radius:0 10px 10px 0;}
 
 .side-name{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90%;text-align:center;}
-.side-pct{font-size:58px;font-weight:900;color:#fff;line-height:1;letter-spacing:-3px;font-variant-numeric:tabular-nums;transition:font-size 0.5s cubic-bezier(0.34,1.1,0.64,1);white-space:nowrap;}
+.side-pct{font-size:58px;font-weight:900;color:#fff;line-height:1;letter-spacing:-3px;font-variant-numeric:tabular-nums;transition:font-size 0.5s cubic-bezier(0.34,1.1,0.64,1), transform 0.15s;white-space:nowrap;}
+.side-pct.pulse{animation:pctPulse 0.3s ease;}
+@keyframes pctPulse{0%{transform:scale(1);}50%{transform:scale(1.12);}100%{transform:scale(1);}}
 .side-votes{font-size:10px;font-weight:500;color:rgba(255,255,255,0.45);font-variant-numeric:tabular-nums;}
 .glow-a{text-shadow:0 0 12px rgba(255,200,0,0.7),0 0 28px rgba(255,150,0,0.35);}
 .glow-b{text-shadow:0 0 12px rgba(255,60,60,0.7),0 0 28px rgba(220,0,0,0.35);}
 
+/* Dramatic lead effect */
+.side-pct.dominating-a{text-shadow:0 0 20px rgba(255,200,0,1),0 0 50px rgba(255,150,0,0.7),0 0 80px rgba(255,100,0,0.4);}
+.side-pct.dominating-b{text-shadow:0 0 20px rgba(255,60,60,1),0 0 50px rgba(220,0,0,0.7),0 0 80px rgba(180,0,0,0.4);}
+
 .divider-glow{position:absolute;top:0;bottom:0;width:3px;margin-left:-1.5px;pointer-events:none;background:rgba(255,255,255,0.07);box-shadow:0 0 8px 2px rgba(255,200,0,0.15),0 0 8px 2px rgba(255,50,0,0.15);transition:left 0.85s cubic-bezier(0.34,1.08,0.64,1);z-index:10;}
 
-.bottom-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:0 2px;}
-.total-votes{font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);letter-spacing:0.5px;}
-.timer{font-size:13px;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:1px;font-variant-numeric:tabular-nums;}
-.timer.urgent{color:#ff4040;animation:blink 0.5s infinite;}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+/* Timer */
+.timer-wrap{text-align:center;margin-bottom:8px;}
+.timer-big{font-size:22px;font-weight:900;color:rgba(255,255,255,0.85);letter-spacing:2px;font-variant-numeric:tabular-nums;transition:font-size 0.3s;}
+.timer-big.urgent{color:#ff4040;animation:tblink 0.5s infinite;font-size:28px;}
+@keyframes tblink{0%,100%{opacity:1;}50%{opacity:.3;}}
 
-.vote-hint{display:flex;justify-content:center;gap:24px;margin-top:8px;}
+.bottom-row{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding:0 2px;}
+.total-votes{font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);letter-spacing:0.5px;}
+.vpm{font-size:11px;font-weight:600;color:rgba(255,255,255,0.35);letter-spacing:0.3px;}
+
+.vote-hint{display:flex;justify-content:center;gap:24px;margin-top:8px;transition:opacity 0.3s;}
 .hint-pill{font-size:10px;font-weight:600;letter-spacing:1px;padding:3px 10px;border-radius:99px;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(4px);background:rgba(0,0,0,0.2);}
+
+/* Comeback effect */
+#comebackBanner{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+  background:rgba(0,0,0,0.8);border:2px solid #fff;border-radius:10px;
+  padding:8px 20px;text-align:center;z-index:25;pointer-events:none;
+  transition:transform 0.3s cubic-bezier(0.34,1.3,0.64,1), opacity 0.3s;opacity:0;
+}
+#comebackBanner.show{transform:translate(-50%,-50%) scale(1);opacity:1;}
+.comeback-text{font-size:18px;font-weight:900;color:#fff;letter-spacing:1px;}
+.comeback-sub{font-size:10px;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase;}
 
 /* Winner panel */
 #winnerPanel{
-  position:absolute;
-  inset:0;
-  border-radius:10px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:4px;
-  z-index:30;
-  transform:translateY(100%);
-  opacity:0;
-  pointer-events:none;
+  position:absolute;inset:0;border-radius:10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  z-index:30;transform:translateY(100%);opacity:0;pointer-events:none;
 }
-
-#winnerPanel.enter{
-  animation:slideIn 0.6s cubic-bezier(0.34,1.1,0.64,1) forwards;
-}
-
-#winnerPanel.exit{
-  animation:slideOut 0.5s cubic-bezier(0.4,0,1,1) forwards;
-}
-
-@keyframes slideIn{
-  from{transform:translateY(100%);opacity:0;}
-  to{transform:translateY(0%);opacity:1;}
-}
-@keyframes slideOut{
-  from{transform:translateY(0%);opacity:1;}
-  to{transform:translateY(100%);opacity:0;}
-}
+#winnerPanel.enter{animation:slideIn 0.6s cubic-bezier(0.34,1.1,0.64,1) forwards;}
+#winnerPanel.exit{animation:slideOut 0.5s cubic-bezier(0.4,0,1,1) forwards;}
+@keyframes slideIn{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0%);opacity:1;}}
+@keyframes slideOut{from{transform:translateY(0%);opacity:1;}to{transform:translateY(100%);opacity:0;}}
 
 .winner-label{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.65);}
 .winner-name{font-size:38px;font-weight:900;color:#fff;letter-spacing:-1.5px;text-align:center;line-height:1;}
@@ -80,6 +81,9 @@ body{background:transparent;font-family:'Inter',sans-serif;width:600px;overflow:
 </head>
 <body>
 <div id="pollOverlay">
+  <div class="timer-wrap" id="timerWrap" style="display:none;">
+    <div class="timer-big" id="timerDisplay"></div>
+  </div>
   <div class="poll-q" id="dQ">¿Qué eligen?</div>
   <div class="battle" id="battleArea">
     <div class="side" id="sideA">
@@ -93,6 +97,10 @@ body{background:transparent;font-family:'Inter',sans-serif;width:600px;overflow:
       <div class="side-votes" id="dvB">0 votos</div>
     </div>
     <div class="divider-glow" id="divGlow"></div>
+    <div id="comebackBanner">
+      <div class="comeback-text" id="comebackText">¡REMONTADA!</div>
+      <div class="comeback-sub" id="comebackSub"></div>
+    </div>
     <div id="winnerPanel">
       <div class="winner-label">¡GANADOR!</div>
       <div class="winner-name" id="winnerName"></div>
@@ -102,11 +110,11 @@ body{background:transparent;font-family:'Inter',sans-serif;width:600px;overflow:
   </div>
   <div class="bottom-row">
     <span class="total-votes" id="totalVotes">0 votos totales</span>
-    <span class="timer" id="timerDisplay"></span>
+    <span class="vpm" id="vpmDisplay"></span>
   </div>
   <div class="vote-hint" id="voteHint">
-    <span class="hint-pill" id="hintA">escribe 1 para votar</span>
-    <span class="hint-pill" id="hintB">escribe 2 para votar</span>
+    <span class="hint-pill" id="hintA">escribe A para votar</span>
+    <span class="hint-pill" id="hintB">escribe B para votar</span>
   </div>
 </div>
 
@@ -114,7 +122,10 @@ body{background:transparent;font-family:'Inter',sans-serif;width:600px;overflow:
 const $ = id => document.getElementById(id);
 const KEY = 'poll_state';
 let winnerShown = false;
-let winnerTimeout = null;
+let lastData = null;
+let lastPctA = 50;
+let voteTimestamps = [];
+let comebackTimeout = null;
 
 function pA(a,b){ const t=a+b; return t===0?50:Math.round((a/t)*100); }
 
@@ -132,108 +143,172 @@ function spawnConfetti(color) {
 function showWinner(data) {
   if(winnerShown) return;
   winnerShown = true;
-
   const pa=pA(data.vA,data.vB), pb=100-pa, t=data.vA+data.vB;
-  const isA = pa >= pb;
-  const name  = isA ? data.nameA : data.nameB;
-  const pct   = isA ? pa : pb;
-  const votes = isA ? data.vA : data.vB;
-  const color = isA ? 'rgba(255,185,0,0.45)' : 'rgba(220,30,10,0.45)';
-  const glow  = isA ? '#FFB800' : '#CC1100';
+  const isA=pa>=pb;
+  const name=isA?data.nameA:data.nameB;
+  const pct=isA?pa:pb;
+  const votes=isA?data.vA:data.vB;
+  const color=isA?'rgba(255,185,0,0.45)':'rgba(220,30,10,0.45)';
+  const glow=isA?'#FFB800':'#CC1100';
 
-  $('winnerName').textContent  = name;
-  $('winnerPct').textContent   = pct+'%';
-  $('winnerVotes').textContent = votes+' votos de '+t+' totales';
-  $('winnerName').style.textShadow = `0 0 25px ${glow}, 0 0 50px ${glow}`;
-  $('winnerPanel').style.background = color;
-  $('winnerPanel').style.backdropFilter = 'blur(6px)';
+  $('winnerName').textContent=name;
+  $('winnerPct').textContent=pct+'%';
+  $('winnerVotes').textContent=votes+' votos de '+t+' totales';
+  $('winnerName').style.textShadow=`0 0 25px ${glow}, 0 0 50px ${glow}`;
+  $('winnerPanel').style.background=color;
+  $('winnerPanel').style.backdropFilter='blur(6px)';
 
-  // Hide voting hints during winner
-  $('voteHint').style.opacity = '0';
-  $('sideA').style.opacity = '0';
-$('sideB').style.opacity = '0';
-$('divGlow').style.opacity = '0';
+  $('sideA').style.opacity='0';
+  $('sideB').style.opacity='0';
+  $('divGlow').style.opacity='0';
+  $('voteHint').style.opacity='0';
+  $('timerWrap').style.opacity='0';
 
-  // Animate in
   $('winnerPanel').classList.remove('exit');
   $('winnerPanel').classList.add('enter');
 
-  // Confetti
-  setTimeout(()=>spawnConfetti(glow), 200);
-  setTimeout(()=>spawnConfetti('#fff'), 500);
-  setTimeout(()=>spawnConfetti(glow), 900);
+  setTimeout(()=>spawnConfetti(glow),200);
+  setTimeout(()=>spawnConfetti('#fff'),500);
+  setTimeout(()=>spawnConfetti(glow),900);
 }
 
 function hideWinner() {
-  const panel = $('winnerPanel');
+  const panel=$('winnerPanel');
   panel.classList.remove('enter');
   panel.classList.add('exit');
   setTimeout(()=>{
     panel.classList.remove('exit');
-    $('sideA').style.opacity = '1';
-$('sideB').style.opacity = '1';
-$('divGlow').style.opacity = '1';
-    panel.style.transform = 'translateY(100%)';
-    panel.style.opacity = '0';
-    $('voteHint').style.opacity = '1';
-    winnerShown = false;
-  }, 500);
+    panel.style.transform='translateY(100%)';
+    panel.style.opacity='0';
+    $('sideA').style.opacity='1';
+    $('sideB').style.opacity='1';
+    $('divGlow').style.opacity='1';
+    $('voteHint').style.opacity='1';
+    $('timerWrap').style.opacity='1';
+    winnerShown=false;
+  },500);
+}
+
+function checkComeback(data) {
+  const newPctA = pA(data.vA, data.vB);
+  const diff = newPctA - lastPctA;
+  const losingA = lastPctA < 50 && diff > 0;
+  const losingB = lastPctA > 50 && diff < 0;
+
+  if((losingA && diff >= 8) || (losingB && Math.abs(diff) >= 8)) {
+    const name = losingA ? data.nameA : data.nameB;
+    $('comebackText').textContent = '¡REMONTADA!';
+    $('comebackSub').textContent = (name||'').toUpperCase() + ' ESTÁ SUBIENDO';
+    $('comebackBanner').classList.add('show');
+    if(comebackTimeout) clearTimeout(comebackTimeout);
+    comebackTimeout = setTimeout(()=>$('comebackBanner').classList.remove('show'), 3000);
+  }
+  lastPctA = newPctA;
+}
+
+function calcVPM() {
+  const now = Date.now();
+  voteTimestamps = voteTimestamps.filter(t => now-t < 60000);
+  return voteTimestamps.length;
 }
 
 function formatTime(sec) {
-  const m=Math.floor(sec/60), s=sec%60;
-  return m+':'+(s<10?'0':'')+s;
+  if(sec >= 60){ const m=Math.floor(sec/60),s=sec%60; return m+':'+(s<10?'0':'')+s; }
+  return sec+'s';
 }
 
 function render(data) {
   if(!data||!data.active){
-    $('pollOverlay').style.display='none';
+    if($('pollOverlay').classList.contains('visible')){
+      $('pollOverlay').classList.remove('visible');
+      $('pollOverlay').classList.add('hiding');
+      setTimeout(()=>{ $('pollOverlay').style.display='none'; $('pollOverlay').classList.remove('hiding'); },500);
+    }
     if(winnerShown) hideWinner();
     return;
   }
-  $('pollOverlay').style.display='block';
+
+  if($('pollOverlay').style.display==='none'||$('pollOverlay').style.display===''){
+    $('pollOverlay').style.display='block';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>$('pollOverlay').classList.add('visible')));
+    winnerShown=false;
+  }
 
   const pa=pA(data.vA,data.vB), pb=100-pa, t=data.vA+data.vB;
+
+  // Check comeback
+  if(lastData && (data.vA+data.vB) > (lastData.vA+lastData.vB)) {
+    const added = (data.vA+data.vB)-(lastData.vA+lastData.vB);
+    for(let i=0;i<added;i++) voteTimestamps.push(Date.now());
+    checkComeback(data);
+  }
+  lastData = {...data};
+
   $('dQ').textContent  = data.question||'¿Qué eligen?';
   $('dnA').textContent = (data.nameA||'A').toUpperCase();
   $('dnB').textContent = (data.nameB||'B').toUpperCase();
-  $('hintA').textContent = '1 → '+(data.nameA||'A');
-  $('hintB').textContent = '2 → '+(data.nameB||'B');
-  $('dpA').textContent = pa+'%';
-  $('dpB').textContent = pb+'%';
+  $('hintA').textContent = 'A → '+(data.nameA||'A');
+  $('hintB').textContent = 'B → '+(data.nameB||'B');
   $('dvA').textContent = data.vA+(data.vA===1?' voto':' votos');
   $('dvB').textContent = data.vB+(data.vB===1?' voto':' votos');
   $('totalVotes').textContent = t+' votos totales';
 
-  if(t===0){$('dpA').style.fontSize='58px';$('dpB').style.fontSize='58px';}
-  else if(pa>pb){$('dpA').style.fontSize='66px';$('dpB').style.fontSize='44px';}
-  else if(pb>pa){$('dpB').style.fontSize='66px';$('dpA').style.fontSize='44px';}
-  else{$('dpA').style.fontSize='58px';$('dpB').style.fontSize='58px';}
+  // VPM
+  const vpm = calcVPM();
+  $('vpmDisplay').textContent = vpm > 0 ? vpm+' votos/min' : '';
+
+  // Dramatic size transition
+  const diff = Math.abs(pa-pb);
+  let sizeA, sizeB;
+  if(t===0){ sizeA=sizeB='58px'; }
+  else if(diff >= 30){ sizeA=pa>pb?'72px':'38px'; sizeB=pb>pa?'72px':'38px'; }
+  else if(diff >= 15){ sizeA=pa>pb?'66px':'44px'; sizeB=pb>pa?'66px':'44px'; }
+  else { sizeA=sizeB='58px'; }
+
+  const pctAEl=$('dpA'), pctBEl=$('dpB');
+
+  // Pulse on new vote
+  const prevT = lastData ? lastData.vA+lastData.vB : 0;
+  if(t > prevT) {
+    if(data.vA > (lastData?.vA||0)){ pctAEl.classList.remove('pulse'); void pctAEl.offsetWidth; pctAEl.classList.add('pulse'); }
+    if(data.vB > (lastData?.vB||0)){ pctBEl.classList.remove('pulse'); void pctBEl.offsetWidth; pctBEl.classList.add('pulse'); }
+  }
+
+  pctAEl.textContent=pa+'%'; pctBEl.textContent=pb+'%';
+  pctAEl.style.fontSize=sizeA; pctBEl.style.fontSize=sizeB;
+
+  // Dominating glow
+  pctAEl.className='side-pct glow-a'+(pa>=70?' dominating-a':'');
+  pctBEl.className='side-pct glow-b'+(pb>=70?' dominating-b':'');
 
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    $('sideA').style.width  = pa+'%';
-    $('divGlow').style.left = pa+'%';
+    $('sideA').style.width=pa+'%';
+    $('divGlow').style.left=pa+'%';
   }));
 
+  // Timer
   if(data.timerEnd && data.timerEnd > 0) {
-    const remaining = Math.max(0, Math.ceil((data.timerEnd - Date.now())/1000));
-    $('timerDisplay').textContent = remaining > 0 ? '⏱ '+formatTime(remaining) : '';
-    $('timerDisplay').className = 'timer'+(remaining<=10&&remaining>0?' urgent':'');
+    const remaining = Math.max(0, Math.ceil((data.timerEnd-Date.now())/1000));
+    $('timerWrap').style.display = 'block';
+    $('timerDisplay').textContent = remaining > 0 ? formatTime(remaining) : '';
+    $('timerDisplay').className = 'timer-big'+(remaining<=5&&remaining>0?' urgent':'');
     if(remaining===0 && !winnerShown && t>0) showWinner(data);
   } else {
-    $('timerDisplay').textContent='';
+    $('timerWrap').style.display='none';
   }
+
+  if(!data.active){ winnerShown=false; $('winnerPanel').classList.remove('enter','exit'); }
 }
 
 function sync() {
   try {
-    const raw = localStorage.getItem(KEY);
-    render(raw ? JSON.parse(raw) : null);
+    const raw=localStorage.getItem(KEY);
+    render(raw?JSON.parse(raw):null);
   } catch(e){}
 }
 
 sync();
-setInterval(sync, 500);
+setInterval(sync,500);
 </script>
 </body>
 </html>
