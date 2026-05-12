@@ -70,7 +70,7 @@ input:focus{border-color:rgba(255,185,0,0.4);}
 <div class="section">
   <div class="section-title">Credenciales YouTube</div>
   <label>API Key</label>
-  <input type="password" id="apiKey" placeholder="AIzaSy...">
+  <input type="password" id="apiKey" placeholder="Rotación automática (3 keys)">
   <div class="saved-note" id="savedApi">✓ Guardada</div>
   <label>Channel ID</label>
   <input type="password" id="channelId" placeholder="UCxxxxxxx...">
@@ -95,6 +95,7 @@ input:focus{border-color:rgba(255,185,0,0.4);}
   </div>
   <label style="margin-top:12px;">Duración del temporizador</label>
   <div class="three-col">
+    <button class="timer-btn" onclick="setDuration(0.5)">30 seg</button>
     <button class="timer-btn" onclick="setDuration(1)">1 min</button>
     <button class="timer-btn active" id="btn2" onclick="setDuration(2)">2 min</button>
     <button class="timer-btn" onclick="setDuration(3)">3 min</button>
@@ -133,13 +134,29 @@ input:focus{border-color:rgba(255,185,0,0.4);}
 const $ = id => document.getElementById(id);
 const KEY = 'poll_state';
 
+// ── Rotación de API Keys ──
+const API_KEYS = [
+  'AIzaSyCeQDuKLiY8G5GO0Vezm0tfZwsezfLpdME',
+  'AIzaSyDqlaHU156M6ilgaFaabHmQort4gMLIzEs',
+  'AIzaSyBTaPw7pPv1X78X_Wif6_wMGJDmg8xpi1w'
+];
+let currentKeyIndex = 0;
+
+function getKey() { return API_KEYS[currentKeyIndex]; }
+
+function rotateKey() {
+  currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
+  setStatus(`⚠️ Rotando a key ${currentKeyIndex+1} de ${API_KEYS.length}...`, 'loading');
+  return getKey();
+}
+
 const state = {
-  apiKey:'', channelId:'',
+  channelId:'',
   liveChatId:'', nextPageToken:'',
   voters:{}, votes:{A:0,B:0},
-  interval:null, delay:5000,
+  interval:null, delay:8000,
   active:false,
-  duration: 2, // minutos
+  duration: 2,
   timerEnd: 0,
   timerInterval: null
 };
@@ -157,10 +174,11 @@ function save() {
 }
 
 function loadSaved() {
-  const k = localStorage.getItem('yt_api_key') || '';
   const c = localStorage.getItem('yt_channel_id') || '';
-  if(k){ $('apiKey').value=k; $('savedApi').style.display='block'; }
   if(c){ $('channelId').value=c; $('savedCh').style.display='block'; }
+  // API key field shows which key is active
+  $('apiKey').value = '●●●● Rotación automática (3 keys)';
+  $('savedApi').style.display='block';
 }
 
 function setDuration(min) {
@@ -171,6 +189,7 @@ function setDuration(min) {
 }
 
 function updateTimerDisplay(sec) {
+  if(sec > 0 && sec < 60) { $('timerDisp').textContent = sec+'s'; $('timerDisp').className = 'timer-display'+(sec<=5?' urgent':''); return; }
   if(sec <= 0 || !sec) { $('timerDisp').textContent = '∞'; return; }
   const m = Math.floor(sec/60), s = sec%60;
   $('timerDisp').textContent = m+':'+(s<10?'0':'')+s;
@@ -181,7 +200,6 @@ function startTimer() {
   if(state.duration === 0) { state.timerEnd = 0; return; }
   state.timerEnd = Date.now() + state.duration * 60 * 1000;
   save();
-
   if(state.timerInterval) clearInterval(state.timerInterval);
   state.timerInterval = setInterval(() => {
     const remaining = Math.max(0, Math.ceil((state.timerEnd - Date.now())/1000));
@@ -226,15 +244,15 @@ function resetVotes() {
 }
 
 async function startPoll() {
-  const apiKey    = $('apiKey').value.trim();
   const channelId = $('channelId').value.trim();
-  if(!apiKey||!channelId){ setStatus('⚠️ Necesitas la API Key y tu Channel ID','err'); return; }
+  if(!channelId){ setStatus('⚠️ Necesitas tu Channel ID','err'); return; }
 
   $('startBtn').disabled = true;
+  currentKeyIndex = 0;
   setStatus('🔍 Buscando tu stream en vivo...','loading');
 
   try {
-    const sRes  = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`);
+    const sRes  = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${getKey()}`);
     const sData = await sRes.json();
     if(sData.error) throw new Error(sData.error.message);
     if(!sData.items?.length) throw new Error('No hay stream en vivo. ¿Ya iniciaste el broadcast?');
@@ -242,22 +260,21 @@ async function startPoll() {
     const videoId = sData.items[0].id.videoId;
     setStatus('✅ Stream detectado — conectando chat...','loading');
 
-    const vRes  = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${apiKey}`);
+    const vRes  = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${getKey()}`);
     const vData = await vRes.json();
     if(vData.error) throw new Error(vData.error.message);
     const chatId = vData?.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
     if(!chatId) throw new Error('No se pudo obtener el chat en vivo.');
 
-    localStorage.setItem('yt_api_key', apiKey);
     localStorage.setItem('yt_channel_id', channelId);
 
-    state.apiKey=apiKey; state.liveChatId=chatId;
+    state.channelId=channelId; state.liveChatId=chatId;
     state.votes={A:0,B:0}; state.voters={}; state.nextPageToken='';
 
     setLive(true);
     startTimer();
     save();
-    setStatus('🟢 Conectado — leyendo chat','ok');
+    setStatus(`🟢 Conectado — key ${currentKeyIndex+1} activa`, 'ok');
 
     await fetchMessages();
     state.interval = setInterval(fetchMessages, state.delay);
@@ -270,26 +287,41 @@ async function startPoll() {
 
 async function fetchMessages() {
   try {
-    let url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${state.liveChatId}&part=snippet,authorDetails&maxResults=200&key=${state.apiKey}`;
+    let url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${state.liveChatId}&part=snippet,authorDetails&maxResults=200&key=${getKey()}`;
     if(state.nextPageToken) url+='&pageToken='+state.nextPageToken;
     const res=await fetch(url); const data=await res.json();
-    if(data.error){console.error(data.error.message);return;}
+
+    if(data.error) {
+      const reason = data.error.errors?.[0]?.reason || '';
+      if(reason === 'quotaExceeded' || data.error.code === 429 || data.error.code === 403) {
+        const newKey = rotateKey();
+        if(currentKeyIndex === 0) {
+          setStatus('❌ Cuota agotada en todas las keys. Intenta mañana.', 'err');
+          clearInterval(state.interval);
+        }
+        return;
+      }
+      console.error(data.error.message);
+      return;
+    }
+
+    setStatus(`🟢 Conectado — key ${currentKeyIndex+1} activa`, 'ok');
+
     if(data.pollingIntervalMillis){
-      const nd=Math.max(data.pollingIntervalMillis,3000);
+      const nd=Math.max(data.pollingIntervalMillis, 8000);
       if(nd!==state.delay){state.delay=nd;clearInterval(state.interval);state.interval=setInterval(fetchMessages,state.delay);}
     }
     state.nextPageToken=data.nextPageToken||'';
     let updated=false;
 
-    // Stop counting if timer ran out
     if(state.timerEnd > 0 && Date.now() > state.timerEnd) return;
 
     (data.items||[]).forEach(item=>{
       const uid=item.authorDetails?.channelId;
       const txt=(item.snippet?.displayMessage||'').trim();
       if(!uid||state.voters[uid])return;
-      if(txt==='1'||txt==='!1'){state.voters[uid]='A';state.votes.A++;updated=true;}
-      else if(txt==='2'||txt==='!2'){state.voters[uid]='B';state.votes.B++;updated=true;}
+      if(txt==='A'||txt==='a'||txt==='!A'||txt==='!a'){state.voters[uid]='A';state.votes.A++;updated=true;}
+      else else if(txt==='B'||txt==='b'||txt==='!B'||txt==='!b'){state.voters[uid]='B';state.votes.B++;updated=true;}
     });
     if(updated){$('vcA').textContent=state.votes.A;$('vcB').textContent=state.votes.B;save();}
   } catch(e){console.error(e);}
@@ -325,7 +357,6 @@ function stopPoll() {
 
 function setStatus(msg,type){const el=$('statusBar');el.textContent=msg;el.className='status '+(type||'');}
 
-// Init
 loadSaved();
 updateTimerDisplay(2*60);
 </script>
