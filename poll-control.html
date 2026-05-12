@@ -329,6 +329,7 @@ async function fetchMessages() {
 
 function startDemo() {
   state.votes={A:0,B:0}; state.voters={};
+  state.channelId = $('channelId').value.trim();
   setLive(true);
   startTimer();
   save();
