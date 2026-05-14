@@ -6,25 +6,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@700;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{
-  background:transparent;
-  overflow:hidden;
-  width:100vw;height:100vh;
-}
+body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 
 #widget{
   position:fixed;
-  bottom:28px;
-  left:50%;
+  bottom:28px;left:50%;
   transform:translateX(-50%);
   width:520px;
-  opacity:0;
-  transition:opacity .4s;
+  opacity:0;transition:opacity .4s;
   pointer-events:none;
 }
 #widget.visible{opacity:1;}
 
-/* Timer + pregunta */
+/* Header */
 .w-header{text-align:center;margin-bottom:6px;}
 .w-timer{
   font-family:'Bebas Neue',sans-serif;
@@ -40,51 +34,39 @@ body{
   text-shadow:0 2px 8px rgba(0,0,0,.9);
 }
 
-/* ══ Contenedor único con fills superpuestos ══ */
+/* ══ Box principal ══ */
 .w-box{
   position:relative;
-  height:110px;
+  height:120px;
   border-radius:12px;
   overflow:hidden;
-  background:rgba(10,10,10,0.55);
+  background:rgba(10,10,10,0.6);
   box-shadow:0 8px 40px rgba(0,0,0,.7);
 }
 
-/* Fill A — desde la izquierda */
+/* Fills que se invaden */
 .fill-a{
-  position:absolute;
-  top:0;left:0;bottom:0;
-  background:#FFB800;
-  opacity:.38;
-  transition:width .7s cubic-bezier(.4,0,.2,1);
-  z-index:1;
+  position:absolute;top:0;left:0;bottom:0;
+  background:#FFB800;opacity:.38;
+  transition:width .7s cubic-bezier(.4,0,.2,1);z-index:1;
 }
-
-/* Fill B — desde la derecha */
 .fill-b{
-  position:absolute;
-  top:0;right:0;bottom:0;
-  background:#CC1100;
-  opacity:.38;
-  transition:width .7s cubic-bezier(.4,0,.2,1);
-  z-index:1;
+  position:absolute;top:0;right:0;bottom:0;
+  background:#CC1100;opacity:.38;
+  transition:width .7s cubic-bezier(.4,0,.2,1);z-index:1;
 }
 
-/* Contenido encima de los fills */
+/* Contenido */
 .w-content{
-  position:absolute;
-  inset:0;
-  display:flex;
-  z-index:2;
+  position:absolute;inset:0;
+  display:flex;z-index:2;
 }
-
-/* Mitad izquierda (A) */
 .w-side{
   flex:1;
-  display:flex;
-  flex-direction:column;
+  display:flex;flex-direction:column;
   justify-content:center;
-  padding:12px 18px;
+  padding:10px 16px;
+  min-width:0;/* evita overflow */
 }
 .w-side-b{align-items:flex-end;text-align:right;}
 
@@ -95,21 +77,23 @@ body{
 }
 .w-name{
   font-family:'Bebas Neue',sans-serif;
-  font-size:20px;letter-spacing:2px;color:#fff;
-  line-height:1;margin-bottom:3px;
+  font-size:20px;letter-spacing:1.5px;color:#fff;
+  line-height:1;margin-bottom:2px;
   text-shadow:0 1px 6px rgba(0,0,0,.6);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  max-width:100%;
 }
 .w-pct{
   font-family:'Bebas Neue',sans-serif;
-  font-size:58px;color:#fff;letter-spacing:-1px;line-height:1;
+  font-size:54px;color:#fff;letter-spacing:-1px;line-height:1;
   text-shadow:0 2px 10px rgba(0,0,0,.4);
   transition:font-size .3s;
 }
-.w-pct.winner{font-size:66px;}
-.w-pct.loser{font-size:46px;color:rgba(255,255,255,.6);}
+.w-pct.winner{font-size:62px;}
+.w-pct.loser{font-size:42px;color:rgba(255,255,255,.55);}
 .w-votes-txt{
   font-size:11px;color:rgba(255,255,255,.5);
-  font-weight:700;letter-spacing:.5px;margin-top:2px;
+  font-weight:700;letter-spacing:.5px;margin-top:3px;
 }
 
 /* Total */
@@ -121,28 +105,58 @@ body{
 
 /* ══ Remontada ══ */
 .w-remontada{
-  position:absolute;
-  top:50%;left:50%;
+  position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%) scale(.85);
   background:rgba(8,8,8,.92);
-  border:2px solid #FFD000;
-  border-radius:10px;
-  padding:7px 18px;
-  text-align:center;
-  z-index:10;
-  opacity:0;
+  border:2px solid #FFD000;border-radius:10px;
+  padding:7px 18px;text-align:center;
+  z-index:10;opacity:0;
   transition:opacity .3s,transform .3s;
-  pointer-events:none;
-  white-space:nowrap;
+  pointer-events:none;white-space:nowrap;
 }
 .w-remontada.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
-.w-rem-title{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:20px;color:#FFD000;letter-spacing:2px;
+.w-rem-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:#FFD000;letter-spacing:2px;}
+.w-rem-sub{font-size:10px;color:rgba(255,255,255,.6);font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+
+/* ══ WINNER ANIMATION ══ */
+.w-winner-overlay{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;
+  z-index:20;
+  opacity:0;
+  transition:opacity .5s;
+  pointer-events:none;
 }
-.w-rem-sub{
-  font-size:10px;color:rgba(255,255,255,.6);
-  font-weight:700;letter-spacing:1px;text-transform:uppercase;
+.w-winner-overlay.show{opacity:1;}
+.w-winner-fill{
+  position:absolute;inset:0;
+  transition:opacity .5s;
+}
+.w-winner-content{
+  position:relative;z-index:1;
+  text-align:center;
+}
+.w-winner-label{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:14px;letter-spacing:3px;
+  color:rgba(255,255,255,.6);margin-bottom:2px;
+}
+.w-winner-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:52px;letter-spacing:3px;color:#fff;
+  line-height:1;
+  text-shadow:0 2px 20px rgba(0,0,0,.5);
+  animation:winnerPulse 1s ease-in-out infinite alternate;
+}
+@keyframes winnerPulse{
+  from{transform:scale(1);}
+  to{transform:scale(1.05);}
+}
+.w-winner-pct{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:30px;color:rgba(255,255,255,.7);
+  letter-spacing:2px;
 }
 </style>
 </head>
@@ -155,20 +169,16 @@ body{
   </div>
 
   <div class="w-box">
-    <!-- Fills que se invaden -->
     <div class="fill-a" id="fillA" style="width:50%"></div>
     <div class="fill-b" id="fillB" style="width:50%"></div>
 
-    <!-- Contenido -->
     <div class="w-content">
-      <!-- Lado A -->
       <div class="w-side">
         <div class="w-label">A</div>
         <div class="w-name" id="wNameA">HOMER</div>
         <div class="w-pct" id="wPctA">50%</div>
         <div class="w-votes-txt"><span id="wVotesA">0</span> votos</div>
       </div>
-      <!-- Lado B -->
       <div class="w-side w-side-b">
         <div class="w-label">B</div>
         <div class="w-name" id="wNameB">BART</div>
@@ -182,6 +192,16 @@ body{
       <div class="w-rem-title">¡REMONTADA!</div>
       <div class="w-rem-sub" id="wRemSub">A ESTÁ SUBIENDO</div>
     </div>
+
+    <!-- Winner animation -->
+    <div class="w-winner-overlay" id="wWinner">
+      <div class="w-winner-fill" id="wWinnerFill"></div>
+      <div class="w-winner-content">
+        <div class="w-winner-label">GANADOR</div>
+        <div class="w-winner-name" id="wWinnerName">HOMER</div>
+        <div class="w-winner-pct" id="wWinnerPct">56%</div>
+      </div>
+    </div>
   </div>
 
   <div class="w-total" id="wTotal">0 votos totales</div>
@@ -189,7 +209,34 @@ body{
 
 <script>
 const LS = 'poll_state';
-let prevLeader = null, prevDiff = 0, remTimeout = null;
+let prevLeader = null, prevDiff = 0;
+let remTimeout = null, winnerShown = false;
+let lastTimerEnd = 0;
+
+function showWinner(s) {
+  const vA = s.vA || 0, vB = s.vB || 0;
+  const total = vA + vB;
+  if (total === 0) return;
+
+  const pA = Math.round(vA / total * 100);
+  const pB = 100 - pA;
+  const winnerIsA = pA >= pB;
+
+  const name = (winnerIsA ? s.nameA : s.nameB || 'B').toUpperCase();
+  const pct  = (winnerIsA ? pA : pB) + '%';
+  const color = winnerIsA ? '#FFB800' : '#CC1100';
+
+  document.getElementById('wWinnerName').textContent = name;
+  document.getElementById('wWinnerPct').textContent  = pct;
+  document.getElementById('wWinnerFill').style.background = color;
+  document.getElementById('wWinnerFill').style.opacity = '0.55';
+  document.getElementById('wWinner').classList.add('show');
+}
+
+function hideWinner() {
+  document.getElementById('wWinner').classList.remove('show');
+  winnerShown = false;
+}
 
 function render(s) {
   const vA = s.vA || 0, vB = s.vB || 0;
@@ -206,29 +253,23 @@ function render(s) {
   document.getElementById('wVotesB').textContent    = vB;
   document.getElementById('wTotal').textContent     = total + (total === 1 ? ' voto total' : ' votos totales');
 
-  // Fills que se invaden mutuamente
   document.getElementById('fillA').style.width = pA + '%';
   document.getElementById('fillB').style.width = pB + '%';
 
   // Tamaño dinámico
   const pctA = document.getElementById('wPctA');
   const pctB = document.getElementById('wPctB');
-  if (total === 0) {
-    pctA.className = pctB.className = 'w-pct';
-  } else if (pA > pB) {
-    pctA.className = 'w-pct winner'; pctB.className = 'w-pct loser';
-  } else if (pB > pA) {
-    pctB.className = 'w-pct winner'; pctA.className = 'w-pct loser';
-  } else {
-    pctA.className = pctB.className = 'w-pct';
-  }
+  if (total === 0) { pctA.className = pctB.className = 'w-pct'; }
+  else if (pA > pB) { pctA.className = 'w-pct winner'; pctB.className = 'w-pct loser'; }
+  else if (pB > pA) { pctB.className = 'w-pct winner'; pctA.className = 'w-pct loser'; }
+  else { pctA.className = pctB.className = 'w-pct'; }
 
   // Remontada
   const leader = pA > pB ? 'a' : pA < pB ? 'b' : null;
   const diff   = Math.abs(pA - pB);
   if (total >= 10 && prevLeader && leader && leader !== prevLeader && prevDiff >= 15) {
-    const name = (leader === 'a' ? (s.nameA||'A') : (s.nameB||'B')).toUpperCase();
-    document.getElementById('wRemSub').textContent = name + ' ESTÁ SUBIENDO';
+    const nm = (leader === 'a' ? (s.nameA||'A') : (s.nameB||'B')).toUpperCase();
+    document.getElementById('wRemSub').textContent = nm + ' ESTÁ SUBIENDO';
     const rem = document.getElementById('wRemontada');
     rem.classList.add('show');
     if (remTimeout) clearTimeout(remTimeout);
@@ -237,7 +278,7 @@ function render(s) {
   prevLeader = leader;
   prevDiff   = diff;
 
-  // Timer
+  // Timer + winner animation
   const timerEl = document.getElementById('wTimer');
   if (s.timerEnd && s.timerEnd > 0) {
     const rem = Math.max(0, Math.ceil((s.timerEnd - Date.now()) / 1000));
@@ -247,11 +288,21 @@ function render(s) {
         ? Math.floor(rem/60) + ':' + String(rem%60).padStart(2,'0')
         : rem + 's';
       timerEl.className = 'w-timer' + (rem <= 10 ? ' urgent' : '');
+      // Si se estaba mostrando ganador y el timer se reinició, ocultar
+      if (winnerShown && s.timerEnd !== lastTimerEnd) hideWinner();
     } else {
+      // Timer llegó a 0 — mostrar ganador
       timerEl.style.display = 'none';
+      if (!winnerShown) {
+        winnerShown = true;
+        lastTimerEnd = s.timerEnd;
+        showWinner(s);
+      }
     }
   } else {
     timerEl.style.display = 'none';
+    // Sin timer activo — ocultar winner si estaba
+    if (winnerShown) hideWinner();
   }
 }
 
@@ -262,7 +313,7 @@ setInterval(() => {
     const s = JSON.parse(raw);
     const w = document.getElementById('widget');
     if (s.active) { w.classList.add('visible'); render(s); }
-    else { w.classList.remove('visible'); }
+    else { w.classList.remove('visible'); hideWinner(); }
   } catch(e) {}
 }, 500);
 </script>
