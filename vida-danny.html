@@ -2,151 +2,197 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Vida Danny</title>
+<title>Vida Sam</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
+body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 
-/* ══ Red damage flash — cubre todo el lienzo ══ */
-#dmgFlash{
-  position:fixed;inset:0;
-  background:radial-gradient(ellipse at center, rgba(255,0,0,0) 30%, rgba(255,0,0,0.75) 100%);
-  opacity:0;pointer-events:none;z-index:100;
-  transition:opacity .08s;
+/* Flash rojo — daño — bordes pantalla completa */
+#flashRed{
+  position:fixed;inset:0;pointer-events:none;z-index:100;opacity:0;
+  background:radial-gradient(ellipse at center, rgba(255,0,0,0) 25%, rgba(255,0,0,0.9) 100%);
+  transition:opacity .07s;
 }
-#dmgFlash.flash{opacity:1;}
+#flashRed.show{opacity:1;}
 
-/* ══ Widget de corazones ══ */
+/* Flash verde — curación */
+#flashGreen{
+  position:fixed;inset:0;pointer-events:none;z-index:100;opacity:0;
+  background:radial-gradient(ellipse at center, rgba(0,255,0,0) 25%, rgba(0,255,0,0.75) 100%);
+  transition:opacity .07s;
+}
+#flashGreen.show{opacity:1;}
+
+/* ══ Corazones — ocultos por defecto, aparecen solo al recibir daño/curar ══ */
 #widget{
   position:fixed;
-  top:20px;left:20px;
-  display:flex;flex-direction:column;align-items:flex-start;
-  gap:6px;
+  top:24px;left:24px;
+  display:flex;flex-direction:column;
+  align-items:flex-start;gap:8px;
+  opacity:0;
+  transition:opacity .3s;
+  pointer-events:none;
+  z-index:50;
 }
+#widget.visible{opacity:1;}
 
 .w-label{
   font-family:'Courier New',monospace;
-  font-size:11px;font-weight:700;letter-spacing:2px;
-  color:rgba(255,255,255,.5);text-transform:uppercase;
-  text-shadow:0 1px 4px rgba(0,0,0,1);
+  font-size:16px;font-weight:700;letter-spacing:3px;
+  color:rgba(255,255,255,.7);text-transform:uppercase;
+  text-shadow:0 0 10px rgba(0,0,0,1), 0 1px 4px rgba(0,0,0,1);
 }
 
 .hearts-row{
-  display:flex;gap:5px;
-  filter:drop-shadow(0 2px 6px rgba(0,0,0,.9));
+  display:flex;gap:8px;
+  filter:drop-shadow(0 3px 10px rgba(0,0,0,1));
 }
 
-.heart-wrap{
-  width:40px;height:40px;position:relative;
-  transition:transform .1s;
-}
+.heart-wrap{width:80px;height:80px;}
 .heart-wrap.hit{animation:heartHit .5s ease-out;}
-.heart-wrap.dead{animation:heartDead .6s ease-out forwards;}
+.heart-wrap.heal{animation:heartHeal .4s ease-out;}
 
 @keyframes heartHit{
-  0%{transform:scale(1.4) rotate(-10deg);}
-  40%{transform:scale(0.85) rotate(5deg);}
-  100%{transform:scale(1) rotate(0deg);}
+  0%{transform:scale(1.5) rotate(-10deg);}
+  40%{transform:scale(0.8) rotate(5deg);}
+  100%{transform:scale(1) rotate(0);}
 }
-@keyframes heartDead{
-  0%{transform:scale(1.3);opacity:1;}
-  50%{transform:scale(0.5) rotate(20deg);opacity:.5;}
-  100%{transform:scale(0) rotate(45deg);opacity:0;}
+@keyframes heartHeal{
+  0%{transform:scale(1);}
+  50%{transform:scale(1.5);}
+  100%{transform:scale(1);}
 }
 
-/* Shake del widget completo */
-#widget.shake{animation:widgetShake .4s ease-out;}
-@keyframes widgetShake{
+#widget.shake{animation:wShake .45s ease-out;}
+@keyframes wShake{
   0%{transform:translateX(0);}
-  15%{transform:translateX(-8px) rotate(-1deg);}
-  30%{transform:translateX(8px) rotate(1deg);}
-  45%{transform:translateX(-6px);}
-  60%{transform:translateX(6px);}
-  75%{transform:translateX(-3px);}
+  15%{transform:translateX(-12px) rotate(-1.5deg);}
+  30%{transform:translateX(12px) rotate(1.5deg);}
+  50%{transform:translateX(-8px);}
+  70%{transform:translateX(8px);}
+  85%{transform:translateX(-4px);}
   100%{transform:translateX(0);}
 }
 
-/* Death overlay */
+/* ══ YOU DIED ══ */
 #deathScreen{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,0);
-  pointer-events:none;z-index:99;
+  position:fixed;inset:0;pointer-events:none;z-index:99;
   display:flex;align-items:center;justify-content:center;
-  opacity:0;transition:opacity .5s;
+  opacity:0;transition:opacity .6s;
 }
 #deathScreen.show{opacity:1;}
+
+/* Overlay rojo sobre la zona del chat (derecha) */
+#chatRedOverlay{
+  position:fixed;
+  top:0;right:0;
+  width:420px; /* Ajusta este valor si tu chat es más ancho/angosto */
+  height:100%;
+  background:rgba(200,0,0,0.55);
+  pointer-events:none;
+  z-index:98;
+  opacity:0;transition:opacity .6s;
+}
+#chatRedOverlay.show{opacity:1;}
+
 .death-text{
   font-family:'Courier New',monospace;
-  font-size:48px;font-weight:900;
-  color:#FF0000;letter-spacing:4px;
-  text-shadow:0 0 20px rgba(255,0,0,.8), 0 0 40px rgba(255,0,0,.4);
+  font-size:100px;font-weight:900;
+  color:#FF0000;letter-spacing:8px;
+  text-shadow:0 0 40px rgba(255,0,0,.9), 0 0 80px rgba(255,0,0,.5), 0 4px 20px rgba(0,0,0,1);
   animation:deathPulse 1s infinite alternate;
 }
-@keyframes deathPulse{from{opacity:.7;}to{opacity:1;}}
+@keyframes deathPulse{from{opacity:.5;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
 </style>
 </head>
 <body>
 
-<div id="dmgFlash"></div>
-<div id="deathScreen"><div class="death-text">YOU DIED</div></div>
+<div id="flashRed"></div>
+<div id="flashGreen"></div>
+<div id="chatRedOverlay"></div>
+
+<div id="deathScreen">
+  <div class="death-text">YOU DIED</div>
+</div>
 
 <div id="widget">
-  <div class="w-label">Danny</div>
+  <div class="w-label">Sam</div>
   <div class="hearts-row" id="heartsRow"></div>
 </div>
 
 <script>
-const LS   = 'battle_state';
-let lastHit  = 0;
-let lastHp   = 6;
-let lastDead = false;
+const LS = 'battle_state';
+let lastHit = 0, lastHeal = 0, lastHp = 6, lastDead = false;
+let hideTimeout = null;
 
-// ══ Audio Minecraft-like ══
 const AC = new (window.AudioContext || window.webkitAudioContext)();
 
 function playHit() {
-  const o = AC.createOscillator();
-  const g = AC.createGain();
+  AC.resume();
+  const o = AC.createOscillator(), g = AC.createGain();
   o.connect(g); g.connect(AC.destination);
   o.type = 'square';
   o.frequency.setValueAtTime(220, AC.currentTime);
-  o.frequency.exponentialRampToValueAtTime(110, AC.currentTime + 0.15);
-  g.gain.setValueAtTime(0.3, AC.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + 0.2);
-  o.start(); o.stop(AC.currentTime + 0.2);
+  o.frequency.exponentialRampToValueAtTime(80, AC.currentTime + 0.22);
+  g.gain.setValueAtTime(0.45, AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + 0.25);
+  o.start(); o.stop(AC.currentTime + 0.25);
 }
 
-function playDeath() {
-  [220,196,165,147,110].forEach((freq, i) => {
-    const o = AC.createOscillator();
-    const g = AC.createGain();
+function playHeal() {
+  AC.resume();
+  [330, 392, 523, 659].forEach((freq, i) => {
+    const o = AC.createOscillator(), g = AC.createGain();
     o.connect(g); g.connect(AC.destination);
-    o.type = 'square';
+    o.type = 'sine';
+    const t = AC.currentTime + i * 0.09;
     o.frequency.value = freq;
-    const t = AC.currentTime + i * 0.12;
-    g.gain.setValueAtTime(0.3, t);
+    g.gain.setValueAtTime(0.25, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
     o.start(t); o.stop(t + 0.15);
   });
 }
 
-// ══ SVG heart pixel art ══
+function playDeath() {
+  AC.resume();
+  [220,196,165,147,110,98].forEach((freq,i) => {
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.connect(g); g.connect(AC.destination);
+    o.type = 'square';
+    const t = AC.currentTime + i * 0.16;
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.45, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    o.start(t); o.stop(t + 0.2);
+  });
+}
+
+function doFlash(elId) {
+  const el = document.getElementById(elId);
+  el.classList.add('show');
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => { el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 90); }, 110);
+  }, 90);
+}
+
+// SVG corazón pixel art rojo
 function heartSVG(filled) {
-  const c  = filled === 2 ? '#FF2222' : filled === 1 ? '#FF2222' : '#2a2a2a';
-  const cr = filled === 2 ? '#FF2222' : '#2a2a2a';
-  const sh = filled >= 1  ? '#FF6666' : '#3a3a3a';
-  return `<svg viewBox="0 0 16 14" xmlns="http://www.w3.org/2000/svg" width="40" height="40" style="display:block">
+  const c  = filled===2?'#FF2222':filled===1?'#FF2222':'#222';
+  const cr = filled===2?'#FF2222':'#222';
+  const sh = filled>=1 ?'#FF6666':'#333';
+  return `<svg viewBox="0 0 16 14" xmlns="http://www.w3.org/2000/svg" width="80" height="80" style="display:block;image-rendering:pixelated">
     <rect x="1" y="0" width="3" height="2" fill="${sh}"/>
     <rect x="4" y="0" width="4" height="1" fill="${c}"/>
     <rect x="8" y="0" width="4" height="1" fill="${cr}"/>
-    <rect x="12" y="0" width="3" height="2" fill="${filled===2?sh:(filled===1?cr:'#3a3a3a')}"/>
+    <rect x="12" y="0" width="3" height="2" fill="${filled===2?sh:filled===1?cr:'#333'}"/>
     <rect x="0" y="1" width="8" height="4" fill="${c}"/>
     <rect x="8" y="1" width="8" height="4" fill="${cr}"/>
-    <rect x="0" y="5" width="16" height="3" fill="${filled>=1?'#FF2222':'#2a2a2a'}"/>
-    <rect x="1" y="8" width="14" height="2" fill="${filled>=1?'#FF2222':'#2a2a2a'}"/>
-    <rect x="2" y="10" width="12" height="2" fill="${filled>=1?'#FF2222':'#2a2a2a'}"/>
-    <rect x="4" y="12" width="8" height="1" fill="${filled>=1?'#FF2222':'#2a2a2a'}"/>
-    <rect x="6" y="13" width="4" height="1" fill="${filled>=1?'#FF2222':'#2a2a2a'}"/>
+    <rect x="0" y="5" width="16" height="3" fill="${filled>=1?'#FF2222':'#222'}"/>
+    <rect x="1" y="8" width="14" height="2" fill="${filled>=1?'#FF2222':'#222'}"/>
+    <rect x="2" y="10" width="12" height="2" fill="${filled>=1?'#FF2222':'#222'}"/>
+    <rect x="4" y="12" width="8" height="1" fill="${filled>=1?'#FF2222':'#222'}"/>
+    <rect x="6" y="13" width="4" height="1" fill="${filled>=1?'#FF2222':'#222'}"/>
   </svg>`;
 }
 
@@ -155,7 +201,7 @@ function renderHearts(hp) {
   row.innerHTML = '';
   for (let i = 0; i < 3; i++) {
     const base   = i * 2;
-    const filled = hp >= base + 2 ? 2 : hp >= base + 1 ? 1 : 0;
+    const filled = hp >= base+2 ? 2 : hp >= base+1 ? 1 : 0;
     const wrap   = document.createElement('div');
     wrap.className = 'heart-wrap';
     wrap.id = 'heart_' + i;
@@ -164,81 +210,92 @@ function renderHearts(hp) {
   }
 }
 
-function triggerDamage(oldHp, newHp) {
-  AC.resume();
-
-  // Flash rojo
-  const flash = document.getElementById('dmgFlash');
-  flash.classList.add('flash');
-  setTimeout(() => {
-    flash.classList.remove('flash');
-    setTimeout(() => { flash.classList.add('flash'); setTimeout(() => flash.classList.remove('flash'), 80); }, 100);
-  }, 80);
-
-  // Shake widget
+function showWidgetThen(animClass, heartIdx, newHp) {
   const widget = document.getElementById('widget');
+
+  // Mostrar widget
+  widget.classList.add('visible');
+
+  // Renderizar estado ANTES de la animación
+  renderHearts(lastHp);
+
+  // Shake
   widget.classList.remove('shake');
   void widget.offsetWidth;
   widget.classList.add('shake');
   setTimeout(() => widget.classList.remove('shake'), 500);
 
-  // Animar el corazón que se perdió
-  const lostHalf = Math.floor(oldHp / 2); // índice del corazón afectado (0,1,2)
-  const heartIdx = Math.max(0, Math.ceil(newHp / 2));
-  const affectedIdx = Math.min(2, Math.floor(oldHp / 2) === Math.floor(newHp / 2)
-    ? Math.floor(oldHp / 2)
-    : Math.floor(oldHp / 2));
-
-  const heartEl = document.getElementById('heart_' + affectedIdx);
+  // Animar corazón
+  const heartEl = document.getElementById('heart_' + heartIdx);
   if (heartEl) {
-    heartEl.classList.remove('hit');
+    heartEl.classList.remove('hit','heal');
     void heartEl.offsetWidth;
-    heartEl.classList.add('hit');
-    setTimeout(() => heartEl.classList.remove('hit'), 500);
+    heartEl.classList.add(animClass);
+    setTimeout(() => heartEl.classList.remove(animClass), 500);
   }
 
-  if (newHp <= 0) {
-    playDeath();
-  } else {
-    playHit();
-  }
+  // Actualizar corazones después de la animación
+  setTimeout(() => renderHearts(newHp), 350);
 
-  // Re-render después de la animación
-  setTimeout(() => renderHearts(newHp), 300);
+  // Ocultar widget después de 3 segundos
+  if (hideTimeout) clearTimeout(hideTimeout);
+  hideTimeout = setTimeout(() => {
+    widget.classList.remove('visible');
+  }, 3200);
 }
 
-// ══ Poll localStorage ══
 setInterval(() => {
   try {
     const raw = localStorage.getItem(LS);
     if (!raw) return;
     const s = JSON.parse(raw);
 
-    // Detectar hit nuevo
+    // DAÑO
     if (s.dannyHit && s.dannyHit !== lastHit && s.dannyHp < lastHp) {
-      lastHit = s.dannyHit;
       const oldHp = lastHp;
+      lastHit = s.dannyHit;
+
+      if (s.dannyHp <= 0) {
+        playDeath();
+        renderHearts(0);
+        document.getElementById('widget').classList.add('visible');
+        if (hideTimeout) clearTimeout(hideTimeout);
+      } else {
+        doFlash('flashRed');
+        playHit();
+        const idx = Math.min(2, Math.floor((oldHp - 1) / 2));
+        showWidgetThen('hit', idx, s.dannyHp);
+      }
       lastHp = s.dannyHp;
-      triggerDamage(oldHp, s.dannyHp);
-    } else if (s.dannyHp !== lastHp) {
+    }
+
+    // CURACIÓN
+    if (s.dannyHeal && s.dannyHeal !== lastHeal && s.dannyHp > lastHp) {
+      const oldHp = lastHp;
+      lastHeal = s.dannyHeal;
+      lastHp   = s.dannyHp;
+      doFlash('flashGreen');
+      playHeal();
+      const idx = Math.min(2, Math.floor(s.dannyHp / 2) - 1);
+      showWidgetThen('heal', Math.max(0, idx), s.dannyHp);
+    }
+
+    // Sync HP sin animación (reset)
+    if (s.dannyHp !== lastHp && s.dannyHit === lastHit && s.dannyHeal === lastHeal) {
       lastHp = s.dannyHp;
       renderHearts(s.dannyHp);
     }
 
-    // Death screen
+    // YOU DIED
     if (s.dannyDead && !lastDead) {
       lastDead = true;
       document.getElementById('deathScreen').classList.add('show');
+      document.getElementById('chatRedOverlay').classList.add('show');
     } else if (!s.dannyDead && lastDead) {
       lastDead = false;
       document.getElementById('deathScreen').classList.remove('show');
-    }
-
-    // Curar también re-renderiza
-    if (s.dannyHit !== lastHit && s.dannyHp >= lastHp) {
-      lastHit = s.dannyHit;
-      lastHp  = s.dannyHp;
-      renderHearts(s.dannyHp);
+      document.getElementById('chatRedOverlay').classList.remove('show');
+      document.getElementById('widget').classList.remove('visible');
     }
 
   } catch(e) {}
