@@ -2,76 +2,16 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Poll Widget v2 — YouTube + Kick</title>
+<title>Poll Overlay</title>
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --a:#00c2ff;
-  --b:#ff4d6d;
-  --bg:#0a0a0f;
-  --panel:#13131a;
-  --border:#2a2a3a;
-  --text:#e8e8f0;
-  --sub:#6b6b80;
-}
-body{background:transparent;font-family:'DM Sans',sans-serif;color:var(--text)}
+:root{--a:#00c2ff;--b:#ff4d6d}
+body{background:transparent;font-family:'DM Sans',sans-serif}
 
-/* ═══════════════ SETUP SCREEN ═══════════════ */
-#setup{
-  position:fixed;inset:0;background:#0a0a0f;
-  display:flex;align-items:center;justify-content:center;
-  z-index:1000;
-}
-.setup-box{
-  background:var(--panel);border:1px solid var(--border);
-  border-radius:16px;padding:32px;width:480px;max-width:95vw;
-}
-.setup-title{
-  font-family:'Bebas Neue',sans-serif;font-size:28px;
-  letter-spacing:2px;margin-bottom:6px;color:var(--text);
-}
-.setup-sub{font-size:13px;color:var(--sub);margin-bottom:24px}
-.section-label{
-  font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
-  color:var(--sub);margin:20px 0 10px;
-  display:flex;align-items:center;gap:8px;
-}
-.section-label::before{content:'';flex:1;height:1px;background:var(--border)}
-.badge{
-  font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;
-  letter-spacing:1px;
-}
-.yt-badge{background:rgba(255,0,0,0.15);color:#ff5555;border:1px solid rgba(255,85,85,0.3)}
-.kick-badge{background:rgba(83,252,83,0.1);color:#53fc53;border:1px solid rgba(83,252,83,0.3)}
-.inp{
-  width:100%;background:#0d0d14;border:1px solid var(--border);
-  border-radius:8px;padding:10px 14px;color:var(--text);font-size:13px;
-  outline:none;transition:.2s;font-family:'DM Sans',sans-serif;
-  margin-bottom:8px;
-}
-.inp:focus{border-color:rgba(255,255,255,0.2);background:#111119}
-.inp-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.kick-note{font-size:11px;color:var(--sub);margin-top:-4px;margin-bottom:8px;line-height:1.5}
-.kick-note a{color:var(--a);text-decoration:none}
-.btn-start{
-  width:100%;background:linear-gradient(135deg,#00c2ff22,#ff4d6d22);
-  border:1px solid rgba(255,255,255,0.12);color:var(--text);
-  padding:13px;border-radius:10px;font-size:15px;font-weight:600;
-  cursor:pointer;margin-top:20px;transition:.2s;letter-spacing:.5px;
-}
-.btn-start:hover{background:linear-gradient(135deg,#00c2ff33,#ff4d6d33);border-color:rgba(255,255,255,0.25)}
-#setupStatus{font-size:12px;text-align:center;margin-top:10px;min-height:18px;color:var(--sub)}
-#setupStatus.err{color:#ff5555}
-#setupStatus.ok{color:#53fc53}
-
-/* ═══════════════ OVERLAY ═══════════════ */
 #overlay{
-  display:none;
-  position:fixed;bottom:30px;left:30px;
-  width:360px;
+  position:fixed;bottom:30px;left:30px;width:360px;
 }
 .ov-wrap{
   background:rgba(8,8,15,0.92);
@@ -80,171 +20,85 @@ body{background:transparent;font-family:'DM Sans',sans-serif;color:var(--text)}
   backdrop-filter:blur(20px);
   box-shadow:0 20px 60px rgba(0,0,0,0.8);
 }
+.ov-timer{
+  font-family:'Bebas Neue',sans-serif;font-size:32px;
+  text-align:center;color:#fff;letter-spacing:3px;
+  margin-bottom:10px;display:none;
+}
+.ov-timer.urgent{color:#ff4d6d;animation:pulse .5s infinite alternate}
+@keyframes pulse{to{opacity:.4}}
+
 .ov-question{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:20px;letter-spacing:1.5px;
-  color:#fff;margin-bottom:14px;line-height:1.1;
+  font-family:'Bebas Neue',sans-serif;font-size:20px;
+  letter-spacing:1.5px;color:#fff;margin-bottom:14px;line-height:1.1;
 }
 .ov-bars{display:flex;flex-direction:column;gap:9px}
-.ov-opt{position:relative}
 .ov-bar-bg{
   height:44px;border-radius:8px;
-  background:rgba(255,255,255,0.04);
-  overflow:hidden;position:relative;
+  background:rgba(255,255,255,0.04);overflow:hidden;position:relative;
 }
 .ov-bar-fill{
-  height:100%;border-radius:8px;
+  height:100%;border-radius:8px;position:absolute;left:0;top:0;
   transition:width .6s cubic-bezier(.4,0,.2,1);
-  position:absolute;left:0;top:0;
 }
-.fill-a{background:linear-gradient(90deg,rgba(0,194,255,.35),rgba(0,194,255,.15))}
-.fill-b{background:linear-gradient(90deg,rgba(255,77,109,.35),rgba(255,77,109,.15))}
+.fill-a{background:linear-gradient(90deg,rgba(0,194,255,.4),rgba(0,194,255,.15))}
+.fill-b{background:linear-gradient(90deg,rgba(255,77,109,.4),rgba(255,77,109,.15))}
 .ov-bar-content{
   position:absolute;inset:0;display:flex;
-  align-items:center;justify-content:space-between;
-  padding:0 12px;
+  align-items:center;justify-content:space-between;padding:0 12px;
 }
-.ov-opt-name{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:20px;letter-spacing:1.5px;
-}
-.name-a{color:var(--a)}
-.name-b{color:var(--b)}
-.ov-pct{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:22px;letter-spacing:1px;
-  transition:font-size .3s;
-}
-.pct-a{color:var(--a)}
-.pct-b{color:var(--b)}
-.ov-votes{
-  font-size:11px;color:var(--sub);font-weight:500;
-  margin-top:3px;padding-left:2px;
+.ov-opt-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px}
+.name-a{color:var(--a)} .name-b{color:var(--b)}
+.ov-pct{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;transition:font-size .3s}
+.pct-a{color:var(--a)} .pct-b{color:var(--b)}
+.ov-votes{font-size:11px;color:rgba(255,255,255,0.35);font-weight:500;margin-top:3px;padding-left:2px}
+
+.ov-comeback{
+  text-align:center;font-family:'Bebas Neue',sans-serif;
+  font-size:16px;letter-spacing:2px;color:#ffd700;
+  margin-top:8px;min-height:20px;
 }
 .ov-footer{
   display:flex;align-items:center;justify-content:space-between;
   margin-top:12px;padding-top:10px;
   border-top:1px solid rgba(255,255,255,0.06);
 }
-.ov-total{font-size:11px;color:var(--sub);font-weight:500}
+.ov-total{font-size:11px;color:rgba(255,255,255,0.3);font-weight:500}
 .ov-sources{display:flex;gap:6px}
-.src-dot{
-  font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;
-  letter-spacing:.5px;
-}
+.src-dot{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.5px}
 .src-yt{background:rgba(255,0,0,.15);color:#ff5555;border:1px solid rgba(255,85,85,.25)}
 .src-kick{background:rgba(83,252,83,.1);color:#53fc53;border:1px solid rgba(83,252,83,.25)}
-.src-dot.off{opacity:.25}
+.src-dot.off{opacity:.2}
 
-/* Timer */
-.ov-timer{
-  font-family:'Bebas Neue',sans-serif;font-size:28px;
-  text-align:center;color:#fff;letter-spacing:3px;
-  margin-bottom:12px;display:none;
+/* Waiting screen */
+#waiting{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:transparent;
 }
-.ov-timer.urgent{color:#ff4d6d;animation:pulse .5s infinite alternate}
-@keyframes pulse{to{opacity:.5}}
-
-/* Remontada */
-.ov-comeback{
-  text-align:center;font-family:'Bebas Neue',sans-serif;
-  font-size:16px;letter-spacing:2px;color:#ffd700;
-  margin-top:8px;min-height:20px;
-  transition:opacity .3s;
+.wait-box{
+  background:rgba(8,8,15,0.85);border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px;padding:20px 28px;text-align:center;
+  font-family:'Bebas Neue',sans-serif;
 }
-
-/* ═══════════════ CONTROL PANEL ═══════════════ */
-#ctrl{
-  display:none;position:fixed;top:20px;right:20px;
-  width:280px;background:var(--panel);
-  border:1px solid var(--border);border-radius:12px;
-  padding:16px;z-index:999;
-}
-.ctrl-title{
-  font-family:'Bebas Neue',sans-serif;font-size:18px;
-  letter-spacing:1.5px;margin-bottom:12px;color:var(--text);
-  display:flex;justify-content:space-between;align-items:center;
-}
-.ctrl-hint{font-size:10px;color:var(--sub);font-weight:400}
-.ctrl-inp{
-  width:100%;background:#0d0d14;border:1px solid var(--border);
-  border-radius:6px;padding:7px 10px;color:var(--text);font-size:12px;
-  outline:none;font-family:'DM Sans',sans-serif;margin-bottom:7px;
-}
-.ctrl-inp:focus{border-color:rgba(255,255,255,0.2)}
-.ctrl-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:7px}
-.ctrl-btn{
-  width:100%;background:#1a1a25;border:1px solid var(--border);
-  color:var(--text);padding:8px;border-radius:7px;
-  font-size:12px;font-weight:600;cursor:pointer;
-  transition:.15s;margin-bottom:5px;font-family:'DM Sans',sans-serif;
-}
-.ctrl-btn:hover{background:#22223a;border-color:#444}
-.ctrl-btn.danger{border-color:#ff4d6d44;color:#ff4d6d}
-.ctrl-btn.danger:hover{background:#ff4d6d22}
-.ctrl-btn.primary{border-color:#00c2ff44;color:#00c2ff}
-.ctrl-btn.primary:hover{background:#00c2ff11}
-.timer-row{display:flex;gap:5px;margin-bottom:7px}
-.t-btn{
-  flex:1;background:#1a1a25;border:1px solid var(--border);
-  color:var(--sub);padding:6px;border-radius:6px;
-  font-size:11px;cursor:pointer;transition:.15s;
-  font-family:'DM Sans',sans-serif;font-weight:600;
-}
-.t-btn:hover,.t-btn.active{background:#22223a;color:var(--text);border-color:#444}
-.ctrl-status{font-size:10px;color:var(--sub);text-align:center;margin-top:6px;min-height:14px}
-.ctrl-votes{
-  display:flex;justify-content:space-between;align-items:center;
-  background:#0d0d14;border-radius:8px;padding:10px 14px;margin-bottom:7px;
-}
-.cv-side{text-align:center}
-.cv-num{
-  font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;
-}
-.cv-num.a{color:var(--a)} .cv-num.b{color:var(--b)}
-.cv-lbl{font-size:10px;color:var(--sub);font-weight:600;letter-spacing:1px}
-.cv-total{font-size:10px;color:var(--sub);text-align:center}
+.wait-title{font-size:22px;letter-spacing:2px;color:rgba(255,255,255,0.5);margin-bottom:4px}
+.wait-sub{font-size:12px;letter-spacing:1px;color:rgba(255,255,255,0.2);font-family:'DM Sans',sans-serif}
 </style>
 </head>
 <body>
 
-<!-- SETUP -->
-<div id="setup">
-<div class="setup-box">
-  <div class="setup-title">POLL WIDGET V2</div>
-  <div class="setup-sub">YouTube + Kick • Votación con A/B (mayúscula o minúscula)</div>
-
-  <div class="section-label"><span class="badge yt-badge">YOUTUBE</span></div>
-  <input class="inp" id="sApiKey" placeholder="API Key de YouTube Data v3" />
-  <input class="inp" id="sChannelId" placeholder="Channel ID (UCxxxxxxxxxxxxxxxx)" />
-
-  <div class="section-label"><span class="badge kick-badge">KICK</span></div>
-  <input class="inp" id="sKickUser" placeholder="Tu usuario en Kick (ej: sdsam01)" />
-  <p class="kick-note">
-    Si no conecta automáticamente, abre <a href="#" onclick="openKickApi()">kick.com/api/v1/channels/TUUSUARIO</a> en tu navegador, busca <strong>"id"</strong> dentro de <strong>"chatroom"</strong> y pégalo aquí:
-  </p>
-  <input class="inp" id="sKickRoom" placeholder="Chatroom ID de Kick (opcional, si falla auto)" />
-
-  <div class="section-label">ENCUESTA INICIAL</div>
-  <input class="inp" id="sQuestion" placeholder="¿Quién elige mejor hoy?" value="¿Quién elige mejor hoy?" />
-  <div class="inp-row">
-    <input class="inp" id="sNameA" placeholder="Opción A" value="SAM" />
-    <input class="inp" id="sNameB" placeholder="Opción B" value="SMA" />
+<div id="waiting">
+  <div class="wait-box">
+    <div class="wait-title">POLL OVERLAY</div>
+    <div class="wait-sub">Esperando conexión desde el panel de control...</div>
   </div>
-
-  <button class="btn-start" onclick="startWidget()">INICIAR WIDGET</button>
-  <div id="setupStatus">Ingresa tus datos y presiona iniciar</div>
-</div>
 </div>
 
-<!-- OVERLAY -->
-<div id="overlay">
+<div id="overlay" style="display:none">
 <div class="ov-wrap">
   <div class="ov-timer" id="ovTimer">30</div>
-  <div class="ov-question" id="ovQ">¿Quién elige mejor hoy?</div>
+  <div class="ov-question" id="ovQ">¿Quién elige mejor?</div>
   <div class="ov-bars">
-    <!-- A -->
-    <div class="ov-opt">
+    <div>
       <div class="ov-bar-bg">
         <div class="ov-bar-fill fill-a" id="barA" style="width:50%"></div>
         <div class="ov-bar-content">
@@ -254,8 +108,7 @@ body{background:transparent;font-family:'DM Sans',sans-serif;color:var(--text)}
       </div>
       <div class="ov-votes"><span id="ovVotesA">0</span> votos</div>
     </div>
-    <!-- B -->
-    <div class="ov-opt">
+    <div>
       <div class="ov-bar-bg">
         <div class="ov-bar-fill fill-b" id="barB" style="width:50%"></div>
         <div class="ov-bar-content">
@@ -277,267 +130,194 @@ body{background:transparent;font-family:'DM Sans',sans-serif;color:var(--text)}
 </div>
 </div>
 
-<!-- CONTROL PANEL -->
-<div id="ctrl">
-<div class="ctrl-title">
-  CONTROL
-  <span class="ctrl-hint">Alt+C para ocultar</span>
-</div>
-
-<!-- Contador en vivo -->
-<div class="ctrl-votes">
-  <div class="cv-side">
-    <div class="cv-num a" id="cvA">0</div>
-    <div class="cv-lbl" id="cvNameA">SAM</div>
-  </div>
-  <div>
-    <div class="cv-total" id="cvTotal">0 total</div>
-  </div>
-  <div class="cv-side">
-    <div class="cv-num b" id="cvB">0</div>
-    <div class="cv-lbl" id="cvNameB">SMA</div>
-  </div>
-</div>
-
-<input class="ctrl-inp" id="ctrlQ" placeholder="Pregunta" oninput="updateQ()" />
-<div class="ctrl-row">
-  <input class="ctrl-inp" id="ctrlA" placeholder="Opción A" oninput="updateNames()" style="margin:0" />
-  <input class="ctrl-inp" id="ctrlB" placeholder="Opción B" oninput="updateNames()" style="margin:0" />
-</div>
-
-<div class="timer-row">
-  <button class="t-btn" onclick="setTimer(30)">30s</button>
-  <button class="t-btn" onclick="setTimer(60)">60s</button>
-  <button class="t-btn" onclick="setTimer(90)">90s</button>
-  <button class="t-btn" onclick="setTimer(0)">OFF</button>
-</div>
-
-<button class="ctrl-btn primary" onclick="startTimer()">▶ INICIAR TIMER</button>
-<button class="ctrl-btn" onclick="resetVotes()">↺ RESET VOTOS</button>
-<button class="ctrl-btn danger" onclick="resetAll()">✕ RESET COMPLETO</button>
-<div class="ctrl-status" id="ctrlStatus"></div>
-</div>
-
 <script>
 // ══════════════════════════════════════════
 //  ESTADO
 // ══════════════════════════════════════════
 const s = {
   votes: { a: 0, b: 0 },
-  voters: {},          // userId → 'a' | 'b'
+  voters: {},
   ytConnected: false,
   kickConnected: false,
-  timer: { duration: 30, remaining: 0, running: false, interval: null },
   prevLeader: null,
   prevDiff: 0,
+  timer: { interval: null, running: false },
 };
 let cfg = {};
 
 // ══════════════════════════════════════════
-//  SETUP
+//  BROADCAST CHANNEL — escucha comandos del control
 // ══════════════════════════════════════════
-function openKickApi() {
-  const u = document.getElementById('sKickUser').value.trim() || 'TUUSUARIO';
-  window.open(`https://kick.com/api/v1/channels/${u}`, '_blank');
-  return false;
-}
+const bc = new BroadcastChannel('sdsam_poll');
 
-async function startWidget() {
-  const apiKey    = document.getElementById('sApiKey').value.trim();
-  const channelId = document.getElementById('sChannelId').value.trim();
-  const kickUser  = document.getElementById('sKickUser').value.trim();
-  const kickRoom  = document.getElementById('sKickRoom').value.trim();
-  const question  = document.getElementById('sQuestion').value.trim();
-  const nameA     = document.getElementById('sNameA').value.trim() || 'SAM';
-  const nameB     = document.getElementById('sNameB').value.trim() || 'SMA';
-
-  if (!apiKey || !channelId) {
-    setSetupStatus('⚠️ API Key y Channel ID son obligatorios', 'err'); return;
+bc.onmessage = (e) => {
+  const { type, data } = e.data;
+  switch(type) {
+    case 'init':
+      cfg = data;
+      document.getElementById('waiting').style.display = 'none';
+      document.getElementById('overlay').style.display = 'block';
+      applyNames(data.nameA, data.nameB);
+      applyQuestion(data.question);
+      initYouTube(data.apiKey, data.channelId);
+      if (data.kickUser || data.kickRoom) initKick(data.kickUser, data.kickRoom);
+      break;
+    case 'reset_votes':
+      s.votes = { a: 0, b: 0 };
+      s.voters = {};
+      s.prevLeader = null; s.prevDiff = 0;
+      document.getElementById('ovComeback').textContent = '';
+      render(); broadcastState();
+      break;
+    case 'update_question':
+      applyQuestion(data.value);
+      break;
+    case 'update_names':
+      applyNames(data.a, data.b);
+      break;
+    case 'start_timer':
+      startTimer(data.duration);
+      break;
+    case 'stop_timer':
+      stopTimer();
+      break;
   }
+};
 
-  cfg = { apiKey, channelId, kickUser, kickRoom, nameA, nameB };
-
-  setSetupStatus('Conectando a YouTube...', '');
-
-  // Inicializar UI
-  document.getElementById('ovQ').textContent     = question || '¿Quién elige mejor?';
-  document.getElementById('ovNameA').textContent = nameA.toUpperCase();
-  document.getElementById('ovNameB').textContent = nameB.toUpperCase();
-  document.getElementById('ctrlQ').value         = question;
-  document.getElementById('ctrlA').value         = nameA;
-  document.getElementById('ctrlB').value         = nameB;
-  document.getElementById('cvNameA').textContent = nameA.toUpperCase();
-  document.getElementById('cvNameB').textContent = nameB.toUpperCase();
-
-  // Conectar YouTube
-  const ytOk = await initYouTube(apiKey, channelId);
-  if (!ytOk) return;
-
-  // Conectar Kick (si hay usuario o roomId)
-  if (kickUser || kickRoom) {
-    setSetupStatus('YouTube ✅ — Conectando Kick...', 'ok');
-    await initKick(kickUser, kickRoom);
-  }
-
-  // Mostrar overlay y panel
-  document.getElementById('setup').style.display  = 'none';
-  document.getElementById('overlay').style.display = 'block';
-  toggleCtrl(true);
-  render();
-}
-
-function setSetupStatus(msg, type) {
-  const el = document.getElementById('setupStatus');
-  el.textContent = msg;
-  el.className = type || '';
+function broadcastState() {
+  bc.postMessage({
+    type: 'state',
+    data: {
+      votes: s.votes,
+      ytConnected: s.ytConnected,
+      kickConnected: s.kickConnected,
+    }
+  });
 }
 
 // ══════════════════════════════════════════
-//  YOUTUBE — polling robusto
+//  YOUTUBE
 // ══════════════════════════════════════════
-let ytChatId = null;
-let ytNextToken = '';
-let ytPollTimeout = null;
+let ytChatId = null, ytNextToken = '';
 
 async function initYouTube(apiKey, channelId) {
   try {
-    // 1. Buscar stream en vivo
-    const sRes = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`
-    );
+    const sRes  = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`);
     const sData = await sRes.json();
     if (sData.error) throw new Error(sData.error.message);
-    if (!sData.items?.length) throw new Error('No hay stream en vivo en tu canal. ¿Ya iniciaste el broadcast?');
-
+    if (!sData.items?.length) throw new Error('No stream en vivo');
     const videoId = sData.items[0].id.videoId;
 
-    // 2. Obtener liveChatId
-    const vRes = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${apiKey}`
-    );
+    const vRes  = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${apiKey}`);
     const vData = await vRes.json();
-    if (vData.error) throw new Error(vData.error.message);
-
     ytChatId = vData?.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
-    if (!ytChatId) throw new Error('No se pudo obtener el chat en vivo.');
+    if (!ytChatId) throw new Error('No se obtuvo chatId');
 
     s.ytConnected = true;
     document.getElementById('dotYT').classList.remove('off');
-    setSetupStatus('YouTube conectado ✅', 'ok');
-
-    // 3. Iniciar polling
-    pollYouTube();
-    return true;
+    broadcastState();
+    pollYouTube(apiKey);
   } catch(e) {
-    setSetupStatus('❌ YouTube: ' + e.message, 'err');
-    return false;
+    bc.postMessage({ type: 'error', source: 'youtube', msg: e.message });
   }
 }
 
-async function pollYouTube() {
+async function pollYouTube(apiKey) {
   if (!ytChatId) return;
   try {
-    const url = `https://www.googleapis.com/youtube/v3/liveChat/messages` +
-      `?liveChatId=${ytChatId}&part=snippet,authorDetails&key=${cfg.apiKey}` +
-      `&maxResults=200${ytNextToken ? '&pageToken='+ytNextToken : ''}`;
-
+    const url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${ytChatId}&part=snippet,authorDetails&key=${apiKey}&maxResults=200${ytNextToken ? '&pageToken='+ytNextToken : ''}`;
     const res  = await fetch(url);
     const data = await res.json();
-
-    if (data.error) { console.warn('YT poll error:', data.error.message); }
-    else {
+    if (!data.error) {
       ytNextToken = data.nextPageToken || ytNextToken;
-      // Procesar TODOS los mensajes del batch
       for (const item of (data.items || [])) {
-        const msg    = item.snippet.displayMessage;
-        const userId = 'yt_' + item.authorDetails.channelId;
-        processVote(msg, userId);
+        processVote(item.snippet.displayMessage, 'yt_' + item.authorDetails.channelId);
       }
-      // Usar el intervalo que recomienda la API (mínimo 2s)
       const interval = Math.max(2000, data.pollingIntervalMillis || 5000);
-      ytPollTimeout = setTimeout(pollYouTube, interval);
+      setTimeout(() => pollYouTube(apiKey), interval);
+    } else {
+      setTimeout(() => pollYouTube(apiKey), 5000);
     }
   } catch(e) {
-    console.warn('YT poll catch:', e);
-    ytPollTimeout = setTimeout(pollYouTube, 5000);
+    setTimeout(() => pollYouTube(apiKey), 5000);
   }
 }
 
 // ══════════════════════════════════════════
-//  KICK — WebSocket via Pusher
+//  KICK
 // ══════════════════════════════════════════
 async function initKick(kickUser, kickRoomId) {
   let roomId = kickRoomId;
-
-  // Intentar obtener chatroom_id automáticamente
   if (!roomId && kickUser) {
     try {
       const res  = await fetch(`https://kick.com/api/v1/channels/${kickUser}`);
       const data = await res.json();
-      roomId = data?.chatroom?.id || data?.id;
-    } catch(e) {
-      console.warn('Kick API fetch failed (CORS?):', e.message);
-    }
+      roomId = data?.chatroom?.id;
+    } catch(e) {}
   }
-
-  if (!roomId) {
-    setCtrlStatus('⚠️ Kick no conectado — ingresa el Chatroom ID manualmente', 'warn');
-    return;
-  }
+  if (!roomId) { bc.postMessage({ type: 'error', source: 'kick', msg: 'No se obtuvo Chatroom ID' }); return; }
 
   try {
     Pusher.logToConsole = false;
-    const pusher = new Pusher('32cbd69e4b950bf97679', {
-      cluster: 'us2',
-      forceTLS: true,
-      disableStats: true,
-    });
-
+    const pusher  = new Pusher('32cbd69e4b950bf97679', { cluster: 'us2', forceTLS: true, disableStats: true });
     const channel = pusher.subscribe(`chatrooms.${roomId}.v2`);
-
     channel.bind('pusher:subscription_succeeded', () => {
       s.kickConnected = true;
       document.getElementById('dotKick').classList.remove('off');
-      setCtrlStatus('Kick conectado ✅');
+      broadcastState();
     });
-
-    channel.bind('pusher:subscription_error', (err) => {
-      setCtrlStatus('⚠️ Kick error: ' + JSON.stringify(err));
-    });
-
-    // Mensaje de chat de Kick
     channel.bind('App\\Events\\ChatMessageEvent', (data) => {
-      const msg    = data?.content || '';
-      const userId = 'kick_' + (data?.sender?.id || Math.random());
-      processVote(msg, userId);
+      processVote(data?.content || '', 'kick_' + (data?.sender?.id || ''));
     });
-
   } catch(e) {
-    setCtrlStatus('⚠️ Kick: ' + e.message);
+    bc.postMessage({ type: 'error', source: 'kick', msg: e.message });
   }
 }
 
 // ══════════════════════════════════════════
-//  PROCESAMIENTO DE VOTOS
-//  Case-insensitive: a, A, b, B → cuenta
-//  Un voto por usuario, no importa si repite
+//  VOTOS — case insensitive
 // ══════════════════════════════════════════
 function processVote(msg, userId) {
-  if (!msg || !userId) return;
-  const clean = msg.trim().toLowerCase();
-
-  // Solo acepta exactamente "a" o "b" (ignora "aa", "abc", etc.)
+  const clean = (msg || '').trim().toLowerCase();
   if (clean !== 'a' && clean !== 'b') return;
-
-  // Anti-doble voto: si ya votó, ignorar
   if (s.voters[userId]) return;
-
-  // Registrar voto
   s.voters[userId] = clean;
   if (clean === 'a') s.votes.a++;
-  else               s.votes.b++;
-
+  else s.votes.b++;
   render();
+  broadcastState();
+}
+
+// ══════════════════════════════════════════
+//  TIMER
+// ══════════════════════════════════════════
+function startTimer(duration) {
+  stopTimer();
+  let remaining = duration;
+  const el = document.getElementById('ovTimer');
+  el.style.display = 'block';
+  el.textContent = remaining;
+  el.classList.remove('urgent');
+  s.timer.running = true;
+  s.timer.interval = setInterval(() => {
+    remaining--;
+    el.textContent = remaining;
+    if (remaining <= 5) el.classList.add('urgent');
+    if (remaining <= 0) {
+      stopTimer();
+      el.textContent = 'FIN';
+      setTimeout(() => { el.style.display = 'none'; el.classList.remove('urgent'); }, 2500);
+      bc.postMessage({ type: 'timer_end' });
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(s.timer.interval);
+  s.timer.running = false;
+  const el = document.getElementById('ovTimer');
+  el.style.display = 'none';
+  el.classList.remove('urgent');
 }
 
 // ══════════════════════════════════════════
@@ -549,141 +329,39 @@ function render() {
   const pA = total === 0 ? 50 : Math.round(a / total * 100);
   const pB = total === 0 ? 50 : 100 - pA;
 
-  // Overlay
-  document.getElementById('barA').style.width    = pA + '%';
-  document.getElementById('barB').style.width    = pB + '%';
-  document.getElementById('ovPctA').textContent  = pA + '%';
-  document.getElementById('ovPctB').textContent  = pB + '%';
+  document.getElementById('barA').style.width     = pA + '%';
+  document.getElementById('barB').style.width     = pB + '%';
+  document.getElementById('ovPctA').textContent   = pA + '%';
+  document.getElementById('ovPctB').textContent   = pB + '%';
   document.getElementById('ovVotesA').textContent = a;
   document.getElementById('ovVotesB').textContent = b;
   document.getElementById('ovTotal').textContent  = total + (total === 1 ? ' voto total' : ' votos totales');
 
-  // Tamaño dinámico de porcentajes (ganador más grande)
   const pctA = document.getElementById('ovPctA');
   const pctB = document.getElementById('ovPctB');
-  if (total === 0) {
-    pctA.style.fontSize = pctB.style.fontSize = '22px';
-  } else if (pA > pB) {
-    pctA.style.fontSize = '26px'; pctB.style.fontSize = '18px';
-  } else if (pB > pA) {
-    pctB.style.fontSize = '26px'; pctA.style.fontSize = '18px';
-  } else {
-    pctA.style.fontSize = pctB.style.fontSize = '22px';
-  }
+  if (total === 0) { pctA.style.fontSize = pctB.style.fontSize = '22px'; }
+  else if (pA > pB) { pctA.style.fontSize = '26px'; pctB.style.fontSize = '18px'; }
+  else if (pB > pA) { pctB.style.fontSize = '26px'; pctA.style.fontSize = '18px'; }
+  else { pctA.style.fontSize = pctB.style.fontSize = '22px'; }
 
-  // Comeback detection
-  const diff = Math.abs(pA - pB);
   const leader = pA > pB ? 'a' : pA < pB ? 'b' : null;
-  const comebackEl = document.getElementById('ovComeback');
+  const diff   = Math.abs(pA - pB);
+  const cb     = document.getElementById('ovComeback');
   if (total >= 10 && s.prevLeader && leader && leader !== s.prevLeader && s.prevDiff >= 15) {
-    const name = leader === 'a' ? document.getElementById('ovNameA').textContent : document.getElementById('ovNameB').textContent;
-    comebackEl.textContent = `⚡ ¡REMONTADA DE ${name}!`;
-    setTimeout(() => { comebackEl.textContent = ''; }, 4000);
+    const nm = leader === 'a' ? document.getElementById('ovNameA').textContent : document.getElementById('ovNameB').textContent;
+    cb.textContent = `⚡ ¡REMONTADA DE ${nm}!`;
+    setTimeout(() => { cb.textContent = ''; }, 4000);
   }
   s.prevLeader = leader;
   s.prevDiff   = diff;
-
-  // Control panel
-  document.getElementById('cvA').textContent    = a;
-  document.getElementById('cvB').textContent    = b;
-  document.getElementById('cvTotal').textContent = total + ' total';
 }
 
-// ══════════════════════════════════════════
-//  CONTROL PANEL
-// ══════════════════════════════════════════
-function toggleCtrl(force) {
-  const el = document.getElementById('ctrl');
-  el.style.display = (force === true || el.style.display === 'none') ? 'block' : 'none';
+function applyQuestion(q) { document.getElementById('ovQ').textContent = q || '¿Quién elige mejor?'; }
+function applyNames(a, b) {
+  document.getElementById('ovNameA').textContent = (a || 'SAM').toUpperCase();
+  document.getElementById('ovNameB').textContent = (b || 'SMA').toUpperCase();
 }
 
-function updateQ() {
-  document.getElementById('ovQ').textContent = document.getElementById('ctrlQ').value || '¿Quién elige mejor?';
-}
-
-function updateNames() {
-  const a = document.getElementById('ctrlA').value || 'SAM';
-  const b = document.getElementById('ctrlB').value || 'SMA';
-  document.getElementById('ovNameA').textContent = a.toUpperCase();
-  document.getElementById('ovNameB').textContent = b.toUpperCase();
-  document.getElementById('cvNameA').textContent = a.toUpperCase();
-  document.getElementById('cvNameB').textContent = b.toUpperCase();
-}
-
-function resetVotes() {
-  s.votes   = { a: 0, b: 0 };
-  s.voters  = {};
-  s.prevLeader = null;
-  s.prevDiff   = 0;
-  document.getElementById('ovComeback').textContent = '';
-  render();
-  setCtrlStatus('Votos reseteados ✅');
-  setTimeout(() => setCtrlStatus(''), 2000);
-}
-
-function resetAll() {
-  resetVotes();
-  document.getElementById('ctrlQ').value = '¿Quién elige mejor hoy?';
-  document.getElementById('ctrlA').value = cfg.nameA || 'SAM';
-  document.getElementById('ctrlB').value = cfg.nameB || 'SMA';
-  updateQ(); updateNames();
-}
-
-function setCtrlStatus(msg) {
-  document.getElementById('ctrlStatus').textContent = msg;
-}
-
-// ══════════════════════════════════════════
-//  TIMER
-// ══════════════════════════════════════════
-let timerDuration = 30;
-
-function setTimer(sec) {
-  timerDuration = sec;
-  document.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active'));
-  if (sec > 0) {
-    event.target.classList.add('active');
-    document.getElementById('ovTimer').textContent = sec;
-  }
-  // Detener si estaba corriendo
-  if (s.timer.running) {
-    clearInterval(s.timer.interval);
-    s.timer.running = false;
-    document.getElementById('ovTimer').style.display = 'none';
-  }
-}
-
-function startTimer() {
-  if (timerDuration === 0) return;
-  clearInterval(s.timer.interval);
-  s.timer.remaining = timerDuration;
-  s.timer.running   = true;
-  const el = document.getElementById('ovTimer');
-  el.style.display = 'block';
-  el.textContent   = timerDuration;
-  el.classList.remove('urgent');
-
-  s.timer.interval = setInterval(() => {
-    s.timer.remaining--;
-    el.textContent = s.timer.remaining;
-    if (s.timer.remaining <= 5) el.classList.add('urgent');
-    if (s.timer.remaining <= 0) {
-      clearInterval(s.timer.interval);
-      s.timer.running = false;
-      el.textContent  = 'FIN';
-      setTimeout(() => { el.style.display = 'none'; el.classList.remove('urgent'); }, 2000);
-    }
-  }, 1000);
-}
-
-// ══════════════════════════════════════════
-//  KEYBOARD
-// ══════════════════════════════════════════
-document.addEventListener('keydown', e => {
-  if (e.altKey && e.key.toLowerCase() === 'c') toggleCtrl();
-});
-
-// Init render
 render();
 </script>
 </body>
