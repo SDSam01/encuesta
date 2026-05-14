@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Poll Control</title>
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -48,8 +49,8 @@ input:focus{border-color:rgba(255,185,0,0.4);}
 .kick-note{font-size:10px;color:rgba(255,255,255,0.25);margin-top:4px;}
 .kick-note a{color:rgba(83,252,83,0.5);cursor:pointer;text-decoration:none;}
 .conn-row{display:flex;gap:6px;margin-top:10px;}
-.conn-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.5px;opacity:.25;transition:opacity .3s;}
-.conn-badge.on{opacity:1;}
+.cbadge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.5px;opacity:.25;transition:opacity .3s;}
+.cbadge.on{opacity:1;}
 .cb-yt{background:rgba(255,0,0,.12);color:#ff5555;border:1px solid rgba(255,85,85,.2);}
 .cb-kick{background:rgba(83,252,83,.07);color:#53fc53;border:1px solid rgba(83,252,83,.18);}
 </style>
@@ -111,25 +112,25 @@ input:focus{border-color:rgba(255,185,0,0.4);}
   </div>
 </div>
 
-<!-- VOTOS EN TIEMPO REAL -->
+<!-- VOTOS -->
 <div class="section" id="votesSection" style="display:none;">
   <div class="section-title">Votos en tiempo real</div>
   <div class="timer-display" id="timerDisp">2:00</div>
   <div class="vote-row">
     <span class="opt-tag"><span class="dot" style="background:#FFB800;"></span><span id="labelA">HOMER</span></span>
-    <button class="vbtn" onclick="manualAdj('A',-1)">−</button>
+    <button class="vbtn" onclick="cv('A',-1)">−</button>
     <span class="vcount" id="vcA">0</span>
-    <button class="vbtn" onclick="manualAdj('A',1)">+</button>
+    <button class="vbtn" onclick="cv('A',1)">+</button>
   </div>
   <div class="vote-row">
     <span class="opt-tag"><span class="dot" style="background:#CC1100;"></span><span id="labelB">BART</span></span>
-    <button class="vbtn" onclick="manualAdj('B',-1)">−</button>
+    <button class="vbtn" onclick="cv('B',-1)">−</button>
     <span class="vcount" id="vcB">0</span>
-    <button class="vbtn" onclick="manualAdj('B',1)">+</button>
+    <button class="vbtn" onclick="cv('B',1)">+</button>
   </div>
   <div class="conn-row">
-    <span class="conn-badge cb-yt" id="dotYT">▶ YouTube</span>
-    <span class="conn-badge cb-kick" id="dotKick">⚡ Kick</span>
+    <span class="cbadge cb-yt" id="dotYT">▶ YouTube</span>
+    <span class="cbadge cb-kick" id="dotKick">⚡ Kick</span>
   </div>
   <button class="big-btn btn-reset" style="margin-top:10px;" onclick="resetVotes()">↺ Reiniciar votos</button>
 </div>
@@ -141,8 +142,9 @@ input:focus{border-color:rgba(255,185,0,0.4);}
 
 <script>
 const $ = id => document.getElementById(id);
+const LS = 'poll_state';
 
-// ══ API Keys ══
+// ══ API Keys con rotación ══
 const API_KEYS = [
   'AIzaSyCeQDuKLiY8G5GO0Vezm0tfZwsezfLpdME',
   'AIzaSyDqlaHU156M6ilgaFaabHmQort4gMLIzEs',
@@ -150,134 +152,66 @@ const API_KEYS = [
 ];
 let keyIdx = 0;
 const getKey = () => API_KEYS[keyIdx];
+function rotateKey() {
+  keyIdx = (keyIdx+1) % API_KEYS.length;
+  setStatus(`⚠️ Rotando a key ${keyIdx+1}...`, 'loading');
+  return getKey();
+}
 
-// ══ BroadcastChannel — comunica con poll-overlay.html ══
-const bc = new BroadcastChannel('sdsam_poll');
-
-bc.onmessage = ({ data: e }) => {
-  if (e.type === 'state') {
-    $('vcA').textContent = e.data.votes.a;
-    $('vcB').textContent = e.data.votes.b;
-    if (e.data.ytConnected)   { $('dotYT').classList.add('on');   setStatus('🟢 YouTube conectado', 'ok'); }
-    if (e.data.kickConnected) { $('dotKick').classList.add('on'); setStatus('🟢 YouTube + Kick conectados', 'ok'); }
-  }
-  if (e.type === 'error') {
-    if (e.data.msg && (e.data.msg.includes('quota') || e.data.msg.includes('403'))) {
-      keyIdx = (keyIdx+1) % API_KEYS.length;
-      bc.postMessage({ type:'rotate_key', data:{ apiKey: getKey() } });
-      setStatus(`⚠️ Key agotada, rotando a key ${keyIdx+1}...`, 'loading');
-    } else {
-      setStatus('⚠️ ' + (e.data.source||'') + ': ' + (e.data.msg||''), 'err');
-    }
-  }
-  if (e.type === 'connected') {
-    setStatus('🟢 Stream detectado y conectado', 'ok');
-    $('startBtn').disabled = false;
-  }
-  if (e.type === 'timer_end') {
-    $('liveText').textContent = '⏱ Tiempo agotado';
-  }
+// ══ Estado ══
+const state = {
+  channelId:'', liveChatId:'', nextPageToken:'',
+  voters:{}, votes:{A:0,B:0},
+  interval:null, delay:5000,
+  active:false, duration:2, timerEnd:0, timerInterval:null
 };
 
-// ══ Timer display local ══
-const st = { duration: 2, timerInt: null };
+// ══ localStorage — esto sí funciona entre panel OBS y Browser Source ══
+function save() {
+  localStorage.setItem(LS, JSON.stringify({
+    active:    state.active,
+    question:  $('question').value,
+    nameA:     $('nameA').value,
+    nameB:     $('nameB').value,
+    vA:        state.votes.A,
+    vB:        state.votes.B,
+    timerEnd:  state.timerEnd,
+    duration:  state.duration,
+  }));
+}
 
+// ══ Timer ══
 function setDuration(min, btn) {
-  st.duration = min;
+  state.duration = min;
   document.querySelectorAll('.timer-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  updateTimerDisp(min * 60);
+  updateTimerDisplay(min * 60);
 }
 
-function updateTimerDisp(sec) {
+function updateTimerDisplay(sec) {
   if (!sec || sec <= 0) { $('timerDisp').textContent = '∞'; $('timerDisp').className = 'timer-display'; return; }
-  if (sec < 60) { $('timerDisp').textContent = sec + 's'; $('timerDisp').className = 'timer-display' + (sec <= 5 ? ' urgent' : ''); return; }
+  if (sec < 60) { $('timerDisp').textContent = sec+'s'; $('timerDisp').className = 'timer-display'+(sec<=5?' urgent':''); return; }
   const m = Math.floor(sec/60), s = sec%60;
-  $('timerDisp').textContent = m + ':' + (s < 10 ? '0' : '') + s;
-  $('timerDisp').className = 'timer-display' + (sec <= 10 ? ' urgent' : '');
+  $('timerDisp').textContent = m+':'+(s<10?'0':'')+s;
+  $('timerDisp').className = 'timer-display'+(sec<=10?' urgent':'');
 }
 
-function runTimerDisp() {
-  if (st.timerInt) clearInterval(st.timerInt);
-  if (st.duration === 0) { updateTimerDisp(0); return; }
-  let rem = st.duration * 60;
-  updateTimerDisp(rem);
-  st.timerInt = setInterval(() => { rem--; updateTimerDisp(rem); if (rem <= 0) clearInterval(st.timerInt); }, 1000);
+function startTimer() {
+  if (state.duration === 0) { state.timerEnd = 0; save(); return; }
+  state.timerEnd = Date.now() + state.duration * 60 * 1000;
+  save();
+  if (state.timerInterval) clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(() => {
+    const r = Math.max(0, Math.ceil((state.timerEnd - Date.now()) / 1000));
+    updateTimerDisplay(r);
+    save();
+    if (r === 0) { clearInterval(state.timerInterval); $('liveText').textContent = '⏱ Tiempo agotado'; }
+  }, 500);
 }
 
-// ══ INICIAR ══
-function startPoll() {
-  const channelId = $('channelId').value.trim();
-  if (!channelId) { setStatus('⚠️ Necesitas tu Channel ID', 'err'); return; }
-  $('startBtn').disabled = true;
-  keyIdx = 0;
-  localStorage.setItem('yt_channel_id', channelId);
-  if ($('kickRoom').value.trim()) localStorage.setItem('kick_room_id', $('kickRoom').value.trim());
-
-  bc.postMessage({
-    type: 'init',
-    data: {
-      apiKey:   getKey(),
-      channelId,
-      kickUser: '',
-      kickRoom: $('kickRoom').value.trim(),
-      question: $('question').value,
-      nameA:    $('nameA').value,
-      nameB:    $('nameB').value,
-    }
-  });
-
-  setLive(true);
-  runTimerDisp();
-  if (st.duration > 0) bc.postMessage({ type:'start_timer', data:{ duration: st.duration * 60 } });
-  setStatus('🔍 Buscando stream en vivo...', 'loading');
-}
-
-function startDemo() {
-  $('startBtn').disabled = true;
-  bc.postMessage({ type:'demo', data:{ question:$('question').value, nameA:$('nameA').value, nameB:$('nameB').value } });
-  setLive(true);
-  runTimerDisp();
-  setStatus('🧪 Modo prueba activo', 'ok');
-  // Simular votos de prueba localmente
-  let t = 0;
-  const dv = ['a','b','a','a','b','a','b','b','a','a','b','a','a','b','a','b','a','a','b','a'];
-  const di = setInterval(() => {
-    if (t >= dv.length) { clearInterval(di); return; }
-    const side = dv[t++] === 'a' ? 'A' : 'B';
-    const el = $('vc'+side);
-    el.textContent = parseInt(el.textContent||'0') + 1;
-  }, 600);
-}
-
-function stopPoll() {
-  if (st.timerInt) clearInterval(st.timerInt);
-  bc.postMessage({ type:'stop', data:{} });
-  setLive(false);
-  $('startBtn').disabled = false;
-  $('dotYT').classList.remove('on');
-  $('dotKick').classList.remove('on');
-  setStatus('Encuesta detenida', '');
-}
-
-function resetVotes() {
-  bc.postMessage({ type:'reset_votes', data:{} });
-  $('vcA').textContent = '0';
-  $('vcB').textContent = '0';
-  if (st.timerInt) clearInterval(st.timerInt);
-  runTimerDisp();
-  if (st.duration > 0) bc.postMessage({ type:'start_timer', data:{ duration: st.duration * 60 } });
-  $('liveText').textContent = 'Encuesta activa — overlay visible en OBS';
-  setStatus('Votos reseteados ✅', 'ok');
-  setTimeout(() => setStatus('', ''), 2000);
-}
-
-function manualAdj(side, d) {
-  const el = $('vc'+side);
-  el.textContent = Math.max(0, parseInt(el.textContent||'0') + d);
-}
-
+// ══ UI ══
 function setLive(on) {
+  state.active = on;
   $('liveBar').style.display      = on ? 'flex'  : 'none';
   $('stopBtn').style.display      = on ? 'block' : 'none';
   $('startBtn').style.display     = on ? 'none'  : 'block';
@@ -289,19 +223,200 @@ function setLive(on) {
   }
 }
 
-function setStatus(msg, type) { const el = $('statusBar'); el.textContent = msg; el.className = 'status '+(type||''); }
+function cv(side, d) {
+  state.votes[side] = Math.max(0, state.votes[side] + d);
+  $('vc'+side).textContent = state.votes[side];
+  save();
+}
 
-function openKickApi() { window.open('https://kick.com/api/v1/channels/sdsam', '_blank'); }
+function resetVotes() {
+  state.votes = {A:0,B:0};
+  state.voters = {};
+  $('vcA').textContent = '0'; $('vcB').textContent = '0';
+  state.timerEnd = 0;
+  if (state.timerInterval) clearInterval(state.timerInterval);
+  updateTimerDisplay(state.duration * 60);
+  $('liveText').textContent = 'Encuesta activa — overlay visible en OBS';
+  startTimer();
+  save();
+  setStatus('Votos reseteados ✅', 'ok');
+  setTimeout(() => setStatus('', ''), 2000);
+}
+
+// ══ INICIAR POLL ══
+async function startPoll() {
+  const channelId = $('channelId').value.trim();
+  if (!channelId) { setStatus('⚠️ Necesitas tu Channel ID', 'err'); return; }
+  $('startBtn').disabled = true;
+  keyIdx = 0;
+  setStatus('🔍 Buscando tu stream en vivo...', 'loading');
+
+  try {
+    const sRes  = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${getKey()}`);
+    const sData = await sRes.json();
+    if (sData.error) throw new Error(sData.error.message);
+    if (!sData.items?.length) throw new Error('No hay stream en vivo. ¿Ya iniciaste el broadcast?');
+
+    const videoId = sData.items[0].id.videoId;
+    setStatus('✅ Stream detectado — conectando chat...', 'loading');
+
+    const vRes  = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${getKey()}`);
+    const vData = await vRes.json();
+    if (vData.error) throw new Error(vData.error.message);
+    const chatId = vData?.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
+    if (!chatId) throw new Error('No se pudo obtener el chat en vivo.');
+
+    localStorage.setItem('yt_channel_id', channelId);
+    if ($('kickRoom').value.trim()) localStorage.setItem('kick_room_id', $('kickRoom').value.trim());
+
+    state.channelId = channelId;
+    state.liveChatId = chatId;
+    state.votes = {A:0,B:0};
+    state.voters = {};
+    state.nextPageToken = '';
+
+    setLive(true);
+    startTimer();
+    save();
+    $('dotYT').classList.add('on');
+    setStatus(`🟢 Conectado — key ${keyIdx+1} activa`, 'ok');
+
+    // Conectar Kick si hay chatroom ID
+    const kickRoom = $('kickRoom').value.trim();
+    if (kickRoom) initKick(kickRoom);
+
+    await fetchMessages();
+    state.interval = setInterval(fetchMessages, state.delay);
+
+  } catch(e) {
+    setStatus('❌ ' + e.message, 'err');
+    $('startBtn').disabled = false;
+  }
+}
+
+// ══ YOUTUBE — polling con case insensitive y sin perder votos ══
+async function fetchMessages() {
+  try {
+    let url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${state.liveChatId}&part=snippet,authorDetails&maxResults=200&key=${getKey()}`;
+    if (state.nextPageToken) url += '&pageToken=' + state.nextPageToken;
+
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.error) {
+      const reason = data.error.errors?.[0]?.reason || '';
+      if (reason === 'quotaExceeded' || data.error.code === 429 || data.error.code === 403) {
+        rotateKey();
+        if (keyIdx === 0) { setStatus('❌ Cuota agotada en todas las keys.', 'err'); clearInterval(state.interval); }
+      }
+      return;
+    }
+
+    setStatus(`🟢 Conectado — key ${keyIdx+1} activa`, 'ok');
+
+    // Usar el intervalo recomendado por YouTube (mínimo 3s)
+    if (data.pollingIntervalMillis) {
+      const nd = Math.max(data.pollingIntervalMillis, 3000);
+      if (nd !== state.delay) {
+        state.delay = nd;
+        clearInterval(state.interval);
+        state.interval = setInterval(fetchMessages, state.delay);
+      }
+    }
+
+    state.nextPageToken = data.nextPageToken || state.nextPageToken;
+
+    // No procesar si el timer expiró
+    if (state.timerEnd > 0 && Date.now() > state.timerEnd) return;
+
+    let updated = false;
+    for (const item of (data.items || [])) {
+      const uid = item.authorDetails?.channelId;
+      // Case insensitive: a, A, b, B — también acepta !a, !b
+      const txt = (item.snippet?.displayMessage || '').trim().toLowerCase();
+      if (!uid || state.voters[uid]) continue;
+      if (txt === 'a' || txt === '!a') { state.voters[uid]='A'; state.votes.A++; updated=true; }
+      else if (txt === 'b' || txt === '!b') { state.voters[uid]='B'; state.votes.B++; updated=true; }
+    }
+
+    if (updated) {
+      $('vcA').textContent = state.votes.A;
+      $('vcB').textContent = state.votes.B;
+      save();
+    }
+  } catch(e) { console.error(e); }
+}
+
+// ══ KICK — WebSocket via Pusher ══
+function initKick(roomId) {
+  try {
+    Pusher.logToConsole = false;
+    const pusher  = new Pusher('32cbd69e4b950bf97679', { cluster:'us2', forceTLS:true, disableStats:true });
+    const channel = pusher.subscribe(`chatrooms.${roomId}.v2`);
+
+    channel.bind('pusher:subscription_succeeded', () => {
+      $('dotKick').classList.add('on');
+      setStatus('🟢 YouTube + Kick conectados', 'ok');
+    });
+
+    channel.bind('App\\Events\\ChatMessageEvent', (data) => {
+      if (state.timerEnd > 0 && Date.now() > state.timerEnd) return;
+      const uid = 'kick_' + (data?.sender?.id || '');
+      const txt = (data?.content || '').trim().toLowerCase();
+      if (!uid || state.voters[uid]) return;
+      let updated = false;
+      if (txt === 'a' || txt === '!a') { state.voters[uid]='A'; state.votes.A++; updated=true; }
+      else if (txt === 'b' || txt === '!b') { state.voters[uid]='B'; state.votes.B++; updated=true; }
+      if (updated) {
+        $('vcA').textContent = state.votes.A;
+        $('vcB').textContent = state.votes.B;
+        save();
+      }
+    });
+  } catch(e) {
+    setStatus('⚠️ Kick: ' + e.message, 'err');
+  }
+}
+
+// ══ DEMO ══
+function startDemo() {
+  state.votes={A:0,B:0}; state.voters={};
+  setLive(true); startTimer(); save();
+  setStatus('🧪 Modo prueba activo','ok');
+  let t=0;
+  const dv=['A','B','A','A','B','A','B','B','A','A','B','A','A','B','A','B'];
+  const di=setInterval(()=>{
+    if(t>=dv.length){clearInterval(di);return;}
+    if(state.timerEnd>0&&Date.now()>state.timerEnd){clearInterval(di);return;}
+    state.votes[dv[t++]]++;
+    $('vcA').textContent=state.votes.A;
+    $('vcB').textContent=state.votes.B;
+    save();
+  },600);
+}
+
+// ══ DETENER ══
+function stopPoll() {
+  clearInterval(state.interval); clearInterval(state.timerInterval);
+  state.active=false; state.timerEnd=0;
+  localStorage.setItem(LS, JSON.stringify({active:false}));
+  setLive(false); $('startBtn').disabled=false;
+  $('dotYT').classList.remove('on'); $('dotKick').classList.remove('on');
+  setStatus('Encuesta detenida','');
+}
+
+function setStatus(msg,type){const el=$('statusBar');el.textContent=msg;el.className='status '+(type||'');}
+
+function openKickApi(){ window.open('https://kick.com/api/v1/channels/sdsam','_blank'); }
 
 // ══ Cargar guardados ══
-(function load() {
-  const c = localStorage.getItem('yt_channel_id') || '';
-  if (c) { $('channelId').value = c; $('savedCh').style.display = 'block'; }
-  const k = localStorage.getItem('kick_room_id') || '';
-  if (k) $('kickRoom').value = k;
+(function load(){
+  const c = localStorage.getItem('yt_channel_id')||'';
+  if(c){$('channelId').value=c;$('savedCh').style.display='block';}
+  const k = localStorage.getItem('kick_room_id')||'';
+  if(k) $('kickRoom').value=k;
 })();
-
-updateTimerDisp(2 * 60);
+updateTimerDisplay(2*60);
 </script>
 </body>
 </html>
