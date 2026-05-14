@@ -3,16 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <title>Poll Overlay</title>
-<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--a:#00c2ff;--b:#ff4d6d}
-body{background:transparent;font-family:'DM Sans',sans-serif}
+body{background:transparent;font-family:'DM Sans',sans-serif;overflow:hidden;}
 
 #overlay{
   position:fixed;bottom:30px;left:30px;width:360px;
+  opacity:0;transition:opacity .4s;
 }
+#overlay.visible{opacity:1;}
+
 .ov-wrap{
   background:rgba(8,8,15,0.92);
   border:1px solid rgba(255,255,255,0.08);
@@ -20,19 +21,21 @@ body{background:transparent;font-family:'DM Sans',sans-serif}
   backdrop-filter:blur(20px);
   box-shadow:0 20px 60px rgba(0,0,0,0.8);
 }
+
 .ov-timer{
   font-family:'Bebas Neue',sans-serif;font-size:32px;
   text-align:center;color:#fff;letter-spacing:3px;
   margin-bottom:10px;display:none;
 }
-.ov-timer.urgent{color:#ff4d6d;animation:pulse .5s infinite alternate}
+.ov-timer.urgent{color:#ff4d6d;animation:pulse .5s infinite alternate;}
 @keyframes pulse{to{opacity:.4}}
 
 .ov-question{
   font-family:'Bebas Neue',sans-serif;font-size:20px;
   letter-spacing:1.5px;color:#fff;margin-bottom:14px;line-height:1.1;
 }
-.ov-bars{display:flex;flex-direction:column;gap:9px}
+
+.ov-opt{margin-bottom:9px;}
 .ov-bar-bg{
   height:44px;border-radius:8px;
   background:rgba(255,255,255,0.04);overflow:hidden;position:relative;
@@ -41,302 +44,89 @@ body{background:transparent;font-family:'DM Sans',sans-serif}
   height:100%;border-radius:8px;position:absolute;left:0;top:0;
   transition:width .6s cubic-bezier(.4,0,.2,1);
 }
-.fill-a{background:linear-gradient(90deg,rgba(0,194,255,.4),rgba(0,194,255,.15))}
-.fill-b{background:linear-gradient(90deg,rgba(255,77,109,.4),rgba(255,77,109,.15))}
+.fill-a{background:linear-gradient(90deg,rgba(255,184,0,.45),rgba(255,184,0,.18));}
+.fill-b{background:linear-gradient(90deg,rgba(204,17,0,.45),rgba(204,17,0,.18));}
 .ov-bar-content{
   position:absolute;inset:0;display:flex;
   align-items:center;justify-content:space-between;padding:0 12px;
 }
-.ov-opt-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px}
-.name-a{color:var(--a)} .name-b{color:var(--b)}
-.ov-pct{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;transition:font-size .3s}
-.pct-a{color:var(--a)} .pct-b{color:var(--b)}
-.ov-votes{font-size:11px;color:rgba(255,255,255,0.35);font-weight:500;margin-top:3px;padding-left:2px}
+.ov-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;}
+.name-a{color:#FFB800;} .name-b{color:#CC1100;}
+.ov-pct{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;transition:font-size .3s;}
+.pct-a{color:#FFB800;} .pct-b{color:#CC1100;}
+.ov-votes{font-size:11px;color:rgba(255,255,255,.3);font-weight:500;margin-top:3px;padding-left:2px;}
 
 .ov-comeback{
   text-align:center;font-family:'Bebas Neue',sans-serif;
-  font-size:16px;letter-spacing:2px;color:#ffd700;
-  margin-top:8px;min-height:20px;
+  font-size:15px;letter-spacing:2px;color:#ffd700;
+  margin-top:6px;min-height:18px;
 }
 .ov-footer{
   display:flex;align-items:center;justify-content:space-between;
-  margin-top:12px;padding-top:10px;
+  margin-top:10px;padding-top:9px;
   border-top:1px solid rgba(255,255,255,0.06);
 }
-.ov-total{font-size:11px;color:rgba(255,255,255,0.3);font-weight:500}
-.ov-sources{display:flex;gap:6px}
-.src-dot{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.5px}
-.src-yt{background:rgba(255,0,0,.15);color:#ff5555;border:1px solid rgba(255,85,85,.25)}
-.src-kick{background:rgba(83,252,83,.1);color:#53fc53;border:1px solid rgba(83,252,83,.25)}
-.src-dot.off{opacity:.2}
-
-/* Waiting screen */
-#waiting{
-  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
-  background:transparent;
-}
-.wait-box{
-  background:rgba(8,8,15,0.85);border:1px solid rgba(255,255,255,0.08);
-  border-radius:12px;padding:20px 28px;text-align:center;
-  font-family:'Bebas Neue',sans-serif;
-}
-.wait-title{font-size:22px;letter-spacing:2px;color:rgba(255,255,255,0.5);margin-bottom:4px}
-.wait-sub{font-size:12px;letter-spacing:1px;color:rgba(255,255,255,0.2);font-family:'DM Sans',sans-serif}
+.ov-total{font-size:11px;color:rgba(255,255,255,.28);font-weight:500;}
 </style>
 </head>
 <body>
-
-<div id="waiting">
-  <div class="wait-box">
-    <div class="wait-title">POLL OVERLAY</div>
-    <div class="wait-sub">Esperando conexión desde el panel de control...</div>
-  </div>
-</div>
-
-<div id="overlay" style="display:none">
+<div id="overlay">
 <div class="ov-wrap">
-  <div class="ov-timer" id="ovTimer">30</div>
-  <div class="ov-question" id="ovQ">¿Quién elige mejor?</div>
-  <div class="ov-bars">
-    <div>
-      <div class="ov-bar-bg">
-        <div class="ov-bar-fill fill-a" id="barA" style="width:50%"></div>
-        <div class="ov-bar-content">
-          <span class="ov-opt-name name-a" id="ovNameA">SAM</span>
-          <span class="ov-pct pct-a" id="ovPctA">50%</span>
-        </div>
+  <div class="ov-timer" id="ovTimer">2:00</div>
+  <div class="ov-question" id="ovQ">¿Qué eligen?</div>
+
+  <div class="ov-opt">
+    <div class="ov-bar-bg">
+      <div class="ov-bar-fill fill-a" id="barA" style="width:50%"></div>
+      <div class="ov-bar-content">
+        <span class="ov-name name-a" id="ovNameA">HOMER</span>
+        <span class="ov-pct pct-a" id="ovPctA">50%</span>
       </div>
-      <div class="ov-votes"><span id="ovVotesA">0</span> votos</div>
     </div>
-    <div>
-      <div class="ov-bar-bg">
-        <div class="ov-bar-fill fill-b" id="barB" style="width:50%"></div>
-        <div class="ov-bar-content">
-          <span class="ov-opt-name name-b" id="ovNameB">SMA</span>
-          <span class="ov-pct pct-b" id="ovPctB">50%</span>
-        </div>
-      </div>
-      <div class="ov-votes"><span id="ovVotesB">0</span> votos</div>
-    </div>
+    <div class="ov-votes"><span id="ovVotesA">0</span> votos</div>
   </div>
+
+  <div class="ov-opt">
+    <div class="ov-bar-bg">
+      <div class="ov-bar-fill fill-b" id="barB" style="width:50%"></div>
+      <div class="ov-bar-content">
+        <span class="ov-name name-b" id="ovNameB">BART</span>
+        <span class="ov-pct pct-b" id="ovPctB">50%</span>
+      </div>
+    </div>
+    <div class="ov-votes"><span id="ovVotesB">0</span> votos</div>
+  </div>
+
   <div class="ov-comeback" id="ovComeback"></div>
   <div class="ov-footer">
     <div class="ov-total" id="ovTotal">0 votos totales</div>
-    <div class="ov-sources">
-      <span class="src-dot src-yt off" id="dotYT">▶ YT</span>
-      <span class="src-dot src-kick off" id="dotKick">⚡ KICK</span>
-    </div>
   </div>
 </div>
 </div>
 
 <script>
-// ══════════════════════════════════════════
-//  ESTADO
-// ══════════════════════════════════════════
-const s = {
-  votes: { a: 0, b: 0 },
-  voters: {},
-  ytConnected: false,
-  kickConnected: false,
-  prevLeader: null,
-  prevDiff: 0,
-  timer: { interval: null, running: false },
-};
-let cfg = {};
+const LS = 'poll_state';
+let prevState = null;
+let prevLeader = null, prevDiff = 0;
 
-// ══════════════════════════════════════════
-//  BROADCAST CHANNEL — escucha comandos del control
-// ══════════════════════════════════════════
-const bc = new BroadcastChannel('sdsam_poll');
-
-bc.onmessage = (e) => {
-  const { type, data } = e.data;
-  switch(type) {
-    case 'init':
-      cfg = data;
-      document.getElementById('waiting').style.display = 'none';
-      document.getElementById('overlay').style.display = 'block';
-      applyNames(data.nameA, data.nameB);
-      applyQuestion(data.question);
-      initYouTube(data.apiKey, data.channelId);
-      if (data.kickUser || data.kickRoom) initKick(data.kickUser, data.kickRoom);
-      break;
-    case 'reset_votes':
-      s.votes = { a: 0, b: 0 };
-      s.voters = {};
-      s.prevLeader = null; s.prevDiff = 0;
-      document.getElementById('ovComeback').textContent = '';
-      render(); broadcastState();
-      break;
-    case 'update_question':
-      applyQuestion(data.value);
-      break;
-    case 'update_names':
-      applyNames(data.a, data.b);
-      break;
-    case 'start_timer':
-      startTimer(data.duration);
-      break;
-    case 'stop_timer':
-      stopTimer();
-      break;
-  }
-};
-
-function broadcastState() {
-  bc.postMessage({
-    type: 'state',
-    data: {
-      votes: s.votes,
-      ytConnected: s.ytConnected,
-      kickConnected: s.kickConnected,
-    }
-  });
-}
-
-// ══════════════════════════════════════════
-//  YOUTUBE
-// ══════════════════════════════════════════
-let ytChatId = null, ytNextToken = '';
-
-async function initYouTube(apiKey, channelId) {
-  try {
-    const sRes  = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`);
-    const sData = await sRes.json();
-    if (sData.error) throw new Error(sData.error.message);
-    if (!sData.items?.length) throw new Error('No stream en vivo');
-    const videoId = sData.items[0].id.videoId;
-
-    const vRes  = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${apiKey}`);
-    const vData = await vRes.json();
-    ytChatId = vData?.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
-    if (!ytChatId) throw new Error('No se obtuvo chatId');
-
-    s.ytConnected = true;
-    document.getElementById('dotYT').classList.remove('off');
-    broadcastState();
-    pollYouTube(apiKey);
-  } catch(e) {
-    bc.postMessage({ type: 'error', source: 'youtube', msg: e.message });
-  }
-}
-
-async function pollYouTube(apiKey) {
-  if (!ytChatId) return;
-  try {
-    const url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${ytChatId}&part=snippet,authorDetails&key=${apiKey}&maxResults=200${ytNextToken ? '&pageToken='+ytNextToken : ''}`;
-    const res  = await fetch(url);
-    const data = await res.json();
-    if (!data.error) {
-      ytNextToken = data.nextPageToken || ytNextToken;
-      for (const item of (data.items || [])) {
-        processVote(item.snippet.displayMessage, 'yt_' + item.authorDetails.channelId);
-      }
-      const interval = Math.max(2000, data.pollingIntervalMillis || 5000);
-      setTimeout(() => pollYouTube(apiKey), interval);
-    } else {
-      setTimeout(() => pollYouTube(apiKey), 5000);
-    }
-  } catch(e) {
-    setTimeout(() => pollYouTube(apiKey), 5000);
-  }
-}
-
-// ══════════════════════════════════════════
-//  KICK
-// ══════════════════════════════════════════
-async function initKick(kickUser, kickRoomId) {
-  let roomId = kickRoomId;
-  if (!roomId && kickUser) {
-    try {
-      const res  = await fetch(`https://kick.com/api/v1/channels/${kickUser}`);
-      const data = await res.json();
-      roomId = data?.chatroom?.id;
-    } catch(e) {}
-  }
-  if (!roomId) { bc.postMessage({ type: 'error', source: 'kick', msg: 'No se obtuvo Chatroom ID' }); return; }
-
-  try {
-    Pusher.logToConsole = false;
-    const pusher  = new Pusher('32cbd69e4b950bf97679', { cluster: 'us2', forceTLS: true, disableStats: true });
-    const channel = pusher.subscribe(`chatrooms.${roomId}.v2`);
-    channel.bind('pusher:subscription_succeeded', () => {
-      s.kickConnected = true;
-      document.getElementById('dotKick').classList.remove('off');
-      broadcastState();
-    });
-    channel.bind('App\\Events\\ChatMessageEvent', (data) => {
-      processVote(data?.content || '', 'kick_' + (data?.sender?.id || ''));
-    });
-  } catch(e) {
-    bc.postMessage({ type: 'error', source: 'kick', msg: e.message });
-  }
-}
-
-// ══════════════════════════════════════════
-//  VOTOS — case insensitive
-// ══════════════════════════════════════════
-function processVote(msg, userId) {
-  const clean = (msg || '').trim().toLowerCase();
-  if (clean !== 'a' && clean !== 'b') return;
-  if (s.voters[userId]) return;
-  s.voters[userId] = clean;
-  if (clean === 'a') s.votes.a++;
-  else s.votes.b++;
-  render();
-  broadcastState();
-}
-
-// ══════════════════════════════════════════
-//  TIMER
-// ══════════════════════════════════════════
-function startTimer(duration) {
-  stopTimer();
-  let remaining = duration;
-  const el = document.getElementById('ovTimer');
-  el.style.display = 'block';
-  el.textContent = remaining;
-  el.classList.remove('urgent');
-  s.timer.running = true;
-  s.timer.interval = setInterval(() => {
-    remaining--;
-    el.textContent = remaining;
-    if (remaining <= 5) el.classList.add('urgent');
-    if (remaining <= 0) {
-      stopTimer();
-      el.textContent = 'FIN';
-      setTimeout(() => { el.style.display = 'none'; el.classList.remove('urgent'); }, 2500);
-      bc.postMessage({ type: 'timer_end' });
-    }
-  }, 1000);
-}
-
-function stopTimer() {
-  clearInterval(s.timer.interval);
-  s.timer.running = false;
-  const el = document.getElementById('ovTimer');
-  el.style.display = 'none';
-  el.classList.remove('urgent');
-}
-
-// ══════════════════════════════════════════
-//  RENDER
-// ══════════════════════════════════════════
-function render() {
-  const { a, b } = s.votes;
-  const total = a + b;
-  const pA = total === 0 ? 50 : Math.round(a / total * 100);
+function render(s) {
+  const vA = s.vA || 0, vB = s.vB || 0;
+  const total = vA + vB;
+  const pA = total === 0 ? 50 : Math.round(vA / total * 100);
   const pB = total === 0 ? 50 : 100 - pA;
 
+  document.getElementById('ovQ').textContent      = s.question || '¿Qué eligen?';
+  document.getElementById('ovNameA').textContent  = (s.nameA || 'A').toUpperCase();
+  document.getElementById('ovNameB').textContent  = (s.nameB || 'B').toUpperCase();
   document.getElementById('barA').style.width     = pA + '%';
   document.getElementById('barB').style.width     = pB + '%';
   document.getElementById('ovPctA').textContent   = pA + '%';
   document.getElementById('ovPctB').textContent   = pB + '%';
-  document.getElementById('ovVotesA').textContent = a;
-  document.getElementById('ovVotesB').textContent = b;
+  document.getElementById('ovVotesA').textContent = vA;
+  document.getElementById('ovVotesB').textContent = vB;
   document.getElementById('ovTotal').textContent  = total + (total === 1 ? ' voto total' : ' votos totales');
 
+  // Tamaño dinámico del ganador
   const pctA = document.getElementById('ovPctA');
   const pctB = document.getElementById('ovPctB');
   if (total === 0) { pctA.style.fontSize = pctB.style.fontSize = '22px'; }
@@ -344,25 +134,55 @@ function render() {
   else if (pB > pA) { pctB.style.fontSize = '26px'; pctA.style.fontSize = '18px'; }
   else { pctA.style.fontSize = pctB.style.fontSize = '22px'; }
 
+  // Remontada
   const leader = pA > pB ? 'a' : pA < pB ? 'b' : null;
   const diff   = Math.abs(pA - pB);
   const cb     = document.getElementById('ovComeback');
-  if (total >= 10 && s.prevLeader && leader && leader !== s.prevLeader && s.prevDiff >= 15) {
-    const nm = leader === 'a' ? document.getElementById('ovNameA').textContent : document.getElementById('ovNameB').textContent;
+  if (total >= 10 && prevLeader && leader && leader !== prevLeader && prevDiff >= 15) {
+    const nm = leader === 'a' ? (s.nameA||'A').toUpperCase() : (s.nameB||'B').toUpperCase();
     cb.textContent = `⚡ ¡REMONTADA DE ${nm}!`;
     setTimeout(() => { cb.textContent = ''; }, 4000);
   }
-  s.prevLeader = leader;
-  s.prevDiff   = diff;
+  prevLeader = leader;
+  prevDiff   = diff;
+
+  // Timer
+  const timerEl = document.getElementById('ovTimer');
+  if (s.timerEnd && s.timerEnd > 0) {
+    const rem = Math.max(0, Math.ceil((s.timerEnd - Date.now()) / 1000));
+    if (rem > 0) {
+      timerEl.style.display = 'block';
+      if (rem < 60) {
+        timerEl.textContent = rem + 's';
+      } else {
+        const m = Math.floor(rem/60), sec = rem%60;
+        timerEl.textContent = m + ':' + (sec < 10 ? '0' : '') + sec;
+      }
+      timerEl.className = 'ov-timer' + (rem <= 10 ? ' urgent' : '');
+    } else {
+      timerEl.style.display = 'none';
+    }
+  } else {
+    timerEl.style.display = 'none';
+  }
 }
 
-function applyQuestion(q) { document.getElementById('ovQ').textContent = q || '¿Quién elige mejor?'; }
-function applyNames(a, b) {
-  document.getElementById('ovNameA').textContent = (a || 'SAM').toUpperCase();
-  document.getElementById('ovNameB').textContent = (b || 'SMA').toUpperCase();
-}
+// ══ Leer localStorage cada 500ms (funciona entre panel OBS y Browser Source) ══
+setInterval(() => {
+  try {
+    const raw = localStorage.getItem(LS);
+    if (!raw) return;
+    const s = JSON.parse(raw);
 
-render();
+    const overlay = document.getElementById('overlay');
+    if (s.active) {
+      overlay.classList.add('visible');
+      render(s);
+    } else {
+      overlay.classList.remove('visible');
+    }
+  } catch(e) {}
+}, 500);
 </script>
 </body>
 </html>
