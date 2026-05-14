@@ -10,10 +10,8 @@ body{
   background:transparent;
   overflow:hidden;
   width:100vw;height:100vh;
-  font-family:'Inter',sans-serif;
 }
 
-/* ══ Contenedor principal — bottom center ══ */
 #widget{
   position:fixed;
   bottom:28px;
@@ -21,211 +19,168 @@ body{
   transform:translateX(-50%);
   width:520px;
   opacity:0;
-  transition:opacity .4s ease;
+  transition:opacity .4s;
   pointer-events:none;
 }
-#widget.visible{ opacity:1; }
+#widget.visible{opacity:1;}
 
-/* Timer y pregunta arriba del widget */
-.w-header{
-  text-align:center;
-  margin-bottom:6px;
-}
+/* Timer + pregunta */
+.w-header{text-align:center;margin-bottom:6px;}
 .w-timer{
   font-family:'Bebas Neue',sans-serif;
-  font-size:36px;
-  color:#fff;
-  letter-spacing:2px;
-  line-height:1;
-  text-shadow:0 2px 12px rgba(0,0,0,0.8);
-  display:none;
+  font-size:36px;color:#fff;letter-spacing:2px;line-height:1;
+  text-shadow:0 2px 12px rgba(0,0,0,.9);display:none;
 }
-.w-timer.urgent{
-  color:#ff4444;
-  animation:tblink .5s infinite;
-}
+.w-timer.urgent{color:#ff4444;animation:tblink .5s infinite;}
 @keyframes tblink{0%,100%{opacity:1;}50%{opacity:.3;}}
-
 .w-question{
   font-family:'Bebas Neue',sans-serif;
-  font-size:18px;
-  color:rgba(255,255,255,0.75);
-  letter-spacing:1.5px;
-  text-shadow:0 2px 8px rgba(0,0,0,0.9);
-  margin-top:3px;
+  font-size:17px;color:rgba(255,255,255,.7);
+  letter-spacing:1.5px;margin-top:2px;
+  text-shadow:0 2px 8px rgba(0,0,0,.9);
 }
 
-/* ══ Panels ══ */
-.w-panels{
-  display:flex;
-  gap:4px;
+/* ══ Contenedor único con fills superpuestos ══ */
+.w-box{
+  position:relative;
+  height:110px;
   border-radius:12px;
   overflow:hidden;
-  box-shadow:0 8px 40px rgba(0,0,0,0.7);
+  background:rgba(10,10,10,0.55);
+  box-shadow:0 8px 40px rgba(0,0,0,.7);
 }
 
-.w-panel{
-  flex:1;
-  padding:14px 16px 12px;
-  position:relative;
-  min-height:100px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  overflow:hidden;
-}
-
-/* Fondo con imagen semitransparente */
-.w-panel::before{
-  content:'';
+/* Fill A — desde la izquierda */
+.fill-a{
   position:absolute;
-  inset:0;
-  z-index:0;
-}
-.w-panel-a{
-  background:rgba(200,140,0,0.82);
-}
-.w-panel-b{
-  background:rgba(160,10,10,0.82);
-}
-
-/* Fill bar animado (detrás del contenido) */
-.w-fill{
-  position:absolute;
-  left:0;top:0;bottom:0;
-  z-index:0;
+  top:0;left:0;bottom:0;
+  background:#FFB800;
+  opacity:.38;
   transition:width .7s cubic-bezier(.4,0,.2,1);
-  opacity:.35;
-}
-.w-fill-a{ background:#FFD000; }
-.w-fill-b{ background:#ff2222; }
-
-/* Contenido del panel */
-.w-panel-content{
-  position:relative;
   z-index:1;
 }
 
-.w-opt-label{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:13px;
-  letter-spacing:2px;
-  color:rgba(255,255,255,0.6);
-  margin-bottom:2px;
+/* Fill B — desde la derecha */
+.fill-b{
+  position:absolute;
+  top:0;right:0;bottom:0;
+  background:#CC1100;
+  opacity:.38;
+  transition:width .7s cubic-bezier(.4,0,.2,1);
+  z-index:1;
 }
 
-.w-opt-name{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:22px;
-  letter-spacing:2px;
-  color:#fff;
-  line-height:1;
-  margin-bottom:4px;
-  text-shadow:0 1px 6px rgba(0,0,0,0.5);
+/* Contenido encima de los fills */
+.w-content{
+  position:absolute;
+  inset:0;
+  display:flex;
+  z-index:2;
 }
 
+/* Mitad izquierda (A) */
+.w-side{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:12px 18px;
+}
+.w-side-b{align-items:flex-end;text-align:right;}
+
+.w-label{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:12px;letter-spacing:2px;
+  color:rgba(255,255,255,.5);margin-bottom:1px;
+}
+.w-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px;letter-spacing:2px;color:#fff;
+  line-height:1;margin-bottom:3px;
+  text-shadow:0 1px 6px rgba(0,0,0,.6);
+}
 .w-pct{
   font-family:'Bebas Neue',sans-serif;
-  font-size:64px;
-  color:#fff;
-  line-height:1;
-  letter-spacing:-1px;
-  text-shadow:0 2px 12px rgba(0,0,0,0.4);
+  font-size:58px;color:#fff;letter-spacing:-1px;line-height:1;
+  text-shadow:0 2px 10px rgba(0,0,0,.4);
   transition:font-size .3s;
 }
-.w-pct.winner{ font-size:72px; }
-.w-pct.loser{  font-size:52px; color:rgba(255,255,255,0.7); }
-
-.w-votes{
-  font-size:11px;
-  color:rgba(255,255,255,0.6);
-  font-weight:700;
-  letter-spacing:.5px;
-  margin-top:3px;
+.w-pct.winner{font-size:66px;}
+.w-pct.loser{font-size:46px;color:rgba(255,255,255,.6);}
+.w-votes-txt{
+  font-size:11px;color:rgba(255,255,255,.5);
+  font-weight:700;letter-spacing:.5px;margin-top:2px;
 }
 
 /* Total */
 .w-total{
-  text-align:center;
-  font-size:11px;
-  color:rgba(255,255,255,0.45);
-  font-weight:700;
-  letter-spacing:.5px;
-  margin-top:5px;
+  text-align:center;font-size:11px;
+  color:rgba(255,255,255,.4);font-weight:700;
+  letter-spacing:.5px;margin-top:5px;
 }
 
 /* ══ Remontada ══ */
 .w-remontada{
   position:absolute;
   top:50%;left:50%;
-  transform:translate(-50%,-50%) scale(0.8);
-  background:rgba(10,10,10,0.9);
+  transform:translate(-50%,-50%) scale(.85);
+  background:rgba(8,8,8,.92);
   border:2px solid #FFD000;
   border-radius:10px;
-  padding:8px 16px;
+  padding:7px 18px;
   text-align:center;
-  pointer-events:none;
-  opacity:0;
-  transition:opacity .3s, transform .3s;
   z-index:10;
+  opacity:0;
+  transition:opacity .3s,transform .3s;
+  pointer-events:none;
   white-space:nowrap;
 }
-.w-remontada.show{
-  opacity:1;
-  transform:translate(-50%,-50%) scale(1);
-}
-.w-remontada-title{
+.w-remontada.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+.w-rem-title{
   font-family:'Bebas Neue',sans-serif;
-  font-size:20px;
-  color:#FFD000;
-  letter-spacing:2px;
+  font-size:20px;color:#FFD000;letter-spacing:2px;
 }
-.w-remontada-sub{
-  font-size:10px;
-  color:rgba(255,255,255,0.6);
-  font-weight:700;
-  letter-spacing:1px;
-  text-transform:uppercase;
+.w-rem-sub{
+  font-size:10px;color:rgba(255,255,255,.6);
+  font-weight:700;letter-spacing:1px;text-transform:uppercase;
 }
 </style>
 </head>
 <body>
 
 <div id="widget">
-  <!-- Header: timer + pregunta -->
   <div class="w-header">
     <div class="w-timer" id="wTimer">30s</div>
     <div class="w-question" id="wQuestion">¿Qué eligen?</div>
   </div>
 
-  <!-- Panels -->
-  <div class="w-panels" style="position:relative;">
-    <!-- Panel A -->
-    <div class="w-panel w-panel-a">
-      <div class="w-fill w-fill-a" id="fillA" style="width:50%"></div>
-      <div class="w-panel-content">
-        <div class="w-opt-label">A</div>
-        <div class="w-opt-name" id="wNameA">HOMER</div>
+  <div class="w-box">
+    <!-- Fills que se invaden -->
+    <div class="fill-a" id="fillA" style="width:50%"></div>
+    <div class="fill-b" id="fillB" style="width:50%"></div>
+
+    <!-- Contenido -->
+    <div class="w-content">
+      <!-- Lado A -->
+      <div class="w-side">
+        <div class="w-label">A</div>
+        <div class="w-name" id="wNameA">HOMER</div>
         <div class="w-pct" id="wPctA">50%</div>
-        <div class="w-votes"><span id="wVotesA">0</span> votos</div>
+        <div class="w-votes-txt"><span id="wVotesA">0</span> votos</div>
       </div>
-    </div>
-
-    <!-- Panel B -->
-    <div class="w-panel w-panel-b">
-      <div class="w-fill w-fill-b" id="fillB" style="width:50%"></div>
-      <div class="w-panel-content">
-        <div class="w-opt-label">B</div>
-        <div class="w-opt-name" id="wNameB">BART</div>
+      <!-- Lado B -->
+      <div class="w-side w-side-b">
+        <div class="w-label">B</div>
+        <div class="w-name" id="wNameB">BART</div>
         <div class="w-pct" id="wPctB">50%</div>
-        <div class="w-votes"><span id="wVotesB">0</span> votos</div>
+        <div class="w-votes-txt"><span id="wVotesB">0</span> votos</div>
       </div>
     </div>
 
-    <!-- Remontada popup (centrado entre paneles) -->
+    <!-- Remontada -->
     <div class="w-remontada" id="wRemontada">
-      <div class="w-remontada-title" id="wRemontadaTitle">¡REMONTADA!</div>
-      <div class="w-remontada-sub" id="wRemontadaSub">A ESTÁ SUBIENDO</div>
+      <div class="w-rem-title">¡REMONTADA!</div>
+      <div class="w-rem-sub" id="wRemSub">A ESTÁ SUBIENDO</div>
     </div>
   </div>
 
@@ -234,56 +189,50 @@ body{
 
 <script>
 const LS = 'poll_state';
-let prevLeader = null, prevDiff = 0;
+let prevLeader = null, prevDiff = 0, remTimeout = null;
 
 function render(s) {
-  const vA    = s.vA || 0;
-  const vB    = s.vB || 0;
+  const vA = s.vA || 0, vB = s.vB || 0;
   const total = vA + vB;
-  const pA    = total === 0 ? 50 : Math.round(vA / total * 100);
-  const pB    = total === 0 ? 50 : 100 - pA;
+  const pA = total === 0 ? 50 : Math.round(vA / total * 100);
+  const pB = total === 0 ? 50 : 100 - pA;
 
-  // Nombres y pregunta
-  document.getElementById('wQuestion').textContent = s.question || '¿Qué eligen?';
-  document.getElementById('wNameA').textContent    = (s.nameA || 'A').toUpperCase();
-  document.getElementById('wNameB').textContent    = (s.nameB || 'B').toUpperCase();
+  document.getElementById('wQuestion').textContent  = s.question || '¿Qué eligen?';
+  document.getElementById('wNameA').textContent     = (s.nameA || 'A').toUpperCase();
+  document.getElementById('wNameB').textContent     = (s.nameB || 'B').toUpperCase();
+  document.getElementById('wPctA').textContent      = pA + '%';
+  document.getElementById('wPctB').textContent      = pB + '%';
+  document.getElementById('wVotesA').textContent    = vA;
+  document.getElementById('wVotesB').textContent    = vB;
+  document.getElementById('wTotal').textContent     = total + (total === 1 ? ' voto total' : ' votos totales');
 
-  // Porcentajes
-  document.getElementById('wPctA').textContent  = pA + '%';
-  document.getElementById('wPctB').textContent  = pB + '%';
-  document.getElementById('wVotesA').textContent = vA;
-  document.getElementById('wVotesB').textContent = vB;
-  document.getElementById('wTotal').textContent  = total + (total === 1 ? ' voto total' : ' votos totales');
-
-  // Fills de fondo
+  // Fills que se invaden mutuamente
   document.getElementById('fillA').style.width = pA + '%';
   document.getElementById('fillB').style.width = pB + '%';
 
-  // Tamaño dinámico del ganador
+  // Tamaño dinámico
   const pctA = document.getElementById('wPctA');
   const pctB = document.getElementById('wPctB');
   if (total === 0) {
-    pctA.className = 'w-pct';
-    pctB.className = 'w-pct';
+    pctA.className = pctB.className = 'w-pct';
   } else if (pA > pB) {
-    pctA.className = 'w-pct winner';
-    pctB.className = 'w-pct loser';
+    pctA.className = 'w-pct winner'; pctB.className = 'w-pct loser';
   } else if (pB > pA) {
-    pctB.className = 'w-pct winner';
-    pctA.className = 'w-pct loser';
+    pctB.className = 'w-pct winner'; pctA.className = 'w-pct loser';
   } else {
-    pctA.className = 'w-pct';
-    pctB.className = 'w-pct';
+    pctA.className = pctB.className = 'w-pct';
   }
 
   // Remontada
   const leader = pA > pB ? 'a' : pA < pB ? 'b' : null;
   const diff   = Math.abs(pA - pB);
   if (total >= 10 && prevLeader && leader && leader !== prevLeader && prevDiff >= 15) {
-    const name = leader === 'a'
-      ? (s.nameA || 'A').toUpperCase()
-      : (s.nameB || 'B').toUpperCase();
-    showRemontada(name + ' ESTÁ SUBIENDO');
+    const name = (leader === 'a' ? (s.nameA||'A') : (s.nameB||'B')).toUpperCase();
+    document.getElementById('wRemSub').textContent = name + ' ESTÁ SUBIENDO';
+    const rem = document.getElementById('wRemontada');
+    rem.classList.add('show');
+    if (remTimeout) clearTimeout(remTimeout);
+    remTimeout = setTimeout(() => rem.classList.remove('show'), 3500);
   }
   prevLeader = leader;
   prevDiff   = diff;
@@ -306,29 +255,14 @@ function render(s) {
   }
 }
 
-let remontadaTimeout = null;
-function showRemontada(sub) {
-  const el    = document.getElementById('wRemontada');
-  const subEl = document.getElementById('wRemontadaSub');
-  subEl.textContent = sub;
-  el.classList.add('show');
-  if (remontadaTimeout) clearTimeout(remontadaTimeout);
-  remontadaTimeout = setTimeout(() => el.classList.remove('show'), 3500);
-}
-
-// ══ Polling localStorage cada 500ms ══
 setInterval(() => {
   try {
     const raw = localStorage.getItem(LS);
     if (!raw) return;
     const s = JSON.parse(raw);
     const w = document.getElementById('widget');
-    if (s.active) {
-      w.classList.add('visible');
-      render(s);
-    } else {
-      w.classList.remove('visible');
-    }
+    if (s.active) { w.classList.add('visible'); render(s); }
+    else { w.classList.remove('visible'); }
   } catch(e) {}
 }, 500);
 </script>
