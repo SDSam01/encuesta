@@ -58,6 +58,8 @@ input:focus{border-color:rgba(255,185,0,.4);}
 .btn-silenciar:hover{background:rgba(255,100,100,.18);}
 .btn-limpiar{width:100%;padding:9px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.35);transition:.15s;font-family:'Inter',sans-serif;}
 .btn-limpiar:hover{color:#fff;background:rgba(255,255,255,.1);}
+.btn-demo{width:100%;padding:9px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(100,200,100,.2);background:rgba(100,200,100,.07);color:rgba(100,200,100,.6);transition:.15s;font-family:'Inter',sans-serif;margin-top:8px;}
+.btn-demo:hover{color:#8eff8e;background:rgba(100,200,100,.15);}
 .btn-connect{width:100%;padding:10px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,185,0,.3);background:rgba(255,185,0,.1);color:#FFD000;transition:.15s;font-family:'Inter',sans-serif;margin-top:6px;}
 .btn-connect:hover{background:rgba(255,185,0,.2);}
 .btn-connect:disabled{opacity:.35;cursor:not-allowed;}
@@ -128,6 +130,7 @@ input:focus{border-color:rgba(255,185,0,.4);}
   <button class="btn-sm btn-silenciar" onclick="silenciarTTS()">🔇 Silenciar TTS</button>
 </div>
 <button class="btn-limpiar" onclick="limpiarRep()">✕ Quitar representante</button>
+<button class="btn-demo" onclick="modoDemo()">🧪 Modo prueba (sin stream)</button>
 
 <div class="status" id="statusBar">Conecta los chats primero</div>
 
@@ -337,6 +340,30 @@ function setStatus(msg, type) {
 }
 
 function openKickApi() { window.open('https://kick.com/api/v1/channels/sdsam', '_blank'); }
+
+function modoDemo() {
+  const fakeUsers = [
+    { id:'yt_demo1', name:'Pizzaboy_99', src:'yt' },
+    { id:'yt_demo2', name:'ElGamerVisitante', src:'yt' },
+    { id:'kick_d1',  name:'sigma_proaidem', src:'kick' },
+    { id:'kick_d2',  name:'javvo77', src:'kick' },
+    { id:'yt_demo3', name:'MauricioMejia', src:'yt' },
+    { id:'kick_d3',  name:'EmmaxMarurr', src:'kick' },
+    { id:'yt_demo4', name:'lukas_pro', src:'yt' },
+    { id:'kick_d4',  name:'Zarai_Ramos', src:'kick' },
+    { id:'yt_demo5', name:'Sashiro', src:'yt' },
+    { id:'kick_d5',  name:'yoselin_g', src:'kick' },
+  ];
+  const now = Date.now();
+  fakeUsers.forEach(u => {
+    recentUsers[u.id] = { username: u.name, src: u.src, lastSeen: now, text: '' };
+  });
+  connected = true;
+  document.getElementById('btnBuscar').disabled = false;
+  document.getElementById('dotYT').classList.add('on');
+  document.getElementById('dotKick').classList.add('on');
+  setStatus('🧪 Modo prueba — ' + fakeUsers.length + ' usuarios cargados', 'ok');
+}
 
 // Cargar guardados
 (function(){
