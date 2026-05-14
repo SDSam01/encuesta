@@ -9,16 +9,12 @@
 body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 
 #widget{
-  position:fixed;
-  bottom:28px;left:50%;
-  transform:translateX(-50%);
-  width:520px;
-  opacity:0;transition:opacity .4s;
-  pointer-events:none;
+  position:fixed;bottom:28px;left:50%;
+  transform:translateX(-50%);width:520px;
+  opacity:0;transition:opacity .4s;pointer-events:none;
 }
 #widget.visible{opacity:1;}
 
-/* Header */
 .w-header{text-align:center;margin-bottom:6px;}
 .w-timer{
   font-family:'Bebas Neue',sans-serif;
@@ -34,129 +30,112 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
   text-shadow:0 2px 8px rgba(0,0,0,.9);
 }
 
-/* ══ Box principal ══ */
+/* ══ Box ══ */
 .w-box{
-  position:relative;
-  height:120px;
-  border-radius:12px;
-  overflow:hidden;
-  background:rgba(10,10,10,0.6);
+  position:relative;height:120px;border-radius:12px;
+  overflow:hidden;background:rgba(10,10,10,0.6);
   box-shadow:0 8px 40px rgba(0,0,0,.7);
 }
 
-/* Fills que se invaden */
+/* Fills normales */
 .fill-a{
   position:absolute;top:0;left:0;bottom:0;
   background:#FFB800;opacity:.38;
-  transition:width .7s cubic-bezier(.4,0,.2,1);z-index:1;
+  transition:width .7s cubic-bezier(.4,0,.2,1), opacity .4s;z-index:1;
 }
 .fill-b{
   position:absolute;top:0;right:0;bottom:0;
   background:#CC1100;opacity:.38;
-  transition:width .7s cubic-bezier(.4,0,.2,1);z-index:1;
+  transition:width .7s cubic-bezier(.4,0,.2,1), opacity .4s;z-index:1;
 }
+/* Ocultar fills cuando hay ganador */
+.w-box.winner-mode .fill-a,
+.w-box.winner-mode .fill-b{opacity:0;}
 
-/* Contenido */
+/* Contenido normal */
 .w-content{
-  position:absolute;inset:0;
-  display:flex;z-index:2;
+  position:absolute;inset:0;display:flex;z-index:2;
+  transition:opacity .4s;
 }
+.w-box.winner-mode .w-content{opacity:0;}
+
 .w-side{
-  flex:1;
-  display:flex;flex-direction:column;
-  justify-content:center;
-  padding:10px 16px;
-  min-width:0;/* evita overflow */
+  flex:1;display:flex;flex-direction:column;
+  justify-content:center;padding:10px 16px;min-width:0;
 }
 .w-side-b{align-items:flex-end;text-align:right;}
-
-.w-label{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:12px;letter-spacing:2px;
-  color:rgba(255,255,255,.5);margin-bottom:1px;
-}
+.w-label{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:rgba(255,255,255,.5);margin-bottom:1px;}
 .w-name{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:20px;letter-spacing:1.5px;color:#fff;
-  line-height:1;margin-bottom:2px;
+  font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;
+  color:#fff;line-height:1;margin-bottom:2px;
   text-shadow:0 1px 6px rgba(0,0,0,.6);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  max-width:100%;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
 }
 .w-pct{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:54px;color:#fff;letter-spacing:-1px;line-height:1;
-  text-shadow:0 2px 10px rgba(0,0,0,.4);
-  transition:font-size .3s;
+  font-family:'Bebas Neue',sans-serif;font-size:54px;color:#fff;
+  letter-spacing:-1px;line-height:1;
+  text-shadow:0 2px 10px rgba(0,0,0,.4);transition:font-size .3s;
 }
 .w-pct.winner{font-size:62px;}
 .w-pct.loser{font-size:42px;color:rgba(255,255,255,.55);}
-.w-votes-txt{
-  font-size:11px;color:rgba(255,255,255,.5);
-  font-weight:700;letter-spacing:.5px;margin-top:3px;
-}
+.w-votes-txt{font-size:11px;color:rgba(255,255,255,.5);font-weight:700;letter-spacing:.5px;margin-top:3px;}
 
-/* Total */
-.w-total{
-  text-align:center;font-size:11px;
-  color:rgba(255,255,255,.4);font-weight:700;
-  letter-spacing:.5px;margin-top:5px;
-}
+.w-total{text-align:center;font-size:11px;color:rgba(255,255,255,.4);font-weight:700;letter-spacing:.5px;margin-top:5px;}
 
 /* ══ Remontada ══ */
 .w-remontada{
   position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%) scale(.85);
-  background:rgba(8,8,8,.92);
-  border:2px solid #FFD000;border-radius:10px;
-  padding:7px 18px;text-align:center;
-  z-index:10;opacity:0;
-  transition:opacity .3s,transform .3s;
+  background:rgba(8,8,8,.92);border:2px solid #FFD000;border-radius:10px;
+  padding:7px 18px;text-align:center;z-index:10;
+  opacity:0;transition:opacity .3s,transform .3s;
   pointer-events:none;white-space:nowrap;
 }
 .w-remontada.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
 .w-rem-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:#FFD000;letter-spacing:2px;}
 .w-rem-sub{font-size:10px;color:rgba(255,255,255,.6);font-weight:700;letter-spacing:1px;text-transform:uppercase;}
 
-/* ══ WINNER ANIMATION ══ */
+/* ══ WINNER ══ */
 .w-winner-overlay{
-  position:absolute;inset:0;
-  display:flex;align-items:center;justify-content:center;
-  flex-direction:column;
-  z-index:20;
-  opacity:0;
-  transition:opacity .5s;
-  pointer-events:none;
+  position:absolute;inset:0;z-index:20;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  opacity:0;transition:opacity .5s;pointer-events:none;
 }
 .w-winner-overlay.show{opacity:1;}
-.w-winner-fill{
-  position:absolute;inset:0;
-  transition:opacity .5s;
+
+/* Canvas confeti dentro del box */
+#confettiCanvas{
+  position:absolute;inset:0;z-index:0;
+  width:100%;height:100%;
+  opacity:0;transition:opacity .5s;
 }
+.w-winner-overlay.show #confettiCanvas{opacity:1;}
+
+/* Fondo ganador */
+.w-winner-bg{
+  position:absolute;inset:0;z-index:1;
+  opacity:0;transition:opacity .6s;
+}
+.w-winner-overlay.show .w-winner-bg{opacity:.7;}
+
+/* Texto ganador */
 .w-winner-content{
-  position:relative;z-index:1;
-  text-align:center;
+  position:relative;z-index:2;text-align:center;
 }
 .w-winner-label{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:14px;letter-spacing:3px;
-  color:rgba(255,255,255,.6);margin-bottom:2px;
+  font-family:'Bebas Neue',sans-serif;font-size:13px;
+  letter-spacing:3px;color:rgba(255,255,255,.65);margin-bottom:0;
 }
 .w-winner-name{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:52px;letter-spacing:3px;color:#fff;
-  line-height:1;
-  text-shadow:0 2px 20px rgba(0,0,0,.5);
-  animation:winnerPulse 1s ease-in-out infinite alternate;
+  font-family:'Bebas Neue',sans-serif;font-size:58px;
+  letter-spacing:3px;color:#fff;line-height:1;
+  text-shadow:0 0 30px rgba(255,255,255,.4), 0 2px 20px rgba(0,0,0,.6);
+  animation:winPulse 1.2s ease-in-out infinite alternate;
 }
-@keyframes winnerPulse{
-  from{transform:scale(1);}
-  to{transform:scale(1.05);}
-}
+@keyframes winPulse{from{transform:scale(1);}to{transform:scale(1.04);}}
 .w-winner-pct{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:30px;color:rgba(255,255,255,.7);
-  letter-spacing:2px;
+  font-family:'Bebas Neue',sans-serif;font-size:26px;
+  color:rgba(255,255,255,.7);letter-spacing:2px;margin-top:2px;
 }
 </style>
 </head>
@@ -168,7 +147,7 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
     <div class="w-question" id="wQuestion">¿Qué eligen?</div>
   </div>
 
-  <div class="w-box">
+  <div class="w-box" id="wBox">
     <div class="fill-a" id="fillA" style="width:50%"></div>
     <div class="fill-b" id="fillB" style="width:50%"></div>
 
@@ -187,15 +166,15 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
       </div>
     </div>
 
-    <!-- Remontada -->
     <div class="w-remontada" id="wRemontada">
       <div class="w-rem-title">¡REMONTADA!</div>
       <div class="w-rem-sub" id="wRemSub">A ESTÁ SUBIENDO</div>
     </div>
 
-    <!-- Winner animation -->
+    <!-- Winner overlay -->
     <div class="w-winner-overlay" id="wWinner">
-      <div class="w-winner-fill" id="wWinnerFill"></div>
+      <canvas id="confettiCanvas"></canvas>
+      <div class="w-winner-bg" id="wWinnerBg"></div>
       <div class="w-winner-content">
         <div class="w-winner-label">GANADOR</div>
         <div class="w-winner-name" id="wWinnerName">HOMER</div>
@@ -210,9 +189,75 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 <script>
 const LS = 'poll_state';
 let prevLeader = null, prevDiff = 0;
-let remTimeout = null, winnerShown = false;
-let lastTimerEnd = 0;
+let remTimeout = null, winnerShown = false, lastTimerEnd = 0;
+let confettiRAF = null, confettiParticles = [];
 
+// ══ Confeti neón ══
+function startConfetti(color) {
+  const canvas = document.getElementById('confettiCanvas');
+  const ctx    = canvas.getContext('2d');
+  canvas.width  = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+
+  // Colores neón basados en el ganador
+  const neonColors = color === '#FFB800'
+    ? ['#FFD000','#FFEC00','#FFA500','#fff700','#ffffff','#FF6B00']
+    : ['#FF2222','#FF6666','#FF0066','#FF44AA','#ffffff','#CC0044'];
+
+  confettiParticles = [];
+  for (let i = 0; i < 80; i++) {
+    confettiParticles.push({
+      x:     Math.random() * canvas.width,
+      y:     Math.random() * canvas.height - canvas.height,
+      w:     Math.random() * 8 + 3,
+      h:     Math.random() * 4 + 2,
+      color: neonColors[Math.floor(Math.random() * neonColors.length)],
+      speed: Math.random() * 2 + 1,
+      angle: Math.random() * Math.PI * 2,
+      spin:  (Math.random() - 0.5) * 0.15,
+      wobble: Math.random() * 0.05,
+      opacity: Math.random() * 0.5 + 0.5,
+    });
+  }
+
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    confettiParticles.forEach(p => {
+      p.y     += p.speed;
+      p.angle += p.spin;
+      p.x     += Math.sin(p.angle * 3) * p.wobble * 20;
+
+      // Neón glow
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+      ctx.globalAlpha = p.opacity;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur  = 8;
+      ctx.fillStyle   = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+
+      // Reciclar
+      if (p.y > canvas.height + 10) {
+        p.y = -10;
+        p.x = Math.random() * canvas.width;
+      }
+    });
+    confettiRAF = requestAnimationFrame(loop);
+  }
+  if (confettiRAF) cancelAnimationFrame(confettiRAF);
+  loop();
+}
+
+function stopConfetti() {
+  if (confettiRAF) { cancelAnimationFrame(confettiRAF); confettiRAF = null; }
+  const canvas = document.getElementById('confettiCanvas');
+  const ctx    = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ══ Winner ══
 function showWinner(s) {
   const vA = s.vA || 0, vB = s.vB || 0;
   const total = vA + vB;
@@ -220,24 +265,29 @@ function showWinner(s) {
 
   const pA = Math.round(vA / total * 100);
   const pB = 100 - pA;
-  const winnerIsA = pA >= pB;
-
-  const name = (winnerIsA ? s.nameA : s.nameB || 'B').toUpperCase();
-  const pct  = (winnerIsA ? pA : pB) + '%';
-  const color = winnerIsA ? '#FFB800' : '#CC1100';
+  const isA  = pA >= pB;
+  const name  = (isA ? s.nameA : s.nameB || 'B').toUpperCase();
+  const pct   = (isA ? pA : pB) + '%';
+  const color = isA ? '#FFB800' : '#CC1100';
 
   document.getElementById('wWinnerName').textContent = name;
   document.getElementById('wWinnerPct').textContent  = pct;
-  document.getElementById('wWinnerFill').style.background = color;
-  document.getElementById('wWinnerFill').style.opacity = '0.55';
+  document.getElementById('wWinnerBg').style.background = color;
+
+  document.getElementById('wBox').classList.add('winner-mode');
   document.getElementById('wWinner').classList.add('show');
+
+  startConfetti(color);
 }
 
 function hideWinner() {
+  document.getElementById('wBox').classList.remove('winner-mode');
   document.getElementById('wWinner').classList.remove('show');
+  stopConfetti();
   winnerShown = false;
 }
 
+// ══ Render ══
 function render(s) {
   const vA = s.vA || 0, vB = s.vB || 0;
   const total = vA + vB;
@@ -267,7 +317,7 @@ function render(s) {
   // Remontada
   const leader = pA > pB ? 'a' : pA < pB ? 'b' : null;
   const diff   = Math.abs(pA - pB);
-  if (total >= 10 && prevLeader && leader && leader !== prevLeader && prevDiff >= 15) {
+  if (total >= 10 && prevLeader && leader && leader !== prevLeader && prevDiff >= 15 && !winnerShown) {
     const nm = (leader === 'a' ? (s.nameA||'A') : (s.nameB||'B')).toUpperCase();
     document.getElementById('wRemSub').textContent = nm + ' ESTÁ SUBIENDO';
     const rem = document.getElementById('wRemontada');
@@ -278,7 +328,7 @@ function render(s) {
   prevLeader = leader;
   prevDiff   = diff;
 
-  // Timer + winner animation
+  // Timer + winner
   const timerEl = document.getElementById('wTimer');
   if (s.timerEnd && s.timerEnd > 0) {
     const rem = Math.max(0, Math.ceil((s.timerEnd - Date.now()) / 1000));
@@ -288,20 +338,17 @@ function render(s) {
         ? Math.floor(rem/60) + ':' + String(rem%60).padStart(2,'0')
         : rem + 's';
       timerEl.className = 'w-timer' + (rem <= 10 ? ' urgent' : '');
-      // Si se estaba mostrando ganador y el timer se reinició, ocultar
       if (winnerShown && s.timerEnd !== lastTimerEnd) hideWinner();
     } else {
-      // Timer llegó a 0 — mostrar ganador
       timerEl.style.display = 'none';
       if (!winnerShown) {
-        winnerShown = true;
+        winnerShown  = true;
         lastTimerEnd = s.timerEnd;
         showWinner(s);
       }
     }
   } else {
     timerEl.style.display = 'none';
-    // Sin timer activo — ocultar winner si estaba
     if (winnerShown) hideWinner();
   }
 }
