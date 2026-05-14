@@ -2,313 +2,689 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Poll Overlay</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poll Widget v2 — YouTube + Kick</title>
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:transparent;font-family:'Inter',sans-serif;width:600px;overflow:hidden;}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --a:#00c2ff;
+  --b:#ff4d6d;
+  --bg:#0a0a0f;
+  --panel:#13131a;
+  --border:#2a2a3a;
+  --text:#e8e8f0;
+  --sub:#6b6b80;
+}
+body{background:transparent;font-family:'DM Sans',sans-serif;color:var(--text)}
 
-#pollOverlay{width:100%;display:none;opacity:0;transform:translateY(40px);transition:opacity 0.5s ease, transform 0.5s cubic-bezier(0.34,1.1,0.64,1);}
-#pollOverlay.visible{opacity:1;transform:translateY(0);}
-#pollOverlay.hiding{opacity:0;transform:translateY(40px);}
+/* ═══════════════ SETUP SCREEN ═══════════════ */
+#setup{
+  position:fixed;inset:0;background:#0a0a0f;
+  display:flex;align-items:center;justify-content:center;
+  z-index:1000;
+}
+.setup-box{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:16px;padding:32px;width:480px;max-width:95vw;
+}
+.setup-title{
+  font-family:'Bebas Neue',sans-serif;font-size:28px;
+  letter-spacing:2px;margin-bottom:6px;color:var(--text);
+}
+.setup-sub{font-size:13px;color:var(--sub);margin-bottom:24px}
+.section-label{
+  font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--sub);margin:20px 0 10px;
+  display:flex;align-items:center;gap:8px;
+}
+.section-label::before{content:'';flex:1;height:1px;background:var(--border)}
+.badge{
+  font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;
+  letter-spacing:1px;
+}
+.yt-badge{background:rgba(255,0,0,0.15);color:#ff5555;border:1px solid rgba(255,85,85,0.3)}
+.kick-badge{background:rgba(83,252,83,0.1);color:#53fc53;border:1px solid rgba(83,252,83,0.3)}
+.inp{
+  width:100%;background:#0d0d14;border:1px solid var(--border);
+  border-radius:8px;padding:10px 14px;color:var(--text);font-size:13px;
+  outline:none;transition:.2s;font-family:'DM Sans',sans-serif;
+  margin-bottom:8px;
+}
+.inp:focus{border-color:rgba(255,255,255,0.2);background:#111119}
+.inp-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kick-note{font-size:11px;color:var(--sub);margin-top:-4px;margin-bottom:8px;line-height:1.5}
+.kick-note a{color:var(--a);text-decoration:none}
+.btn-start{
+  width:100%;background:linear-gradient(135deg,#00c2ff22,#ff4d6d22);
+  border:1px solid rgba(255,255,255,0.12);color:var(--text);
+  padding:13px;border-radius:10px;font-size:15px;font-weight:600;
+  cursor:pointer;margin-top:20px;transition:.2s;letter-spacing:.5px;
+}
+.btn-start:hover{background:linear-gradient(135deg,#00c2ff33,#ff4d6d33);border-color:rgba(255,255,255,0.25)}
+#setupStatus{font-size:12px;text-align:center;margin-top:10px;min-height:18px;color:var(--sub)}
+#setupStatus.err{color:#ff5555}
+#setupStatus.ok{color:#53fc53}
 
-.poll-q{font-size:15px;font-weight:700;color:rgba(255,255,255,0.9);text-align:center;margin-bottom:10px;letter-spacing:-0.2px;line-height:1.3;text-shadow:0 1px 8px rgba(0,0,0,0.6);}
-
-.battle{height:180px;border-radius:10px;overflow:hidden;display:flex;position:relative;gap:2px;background:rgba(255,255,255,0.03);}
-
-.side{display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;min-width:0;position:relative;transition:width 0.85s cubic-bezier(0.34,1.08,0.64,1), opacity 0.3s;gap:2px;backdrop-filter:blur(3px);}
-
-#sideA{width:50%;background:rgba(255,185,0,0.45);border:1px solid rgba(255,185,0,0.55);border-right:none;border-radius:10px 0 0 10px;}
-#sideB{flex:1;background:rgba(220,30,10,0.45);border:1px solid rgba(220,30,10,0.55);border-left:none;border-radius:0 10px 10px 0;}
-
-.side-name{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90%;text-align:center;}
-.side-pct{font-size:58px;font-weight:900;color:#fff;line-height:1;letter-spacing:-3px;font-variant-numeric:tabular-nums;transition:font-size 0.5s cubic-bezier(0.34,1.1,0.64,1), transform 0.15s;white-space:nowrap;}
-.side-pct.pulse{animation:pctPulse 0.3s ease;}
-@keyframes pctPulse{0%{transform:scale(1);}50%{transform:scale(1.12);}100%{transform:scale(1);}}
-.side-votes{font-size:10px;font-weight:500;color:rgba(255,255,255,0.45);font-variant-numeric:tabular-nums;}
-.glow-a{text-shadow:0 0 12px rgba(255,200,0,0.7),0 0 28px rgba(255,150,0,0.35);}
-.glow-b{text-shadow:0 0 12px rgba(255,60,60,0.7),0 0 28px rgba(220,0,0,0.35);}
-
-/* Dramatic lead effect */
-.side-pct.dominating-a{text-shadow:0 0 20px rgba(255,200,0,1),0 0 50px rgba(255,150,0,0.7),0 0 80px rgba(255,100,0,0.4);}
-.side-pct.dominating-b{text-shadow:0 0 20px rgba(255,60,60,1),0 0 50px rgba(220,0,0,0.7),0 0 80px rgba(180,0,0,0.4);}
-
-.divider-glow{position:absolute;top:0;bottom:0;width:3px;margin-left:-1.5px;pointer-events:none;background:rgba(255,255,255,0.07);box-shadow:0 0 8px 2px rgba(255,200,0,0.15),0 0 8px 2px rgba(255,50,0,0.15);transition:left 0.85s cubic-bezier(0.34,1.08,0.64,1);z-index:10;}
+/* ═══════════════ OVERLAY ═══════════════ */
+#overlay{
+  display:none;
+  position:fixed;bottom:30px;left:30px;
+  width:360px;
+}
+.ov-wrap{
+  background:rgba(8,8,15,0.92);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px;padding:18px 20px 16px;
+  backdrop-filter:blur(20px);
+  box-shadow:0 20px 60px rgba(0,0,0,0.8);
+}
+.ov-question{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px;letter-spacing:1.5px;
+  color:#fff;margin-bottom:14px;line-height:1.1;
+}
+.ov-bars{display:flex;flex-direction:column;gap:9px}
+.ov-opt{position:relative}
+.ov-bar-bg{
+  height:44px;border-radius:8px;
+  background:rgba(255,255,255,0.04);
+  overflow:hidden;position:relative;
+}
+.ov-bar-fill{
+  height:100%;border-radius:8px;
+  transition:width .6s cubic-bezier(.4,0,.2,1);
+  position:absolute;left:0;top:0;
+}
+.fill-a{background:linear-gradient(90deg,rgba(0,194,255,.35),rgba(0,194,255,.15))}
+.fill-b{background:linear-gradient(90deg,rgba(255,77,109,.35),rgba(255,77,109,.15))}
+.ov-bar-content{
+  position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:space-between;
+  padding:0 12px;
+}
+.ov-opt-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px;letter-spacing:1.5px;
+}
+.name-a{color:var(--a)}
+.name-b{color:var(--b)}
+.ov-pct{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:22px;letter-spacing:1px;
+  transition:font-size .3s;
+}
+.pct-a{color:var(--a)}
+.pct-b{color:var(--b)}
+.ov-votes{
+  font-size:11px;color:var(--sub);font-weight:500;
+  margin-top:3px;padding-left:2px;
+}
+.ov-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:12px;padding-top:10px;
+  border-top:1px solid rgba(255,255,255,0.06);
+}
+.ov-total{font-size:11px;color:var(--sub);font-weight:500}
+.ov-sources{display:flex;gap:6px}
+.src-dot{
+  font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;
+  letter-spacing:.5px;
+}
+.src-yt{background:rgba(255,0,0,.15);color:#ff5555;border:1px solid rgba(255,85,85,.25)}
+.src-kick{background:rgba(83,252,83,.1);color:#53fc53;border:1px solid rgba(83,252,83,.25)}
+.src-dot.off{opacity:.25}
 
 /* Timer */
-.timer-wrap{text-align:center;margin-bottom:8px;}
-.timer-big{font-size:22px;font-weight:900;color:rgba(255,255,255,0.85);letter-spacing:2px;font-variant-numeric:tabular-nums;transition:font-size 0.3s;}
-.timer-big.urgent{color:#ff4040;animation:tblink 0.5s infinite;font-size:28px;}
-@keyframes tblink{0%,100%{opacity:1;}50%{opacity:.3;}}
-
-.bottom-row{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding:0 2px;}
-.total-votes{font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);letter-spacing:0.5px;}
-.vpm{font-size:11px;font-weight:600;color:rgba(255,255,255,0.35);letter-spacing:0.3px;}
-
-.vote-hint{display:flex;justify-content:center;gap:24px;margin-top:8px;transition:opacity 0.3s;}
-.hint-pill{font-size:10px;font-weight:600;letter-spacing:1px;padding:3px 10px;border-radius:99px;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(4px);background:rgba(0,0,0,0.2);}
-
-/* Comeback effect */
-#comebackBanner{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
-  background:rgba(0,0,0,0.8);border:2px solid #fff;border-radius:10px;
-  padding:8px 20px;text-align:center;z-index:25;pointer-events:none;
-  transition:transform 0.3s cubic-bezier(0.34,1.3,0.64,1), opacity 0.3s;opacity:0;
+.ov-timer{
+  font-family:'Bebas Neue',sans-serif;font-size:28px;
+  text-align:center;color:#fff;letter-spacing:3px;
+  margin-bottom:12px;display:none;
 }
-#comebackBanner.show{transform:translate(-50%,-50%) scale(1);opacity:1;}
-.comeback-text{font-size:18px;font-weight:900;color:#fff;letter-spacing:1px;}
-.comeback-sub{font-size:10px;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase;}
+.ov-timer.urgent{color:#ff4d6d;animation:pulse .5s infinite alternate}
+@keyframes pulse{to{opacity:.5}}
 
-/* Winner panel */
-#winnerPanel{
-  position:absolute;inset:0;border-radius:10px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  z-index:30;transform:translateY(100%);opacity:0;pointer-events:none;
+/* Remontada */
+.ov-comeback{
+  text-align:center;font-family:'Bebas Neue',sans-serif;
+  font-size:16px;letter-spacing:2px;color:#ffd700;
+  margin-top:8px;min-height:20px;
+  transition:opacity .3s;
 }
-#winnerPanel.enter{animation:slideIn 0.6s cubic-bezier(0.34,1.1,0.64,1) forwards;}
-#winnerPanel.exit{animation:slideOut 0.5s cubic-bezier(0.4,0,1,1) forwards;}
-@keyframes slideIn{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0%);opacity:1;}}
-@keyframes slideOut{from{transform:translateY(0%);opacity:1;}to{transform:translateY(100%);opacity:0;}}
 
-.winner-label{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.65);}
-.winner-name{font-size:38px;font-weight:900;color:#fff;letter-spacing:-1.5px;text-align:center;line-height:1;}
-.winner-pct{font-size:22px;font-weight:700;color:rgba(255,255,255,0.85);letter-spacing:-0.5px;}
-.winner-votes{font-size:13px;font-weight:500;color:rgba(255,255,255,0.5);}
-
-.confetti-piece{position:absolute;width:8px;height:8px;border-radius:2px;animation:confettiFall 1.8s ease-in forwards;pointer-events:none;}
-@keyframes confettiFall{0%{transform:translateY(-10px) rotate(0deg);opacity:1;}100%{transform:translateY(210px) rotate(720deg);opacity:0;}}
+/* ═══════════════ CONTROL PANEL ═══════════════ */
+#ctrl{
+  display:none;position:fixed;top:20px;right:20px;
+  width:280px;background:var(--panel);
+  border:1px solid var(--border);border-radius:12px;
+  padding:16px;z-index:999;
+}
+.ctrl-title{
+  font-family:'Bebas Neue',sans-serif;font-size:18px;
+  letter-spacing:1.5px;margin-bottom:12px;color:var(--text);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.ctrl-hint{font-size:10px;color:var(--sub);font-weight:400}
+.ctrl-inp{
+  width:100%;background:#0d0d14;border:1px solid var(--border);
+  border-radius:6px;padding:7px 10px;color:var(--text);font-size:12px;
+  outline:none;font-family:'DM Sans',sans-serif;margin-bottom:7px;
+}
+.ctrl-inp:focus{border-color:rgba(255,255,255,0.2)}
+.ctrl-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:7px}
+.ctrl-btn{
+  width:100%;background:#1a1a25;border:1px solid var(--border);
+  color:var(--text);padding:8px;border-radius:7px;
+  font-size:12px;font-weight:600;cursor:pointer;
+  transition:.15s;margin-bottom:5px;font-family:'DM Sans',sans-serif;
+}
+.ctrl-btn:hover{background:#22223a;border-color:#444}
+.ctrl-btn.danger{border-color:#ff4d6d44;color:#ff4d6d}
+.ctrl-btn.danger:hover{background:#ff4d6d22}
+.ctrl-btn.primary{border-color:#00c2ff44;color:#00c2ff}
+.ctrl-btn.primary:hover{background:#00c2ff11}
+.timer-row{display:flex;gap:5px;margin-bottom:7px}
+.t-btn{
+  flex:1;background:#1a1a25;border:1px solid var(--border);
+  color:var(--sub);padding:6px;border-radius:6px;
+  font-size:11px;cursor:pointer;transition:.15s;
+  font-family:'DM Sans',sans-serif;font-weight:600;
+}
+.t-btn:hover,.t-btn.active{background:#22223a;color:var(--text);border-color:#444}
+.ctrl-status{font-size:10px;color:var(--sub);text-align:center;margin-top:6px;min-height:14px}
+.ctrl-votes{
+  display:flex;justify-content:space-between;align-items:center;
+  background:#0d0d14;border-radius:8px;padding:10px 14px;margin-bottom:7px;
+}
+.cv-side{text-align:center}
+.cv-num{
+  font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;
+}
+.cv-num.a{color:var(--a)} .cv-num.b{color:var(--b)}
+.cv-lbl{font-size:10px;color:var(--sub);font-weight:600;letter-spacing:1px}
+.cv-total{font-size:10px;color:var(--sub);text-align:center}
 </style>
 </head>
 <body>
-<div id="pollOverlay">
-  <div class="timer-wrap" id="timerWrap" style="display:none;">
-    <div class="timer-big" id="timerDisplay"></div>
+
+<!-- SETUP -->
+<div id="setup">
+<div class="setup-box">
+  <div class="setup-title">POLL WIDGET V2</div>
+  <div class="setup-sub">YouTube + Kick • Votación con A/B (mayúscula o minúscula)</div>
+
+  <div class="section-label"><span class="badge yt-badge">YOUTUBE</span></div>
+  <input class="inp" id="sApiKey" placeholder="API Key de YouTube Data v3" />
+  <input class="inp" id="sChannelId" placeholder="Channel ID (UCxxxxxxxxxxxxxxxx)" />
+
+  <div class="section-label"><span class="badge kick-badge">KICK</span></div>
+  <input class="inp" id="sKickUser" placeholder="Tu usuario en Kick (ej: sdsam01)" />
+  <p class="kick-note">
+    Si no conecta automáticamente, abre <a href="#" onclick="openKickApi()">kick.com/api/v1/channels/TUUSUARIO</a> en tu navegador, busca <strong>"id"</strong> dentro de <strong>"chatroom"</strong> y pégalo aquí:
+  </p>
+  <input class="inp" id="sKickRoom" placeholder="Chatroom ID de Kick (opcional, si falla auto)" />
+
+  <div class="section-label">ENCUESTA INICIAL</div>
+  <input class="inp" id="sQuestion" placeholder="¿Quién elige mejor hoy?" value="¿Quién elige mejor hoy?" />
+  <div class="inp-row">
+    <input class="inp" id="sNameA" placeholder="Opción A" value="SAM" />
+    <input class="inp" id="sNameB" placeholder="Opción B" value="SMA" />
   </div>
-  <div class="poll-q" id="dQ">¿Qué eligen?</div>
-  <div class="battle" id="battleArea">
-    <div class="side" id="sideA">
-      <div class="side-name" id="dnA"></div>
-      <div class="side-pct glow-a" id="dpA">50%</div>
-      <div class="side-votes" id="dvA">0 votos</div>
+
+  <button class="btn-start" onclick="startWidget()">INICIAR WIDGET</button>
+  <div id="setupStatus">Ingresa tus datos y presiona iniciar</div>
+</div>
+</div>
+
+<!-- OVERLAY -->
+<div id="overlay">
+<div class="ov-wrap">
+  <div class="ov-timer" id="ovTimer">30</div>
+  <div class="ov-question" id="ovQ">¿Quién elige mejor hoy?</div>
+  <div class="ov-bars">
+    <!-- A -->
+    <div class="ov-opt">
+      <div class="ov-bar-bg">
+        <div class="ov-bar-fill fill-a" id="barA" style="width:50%"></div>
+        <div class="ov-bar-content">
+          <span class="ov-opt-name name-a" id="ovNameA">SAM</span>
+          <span class="ov-pct pct-a" id="ovPctA">50%</span>
+        </div>
+      </div>
+      <div class="ov-votes"><span id="ovVotesA">0</span> votos</div>
     </div>
-    <div class="side" id="sideB">
-      <div class="side-name" id="dnB"></div>
-      <div class="side-pct glow-b" id="dpB">50%</div>
-      <div class="side-votes" id="dvB">0 votos</div>
-    </div>
-    <div class="divider-glow" id="divGlow"></div>
-    <div id="comebackBanner">
-      <div class="comeback-text" id="comebackText">¡REMONTADA!</div>
-      <div class="comeback-sub" id="comebackSub"></div>
-    </div>
-    <div id="winnerPanel">
-      <div class="winner-label">¡GANADOR!</div>
-      <div class="winner-name" id="winnerName"></div>
-      <div class="winner-pct" id="winnerPct"></div>
-      <div class="winner-votes" id="winnerVotes"></div>
+    <!-- B -->
+    <div class="ov-opt">
+      <div class="ov-bar-bg">
+        <div class="ov-bar-fill fill-b" id="barB" style="width:50%"></div>
+        <div class="ov-bar-content">
+          <span class="ov-opt-name name-b" id="ovNameB">SMA</span>
+          <span class="ov-pct pct-b" id="ovPctB">50%</span>
+        </div>
+      </div>
+      <div class="ov-votes"><span id="ovVotesB">0</span> votos</div>
     </div>
   </div>
-  <div class="bottom-row">
-    <span class="total-votes" id="totalVotes">0 votos totales</span>
-    <span class="vpm" id="vpmDisplay"></span>
+  <div class="ov-comeback" id="ovComeback"></div>
+  <div class="ov-footer">
+    <div class="ov-total" id="ovTotal">0 votos totales</div>
+    <div class="ov-sources">
+      <span class="src-dot src-yt off" id="dotYT">▶ YT</span>
+      <span class="src-dot src-kick off" id="dotKick">⚡ KICK</span>
+    </div>
   </div>
-  <div class="vote-hint" id="voteHint">
-    <span class="hint-pill" id="hintA">escribe A para votar</span>
-    <span class="hint-pill" id="hintB">escribe B para votar</span>
+</div>
+</div>
+
+<!-- CONTROL PANEL -->
+<div id="ctrl">
+<div class="ctrl-title">
+  CONTROL
+  <span class="ctrl-hint">Alt+C para ocultar</span>
+</div>
+
+<!-- Contador en vivo -->
+<div class="ctrl-votes">
+  <div class="cv-side">
+    <div class="cv-num a" id="cvA">0</div>
+    <div class="cv-lbl" id="cvNameA">SAM</div>
+  </div>
+  <div>
+    <div class="cv-total" id="cvTotal">0 total</div>
+  </div>
+  <div class="cv-side">
+    <div class="cv-num b" id="cvB">0</div>
+    <div class="cv-lbl" id="cvNameB">SMA</div>
   </div>
 </div>
 
+<input class="ctrl-inp" id="ctrlQ" placeholder="Pregunta" oninput="updateQ()" />
+<div class="ctrl-row">
+  <input class="ctrl-inp" id="ctrlA" placeholder="Opción A" oninput="updateNames()" style="margin:0" />
+  <input class="ctrl-inp" id="ctrlB" placeholder="Opción B" oninput="updateNames()" style="margin:0" />
+</div>
+
+<div class="timer-row">
+  <button class="t-btn" onclick="setTimer(30)">30s</button>
+  <button class="t-btn" onclick="setTimer(60)">60s</button>
+  <button class="t-btn" onclick="setTimer(90)">90s</button>
+  <button class="t-btn" onclick="setTimer(0)">OFF</button>
+</div>
+
+<button class="ctrl-btn primary" onclick="startTimer()">▶ INICIAR TIMER</button>
+<button class="ctrl-btn" onclick="resetVotes()">↺ RESET VOTOS</button>
+<button class="ctrl-btn danger" onclick="resetAll()">✕ RESET COMPLETO</button>
+<div class="ctrl-status" id="ctrlStatus"></div>
+</div>
+
 <script>
-const $ = id => document.getElementById(id);
-const KEY = 'poll_state';
-let winnerShown = false;
-let lastData = null;
-let lastPctA = 50;
-let voteTimestamps = [];
-let comebackTimeout = null;
+// ══════════════════════════════════════════
+//  ESTADO
+// ══════════════════════════════════════════
+const s = {
+  votes: { a: 0, b: 0 },
+  voters: {},          // userId → 'a' | 'b'
+  ytConnected: false,
+  kickConnected: false,
+  timer: { duration: 30, remaining: 0, running: false, interval: null },
+  prevLeader: null,
+  prevDiff: 0,
+};
+let cfg = {};
 
-function pA(a,b){ const t=a+b; return t===0?50:Math.round((a/t)*100); }
+// ══════════════════════════════════════════
+//  SETUP
+// ══════════════════════════════════════════
+function openKickApi() {
+  const u = document.getElementById('sKickUser').value.trim() || 'TUUSUARIO';
+  window.open(`https://kick.com/api/v1/channels/${u}`, '_blank');
+  return false;
+}
 
-function spawnConfetti(color) {
-  const area = $('battleArea');
-  for(let i=0;i<18;i++){
-    const el=document.createElement('div');
-    el.className='confetti-piece';
-    el.style.cssText=`left:${Math.random()*100}%;top:0;background:${color};animation-delay:${Math.random()*0.6}s;animation-duration:${1.2+Math.random()*0.8}s;`;
-    area.appendChild(el);
-    setTimeout(()=>el.remove(),2500);
+async function startWidget() {
+  const apiKey    = document.getElementById('sApiKey').value.trim();
+  const channelId = document.getElementById('sChannelId').value.trim();
+  const kickUser  = document.getElementById('sKickUser').value.trim();
+  const kickRoom  = document.getElementById('sKickRoom').value.trim();
+  const question  = document.getElementById('sQuestion').value.trim();
+  const nameA     = document.getElementById('sNameA').value.trim() || 'SAM';
+  const nameB     = document.getElementById('sNameB').value.trim() || 'SMA';
+
+  if (!apiKey || !channelId) {
+    setSetupStatus('⚠️ API Key y Channel ID son obligatorios', 'err'); return;
+  }
+
+  cfg = { apiKey, channelId, kickUser, kickRoom, nameA, nameB };
+
+  setSetupStatus('Conectando a YouTube...', '');
+
+  // Inicializar UI
+  document.getElementById('ovQ').textContent     = question || '¿Quién elige mejor?';
+  document.getElementById('ovNameA').textContent = nameA.toUpperCase();
+  document.getElementById('ovNameB').textContent = nameB.toUpperCase();
+  document.getElementById('ctrlQ').value         = question;
+  document.getElementById('ctrlA').value         = nameA;
+  document.getElementById('ctrlB').value         = nameB;
+  document.getElementById('cvNameA').textContent = nameA.toUpperCase();
+  document.getElementById('cvNameB').textContent = nameB.toUpperCase();
+
+  // Conectar YouTube
+  const ytOk = await initYouTube(apiKey, channelId);
+  if (!ytOk) return;
+
+  // Conectar Kick (si hay usuario o roomId)
+  if (kickUser || kickRoom) {
+    setSetupStatus('YouTube ✅ — Conectando Kick...', 'ok');
+    await initKick(kickUser, kickRoom);
+  }
+
+  // Mostrar overlay y panel
+  document.getElementById('setup').style.display  = 'none';
+  document.getElementById('overlay').style.display = 'block';
+  toggleCtrl(true);
+  render();
+}
+
+function setSetupStatus(msg, type) {
+  const el = document.getElementById('setupStatus');
+  el.textContent = msg;
+  el.className = type || '';
+}
+
+// ══════════════════════════════════════════
+//  YOUTUBE — polling robusto
+// ══════════════════════════════════════════
+let ytChatId = null;
+let ytNextToken = '';
+let ytPollTimeout = null;
+
+async function initYouTube(apiKey, channelId) {
+  try {
+    // 1. Buscar stream en vivo
+    const sRes = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`
+    );
+    const sData = await sRes.json();
+    if (sData.error) throw new Error(sData.error.message);
+    if (!sData.items?.length) throw new Error('No hay stream en vivo en tu canal. ¿Ya iniciaste el broadcast?');
+
+    const videoId = sData.items[0].id.videoId;
+
+    // 2. Obtener liveChatId
+    const vRes = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${apiKey}`
+    );
+    const vData = await vRes.json();
+    if (vData.error) throw new Error(vData.error.message);
+
+    ytChatId = vData?.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
+    if (!ytChatId) throw new Error('No se pudo obtener el chat en vivo.');
+
+    s.ytConnected = true;
+    document.getElementById('dotYT').classList.remove('off');
+    setSetupStatus('YouTube conectado ✅', 'ok');
+
+    // 3. Iniciar polling
+    pollYouTube();
+    return true;
+  } catch(e) {
+    setSetupStatus('❌ YouTube: ' + e.message, 'err');
+    return false;
   }
 }
 
-function showWinner(data) {
-  if(winnerShown) return;
-  winnerShown = true;
-  const pa=pA(data.vA,data.vB), pb=100-pa, t=data.vA+data.vB;
-  const isA=pa>=pb;
-  const name=isA?data.nameA:data.nameB;
-  const pct=isA?pa:pb;
-  const votes=isA?data.vA:data.vB;
-  const color=isA?'rgba(255,185,0,0.45)':'rgba(220,30,10,0.45)';
-  const glow=isA?'#FFB800':'#CC1100';
+async function pollYouTube() {
+  if (!ytChatId) return;
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/liveChat/messages` +
+      `?liveChatId=${ytChatId}&part=snippet,authorDetails&key=${cfg.apiKey}` +
+      `&maxResults=200${ytNextToken ? '&pageToken='+ytNextToken : ''}`;
 
-  $('winnerName').textContent=name;
-  $('winnerPct').textContent=pct+'%';
-  $('winnerVotes').textContent=votes+' votos de '+t+' totales';
-  $('winnerName').style.textShadow=`0 0 25px ${glow}, 0 0 50px ${glow}`;
-  $('winnerPanel').style.background=color;
-  $('winnerPanel').style.backdropFilter='blur(6px)';
+    const res  = await fetch(url);
+    const data = await res.json();
 
-  $('sideA').style.opacity='0';
-  $('sideB').style.opacity='0';
-  $('divGlow').style.opacity='0';
-  $('voteHint').style.opacity='0';
-  $('timerWrap').style.opacity='0';
-
-  $('winnerPanel').classList.remove('exit');
-  $('winnerPanel').classList.add('enter');
-
-  setTimeout(()=>spawnConfetti(glow),200);
-  setTimeout(()=>spawnConfetti('#fff'),500);
-  setTimeout(()=>spawnConfetti(glow),900);
-}
-
-function hideWinner() {
-  const panel=$('winnerPanel');
-  panel.classList.remove('enter');
-  panel.classList.add('exit');
-  setTimeout(()=>{
-    panel.classList.remove('exit');
-    panel.style.transform='translateY(100%)';
-    panel.style.opacity='0';
-    $('sideA').style.opacity='1';
-    $('sideB').style.opacity='1';
-    $('divGlow').style.opacity='1';
-    $('voteHint').style.opacity='1';
-    $('timerWrap').style.opacity='1';
-    winnerShown=false;
-  },500);
-}
-
-function checkComeback(data) {
-  const newPctA = pA(data.vA, data.vB);
-  const diff = newPctA - lastPctA;
-  const losingA = lastPctA < 50 && diff > 0;
-  const losingB = lastPctA > 50 && diff < 0;
-
-  if((losingA && diff >= 8) || (losingB && Math.abs(diff) >= 8)) {
-    const name = losingA ? data.nameA : data.nameB;
-    $('comebackText').textContent = '¡REMONTADA!';
-    $('comebackSub').textContent = (name||'').toUpperCase() + ' ESTÁ SUBIENDO';
-    $('comebackBanner').classList.add('show');
-    if(comebackTimeout) clearTimeout(comebackTimeout);
-    comebackTimeout = setTimeout(()=>$('comebackBanner').classList.remove('show'), 3000);
-  }
-  lastPctA = newPctA;
-}
-
-function calcVPM() {
-  const now = Date.now();
-  voteTimestamps = voteTimestamps.filter(t => now-t < 60000);
-  return voteTimestamps.length;
-}
-
-function formatTime(sec) {
-  if(sec >= 60){ const m=Math.floor(sec/60),s=sec%60; return m+':'+(s<10?'0':'')+s; }
-  return sec+'s';
-}
-
-function render(data) {
-  if(!data||!data.active){
-    if($('pollOverlay').classList.contains('visible')){
-      $('pollOverlay').classList.remove('visible');
-      $('pollOverlay').classList.add('hiding');
-      setTimeout(()=>{ $('pollOverlay').style.display='none'; $('pollOverlay').classList.remove('hiding'); },500);
+    if (data.error) { console.warn('YT poll error:', data.error.message); }
+    else {
+      ytNextToken = data.nextPageToken || ytNextToken;
+      // Procesar TODOS los mensajes del batch
+      for (const item of (data.items || [])) {
+        const msg    = item.snippet.displayMessage;
+        const userId = 'yt_' + item.authorDetails.channelId;
+        processVote(msg, userId);
+      }
+      // Usar el intervalo que recomienda la API (mínimo 2s)
+      const interval = Math.max(2000, data.pollingIntervalMillis || 5000);
+      ytPollTimeout = setTimeout(pollYouTube, interval);
     }
-    if(winnerShown) hideWinner();
+  } catch(e) {
+    console.warn('YT poll catch:', e);
+    ytPollTimeout = setTimeout(pollYouTube, 5000);
+  }
+}
+
+// ══════════════════════════════════════════
+//  KICK — WebSocket via Pusher
+// ══════════════════════════════════════════
+async function initKick(kickUser, kickRoomId) {
+  let roomId = kickRoomId;
+
+  // Intentar obtener chatroom_id automáticamente
+  if (!roomId && kickUser) {
+    try {
+      const res  = await fetch(`https://kick.com/api/v1/channels/${kickUser}`);
+      const data = await res.json();
+      roomId = data?.chatroom?.id || data?.id;
+    } catch(e) {
+      console.warn('Kick API fetch failed (CORS?):', e.message);
+    }
+  }
+
+  if (!roomId) {
+    setCtrlStatus('⚠️ Kick no conectado — ingresa el Chatroom ID manualmente', 'warn');
     return;
   }
 
-  if($('pollOverlay').style.display==='none'||$('pollOverlay').style.display===''){
-    $('pollOverlay').style.display='block';
-    requestAnimationFrame(()=>requestAnimationFrame(()=>$('pollOverlay').classList.add('visible')));
-    winnerShown=false;
-  }
-
-  const pa=pA(data.vA,data.vB), pb=100-pa, t=data.vA+data.vB;
-
-  // Check comeback
-  if(lastData && (data.vA+data.vB) > (lastData.vA+lastData.vB)) {
-    const added = (data.vA+data.vB)-(lastData.vA+lastData.vB);
-    for(let i=0;i<added;i++) voteTimestamps.push(Date.now());
-    checkComeback(data);
-  }
-  lastData = {...data};
-
-  $('dQ').textContent  = data.question||'¿Qué eligen?';
-  $('dnA').textContent = (data.nameA||'A').toUpperCase();
-  $('dnB').textContent = (data.nameB||'B').toUpperCase();
-  $('hintA').textContent = 'A → '+(data.nameA||'A');
-  $('hintB').textContent = 'B → '+(data.nameB||'B');
-  $('dvA').textContent = data.vA+(data.vA===1?' voto':' votos');
-  $('dvB').textContent = data.vB+(data.vB===1?' voto':' votos');
-  $('totalVotes').textContent = t+' votos totales';
-
-  // VPM
-  const vpm = calcVPM();
-  $('vpmDisplay').textContent = vpm > 0 ? vpm+' votos/min' : '';
-
-  // Dramatic size transition
-  const diff = Math.abs(pa-pb);
-  let sizeA, sizeB;
-  if(t===0){ sizeA=sizeB='58px'; }
-  else if(diff >= 30){ sizeA=pa>pb?'72px':'38px'; sizeB=pb>pa?'72px':'38px'; }
-  else if(diff >= 15){ sizeA=pa>pb?'66px':'44px'; sizeB=pb>pa?'66px':'44px'; }
-  else { sizeA=sizeB='58px'; }
-
-  const pctAEl=$('dpA'), pctBEl=$('dpB');
-
-  // Pulse on new vote
-  const prevT = lastData ? lastData.vA+lastData.vB : 0;
-  if(t > prevT) {
-    if(data.vA > (lastData?.vA||0)){ pctAEl.classList.remove('pulse'); void pctAEl.offsetWidth; pctAEl.classList.add('pulse'); }
-    if(data.vB > (lastData?.vB||0)){ pctBEl.classList.remove('pulse'); void pctBEl.offsetWidth; pctBEl.classList.add('pulse'); }
-  }
-
-  pctAEl.textContent=pa+'%'; pctBEl.textContent=pb+'%';
-  pctAEl.style.fontSize=sizeA; pctBEl.style.fontSize=sizeB;
-
-  // Dominating glow
-  pctAEl.className='side-pct glow-a'+(pa>=70?' dominating-a':'');
-  pctBEl.className='side-pct glow-b'+(pb>=70?' dominating-b':'');
-
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    $('sideA').style.width=pa+'%';
-    $('divGlow').style.left=pa+'%';
-  }));
-
-  // Timer
-  if(data.timerEnd && data.timerEnd > 0) {
-    const remaining = Math.max(0, Math.ceil((data.timerEnd-Date.now())/1000));
-    $('timerWrap').style.display = 'block';
-    $('timerDisplay').textContent = remaining > 0 ? formatTime(remaining) : '';
-    $('timerDisplay').className = 'timer-big'+(remaining<=5&&remaining>0?' urgent':'');
-    if(remaining===0 && !winnerShown && t>0) showWinner(data);
-  } else {
-    $('timerWrap').style.display='none';
-  }
-
-  if(!data.active){ winnerShown=false; $('winnerPanel').classList.remove('enter','exit'); }
-}
-
-function sync() {
   try {
-    const raw=localStorage.getItem(KEY);
-    render(raw?JSON.parse(raw):null);
-  } catch(e){}
+    Pusher.logToConsole = false;
+    const pusher = new Pusher('32cbd69e4b950bf97679', {
+      cluster: 'us2',
+      forceTLS: true,
+      disableStats: true,
+    });
+
+    const channel = pusher.subscribe(`chatrooms.${roomId}.v2`);
+
+    channel.bind('pusher:subscription_succeeded', () => {
+      s.kickConnected = true;
+      document.getElementById('dotKick').classList.remove('off');
+      setCtrlStatus('Kick conectado ✅');
+    });
+
+    channel.bind('pusher:subscription_error', (err) => {
+      setCtrlStatus('⚠️ Kick error: ' + JSON.stringify(err));
+    });
+
+    // Mensaje de chat de Kick
+    channel.bind('App\\Events\\ChatMessageEvent', (data) => {
+      const msg    = data?.content || '';
+      const userId = 'kick_' + (data?.sender?.id || Math.random());
+      processVote(msg, userId);
+    });
+
+  } catch(e) {
+    setCtrlStatus('⚠️ Kick: ' + e.message);
+  }
 }
 
-sync();
-setInterval(sync,500);
+// ══════════════════════════════════════════
+//  PROCESAMIENTO DE VOTOS
+//  Case-insensitive: a, A, b, B → cuenta
+//  Un voto por usuario, no importa si repite
+// ══════════════════════════════════════════
+function processVote(msg, userId) {
+  if (!msg || !userId) return;
+  const clean = msg.trim().toLowerCase();
+
+  // Solo acepta exactamente "a" o "b" (ignora "aa", "abc", etc.)
+  if (clean !== 'a' && clean !== 'b') return;
+
+  // Anti-doble voto: si ya votó, ignorar
+  if (s.voters[userId]) return;
+
+  // Registrar voto
+  s.voters[userId] = clean;
+  if (clean === 'a') s.votes.a++;
+  else               s.votes.b++;
+
+  render();
+}
+
+// ══════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════
+function render() {
+  const { a, b } = s.votes;
+  const total = a + b;
+  const pA = total === 0 ? 50 : Math.round(a / total * 100);
+  const pB = total === 0 ? 50 : 100 - pA;
+
+  // Overlay
+  document.getElementById('barA').style.width    = pA + '%';
+  document.getElementById('barB').style.width    = pB + '%';
+  document.getElementById('ovPctA').textContent  = pA + '%';
+  document.getElementById('ovPctB').textContent  = pB + '%';
+  document.getElementById('ovVotesA').textContent = a;
+  document.getElementById('ovVotesB').textContent = b;
+  document.getElementById('ovTotal').textContent  = total + (total === 1 ? ' voto total' : ' votos totales');
+
+  // Tamaño dinámico de porcentajes (ganador más grande)
+  const pctA = document.getElementById('ovPctA');
+  const pctB = document.getElementById('ovPctB');
+  if (total === 0) {
+    pctA.style.fontSize = pctB.style.fontSize = '22px';
+  } else if (pA > pB) {
+    pctA.style.fontSize = '26px'; pctB.style.fontSize = '18px';
+  } else if (pB > pA) {
+    pctB.style.fontSize = '26px'; pctA.style.fontSize = '18px';
+  } else {
+    pctA.style.fontSize = pctB.style.fontSize = '22px';
+  }
+
+  // Comeback detection
+  const diff = Math.abs(pA - pB);
+  const leader = pA > pB ? 'a' : pA < pB ? 'b' : null;
+  const comebackEl = document.getElementById('ovComeback');
+  if (total >= 10 && s.prevLeader && leader && leader !== s.prevLeader && s.prevDiff >= 15) {
+    const name = leader === 'a' ? document.getElementById('ovNameA').textContent : document.getElementById('ovNameB').textContent;
+    comebackEl.textContent = `⚡ ¡REMONTADA DE ${name}!`;
+    setTimeout(() => { comebackEl.textContent = ''; }, 4000);
+  }
+  s.prevLeader = leader;
+  s.prevDiff   = diff;
+
+  // Control panel
+  document.getElementById('cvA').textContent    = a;
+  document.getElementById('cvB').textContent    = b;
+  document.getElementById('cvTotal').textContent = total + ' total';
+}
+
+// ══════════════════════════════════════════
+//  CONTROL PANEL
+// ══════════════════════════════════════════
+function toggleCtrl(force) {
+  const el = document.getElementById('ctrl');
+  el.style.display = (force === true || el.style.display === 'none') ? 'block' : 'none';
+}
+
+function updateQ() {
+  document.getElementById('ovQ').textContent = document.getElementById('ctrlQ').value || '¿Quién elige mejor?';
+}
+
+function updateNames() {
+  const a = document.getElementById('ctrlA').value || 'SAM';
+  const b = document.getElementById('ctrlB').value || 'SMA';
+  document.getElementById('ovNameA').textContent = a.toUpperCase();
+  document.getElementById('ovNameB').textContent = b.toUpperCase();
+  document.getElementById('cvNameA').textContent = a.toUpperCase();
+  document.getElementById('cvNameB').textContent = b.toUpperCase();
+}
+
+function resetVotes() {
+  s.votes   = { a: 0, b: 0 };
+  s.voters  = {};
+  s.prevLeader = null;
+  s.prevDiff   = 0;
+  document.getElementById('ovComeback').textContent = '';
+  render();
+  setCtrlStatus('Votos reseteados ✅');
+  setTimeout(() => setCtrlStatus(''), 2000);
+}
+
+function resetAll() {
+  resetVotes();
+  document.getElementById('ctrlQ').value = '¿Quién elige mejor hoy?';
+  document.getElementById('ctrlA').value = cfg.nameA || 'SAM';
+  document.getElementById('ctrlB').value = cfg.nameB || 'SMA';
+  updateQ(); updateNames();
+}
+
+function setCtrlStatus(msg) {
+  document.getElementById('ctrlStatus').textContent = msg;
+}
+
+// ══════════════════════════════════════════
+//  TIMER
+// ══════════════════════════════════════════
+let timerDuration = 30;
+
+function setTimer(sec) {
+  timerDuration = sec;
+  document.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active'));
+  if (sec > 0) {
+    event.target.classList.add('active');
+    document.getElementById('ovTimer').textContent = sec;
+  }
+  // Detener si estaba corriendo
+  if (s.timer.running) {
+    clearInterval(s.timer.interval);
+    s.timer.running = false;
+    document.getElementById('ovTimer').style.display = 'none';
+  }
+}
+
+function startTimer() {
+  if (timerDuration === 0) return;
+  clearInterval(s.timer.interval);
+  s.timer.remaining = timerDuration;
+  s.timer.running   = true;
+  const el = document.getElementById('ovTimer');
+  el.style.display = 'block';
+  el.textContent   = timerDuration;
+  el.classList.remove('urgent');
+
+  s.timer.interval = setInterval(() => {
+    s.timer.remaining--;
+    el.textContent = s.timer.remaining;
+    if (s.timer.remaining <= 5) el.classList.add('urgent');
+    if (s.timer.remaining <= 0) {
+      clearInterval(s.timer.interval);
+      s.timer.running = false;
+      el.textContent  = 'FIN';
+      setTimeout(() => { el.style.display = 'none'; el.classList.remove('urgent'); }, 2000);
+    }
+  }, 1000);
+}
+
+// ══════════════════════════════════════════
+//  KEYBOARD
+// ══════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.altKey && e.key.toLowerCase() === 'c') toggleCtrl();
+});
+
+// Init render
+render();
 </script>
 </body>
 </html>
