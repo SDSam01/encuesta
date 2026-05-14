@@ -19,9 +19,10 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 .w-timer{
   font-family:'Bebas Neue',sans-serif;
   font-size:36px;color:#fff;letter-spacing:2px;line-height:1;
+  text-shadow:0 0 20px rgba(255,255,255,.9), 0 0 40px rgba(255,255,255,.4), 0 2px 8px rgba(0,0,0,.9);
   text-shadow:0 2px 12px rgba(0,0,0,.9);display:none;
 }
-.w-timer.urgent{color:#ff4444;animation:tblink .5s infinite;}
+.w-timer.urgent{color:#ff4444;text-shadow:0 0 20px rgba(255,68,68,1), 0 0 50px rgba(255,68,68,.6);animation:tblink .5s infinite;}
 @keyframes tblink{0%,100%{opacity:1;}50%{opacity:.3;}}
 .w-question{
   font-family:'Bebas Neue',sans-serif;
@@ -34,18 +35,20 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 .w-box{
   position:relative;height:120px;border-radius:12px;
   overflow:hidden;background:rgba(10,10,10,0.6);
-  box-shadow:0 8px 40px rgba(0,0,0,.7);
+  box-shadow:0 8px 40px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.06), 0 0 30px rgba(255,150,0,.12), 0 0 60px rgba(200,0,0,.08);
 }
 
 /* Fills normales */
 .fill-a{
   position:absolute;top:0;left:0;bottom:0;
   background:#FFB800;opacity:.38;
+  box-shadow:inset -6px 0 24px rgba(255,184,0,.7), inset 0 0 40px rgba(255,220,0,.2);
   transition:width .7s cubic-bezier(.4,0,.2,1), opacity .4s;z-index:1;
 }
 .fill-b{
   position:absolute;top:0;right:0;bottom:0;
   background:#CC1100;opacity:.38;
+  box-shadow:inset 6px 0 24px rgba(220,30,0,.7), inset 0 0 40px rgba(255,40,0,.2);
   transition:width .7s cubic-bezier(.4,0,.2,1), opacity .4s;z-index:1;
 }
 /* Ocultar fills cuando hay ganador */
@@ -68,13 +71,13 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 .w-name{
   font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;
   color:#fff;line-height:1;margin-bottom:2px;
-  text-shadow:0 1px 6px rgba(0,0,0,.6);
+  text-shadow:0 0 15px rgba(255,184,0,.7), 0 1px 6px rgba(0,0,0,.8);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
 }
 .w-pct{
   font-family:'Bebas Neue',sans-serif;font-size:54px;color:#fff;
   letter-spacing:-1px;line-height:1;
-  text-shadow:0 2px 10px rgba(0,0,0,.4);transition:font-size .3s;
+  text-shadow:0 0 20px rgba(255,184,0,.9), 0 0 40px rgba(255,184,0,.4), 0 2px 8px rgba(0,0,0,.6);transition:font-size .3s;
 }
 .w-pct.winner{font-size:62px;}
 .w-pct.loser{font-size:42px;color:rgba(255,255,255,.55);}
@@ -92,7 +95,7 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
   pointer-events:none;white-space:nowrap;
 }
 .w-remontada.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
-.w-rem-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:#FFD000;letter-spacing:2px;}
+.w-rem-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:#FFD000;letter-spacing:2px;text-shadow:0 0 15px rgba(255,208,0,.9), 0 0 30px rgba(255,208,0,.5);}
 .w-rem-sub{font-size:10px;color:rgba(255,255,255,.6);font-weight:700;letter-spacing:1px;text-transform:uppercase;}
 
 /* ══ WINNER ══ */
@@ -304,6 +307,10 @@ function render(s) {
   document.getElementById('wTotal').textContent     = total + (total === 1 ? ' voto total' : ' votos totales');
 
   document.getElementById('fillA').style.width = pA + '%';
+  document.getElementById('wPctA').style.textShadow = '0 0 20px rgba(255,184,0,.95), 0 0 45px rgba(255,184,0,.5), 0 2px 8px rgba(0,0,0,.8)';
+  document.getElementById('wPctB').style.textShadow = '0 0 20px rgba(220,30,0,.95), 0 0 45px rgba(220,30,0,.5), 0 2px 8px rgba(0,0,0,.8)';
+  document.getElementById('wNameA').style.textShadow = '0 0 14px rgba(255,184,0,.7), 0 1px 4px rgba(0,0,0,.9)';
+  document.getElementById('wNameB').style.textShadow = '0 0 14px rgba(220,30,0,.7), 0 1px 4px rgba(0,0,0,.9)';
   document.getElementById('fillB').style.width = pB + '%';
 
   // Tamaño dinámico
