@@ -9,22 +9,13 @@
 body{background:#0f0f0f;font-family:'Inter',sans-serif;color:#fff;padding:16px;max-width:420px;margin:0 auto;}
 h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 .sub{font-size:11px;color:rgba(255,255,255,.3);margin-bottom:16px;}
-
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
 .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;}
 .card-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:10px;}
-
-/* Hearts preview */
-.hearts{display:flex;gap:4px;margin-bottom:12px;justify-content:center;}
-.heart-wrap{width:28px;height:28px;position:relative;}
-.heart-svg{width:28px;height:28px;}
-
-/* HP display */
+.hearts{display:flex;gap:4px;margin-bottom:10px;justify-content:center;}
+.heart-wrap{width:28px;height:28px;}
 .hp-num{font-size:28px;font-weight:900;text-align:center;margin-bottom:10px;font-variant-numeric:tabular-nums;}
-.hp-danny{color:#FF4444;}
-.hp-chat{color:#44AAFF;}
-
-/* Buttons */
+.hp-danny{color:#FF4444;} .hp-chat{color:#FF4444;}
 .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px;}
 .btn{padding:8px 6px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid;transition:.15s;font-family:'Inter',sans-serif;text-align:center;}
 .btn-dmg{background:rgba(255,68,68,.12);border-color:rgba(255,68,68,.3);color:#FF6666;}
@@ -35,17 +26,11 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 .btn-heal:hover{background:rgba(68,255,68,.18);}
 .btn-reset{width:100%;padding:8px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.4);transition:.15s;font-family:'Inter',sans-serif;margin-top:4px;}
 .btn-reset:hover{background:rgba(255,255,255,.1);}
-
 .btn-full-reset{width:100%;padding:10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.35);transition:.15s;font-family:'Inter',sans-serif;}
 .btn-full-reset:hover{background:rgba(255,255,255,.1);color:#fff;}
-
 .status{font-size:11px;text-align:center;margin-top:10px;min-height:16px;color:rgba(255,255,255,.3);}
-.status.ok{color:#4ade80;}
-.status.dead{color:#FF4444;}
-
-.dead-banner{display:none;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:1px;margin-bottom:8px;}
-.dead-danny{background:rgba(255,68,68,.15);border:1px solid rgba(255,68,68,.3);color:#FF6666;}
-.dead-chat{background:rgba(68,170,255,.12);border:1px solid rgba(68,170,255,.3);color:#66BBFF;}
+.status.ok{color:#4ade80;} .status.heal{color:#66FF88;} .status.dmg{color:#FF6666;}
+.dead-banner{display:none;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:1px;margin-bottom:8px;background:rgba(255,68,68,.15);border:1px solid rgba(255,68,68,.3);color:#FF6666;}
 </style>
 </head>
 <body>
@@ -53,8 +38,8 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 <h1>⚔️ Batalla Chat vs Danny</h1>
 <div class="sub">Panel de control — gestiona las vidas en tiempo real</div>
 
-<div id="deadDanny" class="dead-banner dead-danny">💀 DANNY ELIMINADO</div>
-<div id="deadChat"  class="dead-banner dead-chat">💀 CHAT ELIMINADO</div>
+<div id="deadDanny" class="dead-banner">💀 DANNY ELIMINADO</div>
+<div id="deadChat"  class="dead-banner">💀 CHAT ELIMINADO</div>
 
 <div class="cols">
   <!-- DANNY -->
@@ -95,51 +80,37 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 
 <script>
 const LS = 'battle_state';
+const state = { dannyHp:6, chatHp:6, dannyHit:0, chatHit:0, dannyHeal:0, chatHeal:0, dannyDead:false, chatDead:false };
 
-const state = {
-  dannyHp: 6, chatHp: 6,
-  dannyHit: 0, chatHit: 0,
-  dannyDead: false, chatDead: false,
-};
-
-function save() {
-  localStorage.setItem(LS, JSON.stringify(state));
-}
+function save(){ localStorage.setItem(LS, JSON.stringify(state)); }
 
 function heartSVG(filled) {
-  // full=2, half=1, empty=0
-  const colors = {
-    full: '#FF2222', half_l: '#FF2222', half_r: '#555',
-    empty: '#333', shine: '#FF6666', shine_e: '#444'
-  };
-  // Pixel art heart 16x16
-  const c  = filled === 2 ? colors.full  : filled === 1 ? colors.half_l : colors.empty;
-  const cr = filled === 2 ? colors.full  : colors.half_r;
-  const sh = filled >= 1  ? colors.shine : colors.shine_e;
-  return `<svg viewBox="0 0 16 14" xmlns="http://www.w3.org/2000/svg" class="heart-svg">
+  const c  = filled===2?'#FF2222':filled===1?'#FF2222':'#2a2a2a';
+  const cr = filled===2?'#FF2222':'#2a2a2a';
+  const sh = filled>=1 ?'#FF6666':'#3a3a3a';
+  return `<svg viewBox="0 0 16 14" xmlns="http://www.w3.org/2000/svg" width="28" height="28" style="display:block">
     <rect x="1" y="0" width="3" height="2" fill="${sh}"/>
     <rect x="4" y="0" width="4" height="1" fill="${c}"/>
     <rect x="8" y="0" width="4" height="1" fill="${cr}"/>
-    <rect x="12" y="0" width="3" height="2" fill="${filled===2?sh:(filled===1?cr:colors.shine_e)}"/>
+    <rect x="12" y="0" width="3" height="2" fill="${filled===2?sh:(filled===1?cr:'#3a3a3a')}"/>
     <rect x="0" y="1" width="8" height="4" fill="${c}"/>
     <rect x="8" y="1" width="8" height="4" fill="${cr}"/>
-    <rect x="0" y="5" width="16" height="3" fill="${filled>=1?colors.full:colors.empty}"/>
-    <rect x="1" y="8" width="14" height="2" fill="${filled>=1?colors.full:colors.empty}"/>
-    <rect x="2" y="10" width="12" height="2" fill="${filled>=1?colors.full:colors.empty}"/>
-    <rect x="4" y="12" width="8" height="1" fill="${filled>=1?colors.full:colors.empty}"/>
-    <rect x="6" y="13" width="4" height="1" fill="${filled>=1?colors.full:colors.empty}"/>
+    <rect x="0" y="5" width="16" height="3" fill="${filled>=1?'#FF2222':'#2a2a2a'}"/>
+    <rect x="1" y="8" width="14" height="2" fill="${filled>=1?'#FF2222':'#2a2a2a'}"/>
+    <rect x="2" y="10" width="12" height="2" fill="${filled>=1?'#FF2222':'#2a2a2a'}"/>
+    <rect x="4" y="12" width="8" height="1" fill="${filled>=1?'#FF2222':'#2a2a2a'}"/>
+    <rect x="6" y="13" width="4" height="1" fill="${filled>=1?'#FF2222':'#2a2a2a'}"/>
   </svg>`;
 }
 
-function renderHearts(containerId, hp) {
-  const el = document.getElementById(containerId);
+function renderHearts(id, hp) {
+  const el = document.getElementById(id);
   let html = '';
-  for (let i = 0; i < 3; i++) {
-    const base = i * 2;
-    const filled = hp >= base + 2 ? 2 : hp >= base + 1 ? 1 : 0;
-    html += `<div class="heart-wrap">${heartSVG(filled)}</div>`;
+  for (let i=0;i<3;i++) {
+    const base=i*2, filled=hp>=base+2?2:hp>=base+1?1:0;
+    html+=`<div class="heart-wrap">${heartSVG(filled)}</div>`;
   }
-  el.innerHTML = html;
+  el.innerHTML=html;
 }
 
 function updateUI() {
@@ -147,58 +118,60 @@ function updateUI() {
   renderHearts('heartsChat',  state.chatHp);
   document.getElementById('hpDanny').textContent = state.dannyHp;
   document.getElementById('hpChat').textContent  = state.chatHp;
-  document.getElementById('deadDanny').style.display = state.dannyDead ? 'block' : 'none';
-  document.getElementById('deadChat').style.display  = state.chatDead  ? 'block' : 'none';
+  document.getElementById('deadDanny').style.display = state.dannyDead?'block':'none';
+  document.getElementById('deadChat').style.display  = state.chatDead ?'block':'none';
 }
 
 function dmg(who, amount) {
-  const halfUnits = Math.round(amount * 2); // 1 vida=2, ½=1
-  if (who === 'danny') {
+  const units = Math.round(amount*2);
+  if (who==='danny') {
     if (state.dannyDead) return;
-    state.dannyHp = Math.max(0, state.dannyHp - halfUnits);
+    state.dannyHp = Math.max(0, state.dannyHp - units);
     state.dannyHit = Date.now();
-    if (state.dannyHp <= 0) state.dannyDead = true;
+    if (state.dannyHp<=0) state.dannyDead=true;
   } else {
     if (state.chatDead) return;
-    state.chatHp = Math.max(0, state.chatHp - halfUnits);
+    state.chatHp = Math.max(0, state.chatHp - units);
     state.chatHit = Date.now();
-    if (state.chatHp <= 0) state.chatDead = true;
+    if (state.chatHp<=0) state.chatDead=true;
   }
   save(); updateUI();
-  setStatus(who === 'danny' ? `💥 Danny recibió daño` : `💥 Chat recibió daño`, 'ok');
-  setTimeout(() => setStatus('Listo', ''), 2000);
+  setStatus(`💥 ${who==='danny'?'Danny':'Chat'} recibió daño`, 'dmg');
+  setTimeout(()=>setStatus('Listo',''),2000);
 }
 
 function heal(who, amount) {
-  const halfUnits = Math.round(amount * 2);
-  if (who === 'danny') {
-    state.dannyHp = Math.min(6, state.dannyHp + halfUnits);
-    state.dannyDead = state.dannyHp <= 0;
+  const units = Math.round(amount*2);
+  if (who==='danny') {
+    if (state.dannyHp>=6) return;
+    state.dannyHp = Math.min(6, state.dannyHp+units);
+    state.dannyHeal = Date.now();
+    state.dannyDead = false;
   } else {
-    state.chatHp = Math.min(6, state.chatHp + halfUnits);
-    state.chatDead = state.chatHp <= 0;
+    if (state.chatHp>=6) return;
+    state.chatHp = Math.min(6, state.chatHp+units);
+    state.chatHeal = Date.now();
+    state.chatDead = false;
   }
   save(); updateUI();
+  setStatus(`💚 ${who==='danny'?'Danny':'Chat'} curado`, 'heal');
+  setTimeout(()=>setStatus('Listo',''),2000);
 }
 
 function resetOne(who) {
-  if (who === 'danny') { state.dannyHp = 6; state.dannyHit = 0; state.dannyDead = false; }
-  else                 { state.chatHp  = 6; state.chatHit  = 0; state.chatDead  = false; }
+  if (who==='danny') { state.dannyHp=6;state.dannyHit=0;state.dannyHeal=0;state.dannyDead=false; }
+  else               { state.chatHp=6; state.chatHit=0; state.chatHeal=0; state.chatDead=false;  }
   save(); updateUI();
 }
 
 function resetAll() {
-  Object.assign(state, { dannyHp:6, chatHp:6, dannyHit:0, chatHit:0, dannyDead:false, chatDead:false });
+  Object.assign(state,{dannyHp:6,chatHp:6,dannyHit:0,chatHit:0,dannyHeal:0,chatHeal:0,dannyDead:false,chatDead:false});
   save(); updateUI();
-  setStatus('Nueva batalla iniciada ✅', 'ok');
-  setTimeout(() => setStatus('Listo', ''), 2000);
+  setStatus('Nueva batalla iniciada ✅','ok');
+  setTimeout(()=>setStatus('Listo',''),2000);
 }
 
-function setStatus(msg, type) {
-  const el = document.getElementById('statusBar');
-  el.textContent = msg;
-  el.className = 'status ' + (type||'');
-}
+function setStatus(msg,type){const el=document.getElementById('statusBar');el.textContent=msg;el.className='status '+(type||'');}
 
 updateUI();
 </script>
