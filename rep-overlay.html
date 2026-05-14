@@ -183,6 +183,22 @@ setInterval(() => {
 }, 250);
 window._lastMsgTs = 0;
 
+// ══ Voz única por username (hash simple) ══
+function voiceFingerprint(username) {
+  // Genera un número consistente del username
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) {
+    hash = ((hash << 5) - hash) + username.charCodeAt(i);
+    hash |= 0;
+  }
+  const n = Math.abs(hash);
+  // pitch: 0.75 a 1.25 (claro y entendible, no robótico)
+  const pitch = 0.75 + (n % 50) / 100;
+  // rate: 0.9 a 1.15 (natural)
+  const rate  = 0.9  + (n % 25) / 100;
+  return { pitch, rate };
+}
+
 // ══ TTS ══
 function speakMessage(username, text) {
   if (!text || text.length > 200) return;
@@ -195,14 +211,15 @@ function speakMessage(username, text) {
   if (msgTimeout) clearTimeout(msgTimeout);
   msgTimeout = setTimeout(() => document.getElementById('ttsMsg').classList.remove('show'), 5000);
 
-  // Hablar
+  // Voz con fingerprint del usuario
+  const { pitch, rate } = voiceFingerprint(username);
   const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = 'es-MX';
-  utt.rate = 1.1;
-  utt.pitch = 1.0;
+  utt.lang  = 'es-MX';
+  utt.pitch = pitch;
+  utt.rate  = rate;
 
-  // Intentar voz española
-  const voices = window.speechSynthesis.getVoices();
+  // Voz española
+  const voices  = window.speechSynthesis.getVoices();
   const esVoice = voices.find(v => v.lang.startsWith('es')) || voices[0];
   if (esVoice) utt.voice = esVoice;
 
