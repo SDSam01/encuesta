@@ -3,162 +3,301 @@
 <head>
 <meta charset="UTF-8">
 <title>Poll Overlay</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@700;900&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:transparent;font-family:'DM Sans',sans-serif;overflow:hidden;}
-
-#overlay{
-  position:fixed;bottom:30px;left:30px;width:360px;
-  opacity:0;transition:opacity .4s;
-}
-#overlay.visible{opacity:1;}
-
-.ov-wrap{
-  background:rgba(8,8,15,0.92);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:14px;padding:18px 20px 16px;
-  backdrop-filter:blur(20px);
-  box-shadow:0 20px 60px rgba(0,0,0,0.8);
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:transparent;
+  overflow:hidden;
+  width:100vw;height:100vh;
+  font-family:'Inter',sans-serif;
 }
 
-.ov-timer{
-  font-family:'Bebas Neue',sans-serif;font-size:32px;
-  text-align:center;color:#fff;letter-spacing:3px;
-  margin-bottom:10px;display:none;
+/* ══ Contenedor principal — bottom center ══ */
+#widget{
+  position:fixed;
+  bottom:28px;
+  left:50%;
+  transform:translateX(-50%);
+  width:520px;
+  opacity:0;
+  transition:opacity .4s ease;
+  pointer-events:none;
 }
-.ov-timer.urgent{color:#ff4d6d;animation:pulse .5s infinite alternate;}
-@keyframes pulse{to{opacity:.4}}
+#widget.visible{ opacity:1; }
 
-.ov-question{
-  font-family:'Bebas Neue',sans-serif;font-size:20px;
-  letter-spacing:1.5px;color:#fff;margin-bottom:14px;line-height:1.1;
+/* Timer y pregunta arriba del widget */
+.w-header{
+  text-align:center;
+  margin-bottom:6px;
+}
+.w-timer{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:36px;
+  color:#fff;
+  letter-spacing:2px;
+  line-height:1;
+  text-shadow:0 2px 12px rgba(0,0,0,0.8);
+  display:none;
+}
+.w-timer.urgent{
+  color:#ff4444;
+  animation:tblink .5s infinite;
+}
+@keyframes tblink{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+.w-question{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;
+  color:rgba(255,255,255,0.75);
+  letter-spacing:1.5px;
+  text-shadow:0 2px 8px rgba(0,0,0,0.9);
+  margin-top:3px;
 }
 
-.ov-opt{margin-bottom:9px;}
-.ov-bar-bg{
-  height:44px;border-radius:8px;
-  background:rgba(255,255,255,0.04);overflow:hidden;position:relative;
+/* ══ Panels ══ */
+.w-panels{
+  display:flex;
+  gap:4px;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 8px 40px rgba(0,0,0,0.7);
 }
-.ov-bar-fill{
-  height:100%;border-radius:8px;position:absolute;left:0;top:0;
-  transition:width .6s cubic-bezier(.4,0,.2,1);
-}
-.fill-a{background:linear-gradient(90deg,rgba(255,184,0,.45),rgba(255,184,0,.18));}
-.fill-b{background:linear-gradient(90deg,rgba(204,17,0,.45),rgba(204,17,0,.18));}
-.ov-bar-content{
-  position:absolute;inset:0;display:flex;
-  align-items:center;justify-content:space-between;padding:0 12px;
-}
-.ov-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;}
-.name-a{color:#FFB800;} .name-b{color:#CC1100;}
-.ov-pct{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;transition:font-size .3s;}
-.pct-a{color:#FFB800;} .pct-b{color:#CC1100;}
-.ov-votes{font-size:11px;color:rgba(255,255,255,.3);font-weight:500;margin-top:3px;padding-left:2px;}
 
-.ov-comeback{
-  text-align:center;font-family:'Bebas Neue',sans-serif;
-  font-size:15px;letter-spacing:2px;color:#ffd700;
-  margin-top:6px;min-height:18px;
+.w-panel{
+  flex:1;
+  padding:14px 16px 12px;
+  position:relative;
+  min-height:100px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  overflow:hidden;
 }
-.ov-footer{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-top:10px;padding-top:9px;
-  border-top:1px solid rgba(255,255,255,0.06);
+
+/* Fondo con imagen semitransparente */
+.w-panel::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:0;
 }
-.ov-total{font-size:11px;color:rgba(255,255,255,.28);font-weight:500;}
+.w-panel-a{
+  background:rgba(200,140,0,0.82);
+}
+.w-panel-b{
+  background:rgba(160,10,10,0.82);
+}
+
+/* Fill bar animado (detrás del contenido) */
+.w-fill{
+  position:absolute;
+  left:0;top:0;bottom:0;
+  z-index:0;
+  transition:width .7s cubic-bezier(.4,0,.2,1);
+  opacity:.35;
+}
+.w-fill-a{ background:#FFD000; }
+.w-fill-b{ background:#ff2222; }
+
+/* Contenido del panel */
+.w-panel-content{
+  position:relative;
+  z-index:1;
+}
+
+.w-opt-label{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;
+  letter-spacing:2px;
+  color:rgba(255,255,255,0.6);
+  margin-bottom:2px;
+}
+
+.w-opt-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:22px;
+  letter-spacing:2px;
+  color:#fff;
+  line-height:1;
+  margin-bottom:4px;
+  text-shadow:0 1px 6px rgba(0,0,0,0.5);
+}
+
+.w-pct{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:64px;
+  color:#fff;
+  line-height:1;
+  letter-spacing:-1px;
+  text-shadow:0 2px 12px rgba(0,0,0,0.4);
+  transition:font-size .3s;
+}
+.w-pct.winner{ font-size:72px; }
+.w-pct.loser{  font-size:52px; color:rgba(255,255,255,0.7); }
+
+.w-votes{
+  font-size:11px;
+  color:rgba(255,255,255,0.6);
+  font-weight:700;
+  letter-spacing:.5px;
+  margin-top:3px;
+}
+
+/* Total */
+.w-total{
+  text-align:center;
+  font-size:11px;
+  color:rgba(255,255,255,0.45);
+  font-weight:700;
+  letter-spacing:.5px;
+  margin-top:5px;
+}
+
+/* ══ Remontada ══ */
+.w-remontada{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(0.8);
+  background:rgba(10,10,10,0.9);
+  border:2px solid #FFD000;
+  border-radius:10px;
+  padding:8px 16px;
+  text-align:center;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .3s, transform .3s;
+  z-index:10;
+  white-space:nowrap;
+}
+.w-remontada.show{
+  opacity:1;
+  transform:translate(-50%,-50%) scale(1);
+}
+.w-remontada-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px;
+  color:#FFD000;
+  letter-spacing:2px;
+}
+.w-remontada-sub{
+  font-size:10px;
+  color:rgba(255,255,255,0.6);
+  font-weight:700;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
 </style>
 </head>
 <body>
-<div id="overlay">
-<div class="ov-wrap">
-  <div class="ov-timer" id="ovTimer">2:00</div>
-  <div class="ov-question" id="ovQ">¿Qué eligen?</div>
 
-  <div class="ov-opt">
-    <div class="ov-bar-bg">
-      <div class="ov-bar-fill fill-a" id="barA" style="width:50%"></div>
-      <div class="ov-bar-content">
-        <span class="ov-name name-a" id="ovNameA">HOMER</span>
-        <span class="ov-pct pct-a" id="ovPctA">50%</span>
+<div id="widget">
+  <!-- Header: timer + pregunta -->
+  <div class="w-header">
+    <div class="w-timer" id="wTimer">30s</div>
+    <div class="w-question" id="wQuestion">¿Qué eligen?</div>
+  </div>
+
+  <!-- Panels -->
+  <div class="w-panels" style="position:relative;">
+    <!-- Panel A -->
+    <div class="w-panel w-panel-a">
+      <div class="w-fill w-fill-a" id="fillA" style="width:50%"></div>
+      <div class="w-panel-content">
+        <div class="w-opt-label">A</div>
+        <div class="w-opt-name" id="wNameA">HOMER</div>
+        <div class="w-pct" id="wPctA">50%</div>
+        <div class="w-votes"><span id="wVotesA">0</span> votos</div>
       </div>
     </div>
-    <div class="ov-votes"><span id="ovVotesA">0</span> votos</div>
-  </div>
 
-  <div class="ov-opt">
-    <div class="ov-bar-bg">
-      <div class="ov-bar-fill fill-b" id="barB" style="width:50%"></div>
-      <div class="ov-bar-content">
-        <span class="ov-name name-b" id="ovNameB">BART</span>
-        <span class="ov-pct pct-b" id="ovPctB">50%</span>
+    <!-- Panel B -->
+    <div class="w-panel w-panel-b">
+      <div class="w-fill w-fill-b" id="fillB" style="width:50%"></div>
+      <div class="w-panel-content">
+        <div class="w-opt-label">B</div>
+        <div class="w-opt-name" id="wNameB">BART</div>
+        <div class="w-pct" id="wPctB">50%</div>
+        <div class="w-votes"><span id="wVotesB">0</span> votos</div>
       </div>
     </div>
-    <div class="ov-votes"><span id="ovVotesB">0</span> votos</div>
+
+    <!-- Remontada popup (centrado entre paneles) -->
+    <div class="w-remontada" id="wRemontada">
+      <div class="w-remontada-title" id="wRemontadaTitle">¡REMONTADA!</div>
+      <div class="w-remontada-sub" id="wRemontadaSub">A ESTÁ SUBIENDO</div>
+    </div>
   </div>
 
-  <div class="ov-comeback" id="ovComeback"></div>
-  <div class="ov-footer">
-    <div class="ov-total" id="ovTotal">0 votos totales</div>
-  </div>
-</div>
+  <div class="w-total" id="wTotal">0 votos totales</div>
 </div>
 
 <script>
 const LS = 'poll_state';
-let prevState = null;
 let prevLeader = null, prevDiff = 0;
 
 function render(s) {
-  const vA = s.vA || 0, vB = s.vB || 0;
+  const vA    = s.vA || 0;
+  const vB    = s.vB || 0;
   const total = vA + vB;
-  const pA = total === 0 ? 50 : Math.round(vA / total * 100);
-  const pB = total === 0 ? 50 : 100 - pA;
+  const pA    = total === 0 ? 50 : Math.round(vA / total * 100);
+  const pB    = total === 0 ? 50 : 100 - pA;
 
-  document.getElementById('ovQ').textContent      = s.question || '¿Qué eligen?';
-  document.getElementById('ovNameA').textContent  = (s.nameA || 'A').toUpperCase();
-  document.getElementById('ovNameB').textContent  = (s.nameB || 'B').toUpperCase();
-  document.getElementById('barA').style.width     = pA + '%';
-  document.getElementById('barB').style.width     = pB + '%';
-  document.getElementById('ovPctA').textContent   = pA + '%';
-  document.getElementById('ovPctB').textContent   = pB + '%';
-  document.getElementById('ovVotesA').textContent = vA;
-  document.getElementById('ovVotesB').textContent = vB;
-  document.getElementById('ovTotal').textContent  = total + (total === 1 ? ' voto total' : ' votos totales');
+  // Nombres y pregunta
+  document.getElementById('wQuestion').textContent = s.question || '¿Qué eligen?';
+  document.getElementById('wNameA').textContent    = (s.nameA || 'A').toUpperCase();
+  document.getElementById('wNameB').textContent    = (s.nameB || 'B').toUpperCase();
+
+  // Porcentajes
+  document.getElementById('wPctA').textContent  = pA + '%';
+  document.getElementById('wPctB').textContent  = pB + '%';
+  document.getElementById('wVotesA').textContent = vA;
+  document.getElementById('wVotesB').textContent = vB;
+  document.getElementById('wTotal').textContent  = total + (total === 1 ? ' voto total' : ' votos totales');
+
+  // Fills de fondo
+  document.getElementById('fillA').style.width = pA + '%';
+  document.getElementById('fillB').style.width = pB + '%';
 
   // Tamaño dinámico del ganador
-  const pctA = document.getElementById('ovPctA');
-  const pctB = document.getElementById('ovPctB');
-  if (total === 0) { pctA.style.fontSize = pctB.style.fontSize = '22px'; }
-  else if (pA > pB) { pctA.style.fontSize = '26px'; pctB.style.fontSize = '18px'; }
-  else if (pB > pA) { pctB.style.fontSize = '26px'; pctA.style.fontSize = '18px'; }
-  else { pctA.style.fontSize = pctB.style.fontSize = '22px'; }
+  const pctA = document.getElementById('wPctA');
+  const pctB = document.getElementById('wPctB');
+  if (total === 0) {
+    pctA.className = 'w-pct';
+    pctB.className = 'w-pct';
+  } else if (pA > pB) {
+    pctA.className = 'w-pct winner';
+    pctB.className = 'w-pct loser';
+  } else if (pB > pA) {
+    pctB.className = 'w-pct winner';
+    pctA.className = 'w-pct loser';
+  } else {
+    pctA.className = 'w-pct';
+    pctB.className = 'w-pct';
+  }
 
   // Remontada
   const leader = pA > pB ? 'a' : pA < pB ? 'b' : null;
   const diff   = Math.abs(pA - pB);
-  const cb     = document.getElementById('ovComeback');
   if (total >= 10 && prevLeader && leader && leader !== prevLeader && prevDiff >= 15) {
-    const nm = leader === 'a' ? (s.nameA||'A').toUpperCase() : (s.nameB||'B').toUpperCase();
-    cb.textContent = `⚡ ¡REMONTADA DE ${nm}!`;
-    setTimeout(() => { cb.textContent = ''; }, 4000);
+    const name = leader === 'a'
+      ? (s.nameA || 'A').toUpperCase()
+      : (s.nameB || 'B').toUpperCase();
+    showRemontada(name + ' ESTÁ SUBIENDO');
   }
   prevLeader = leader;
   prevDiff   = diff;
 
   // Timer
-  const timerEl = document.getElementById('ovTimer');
+  const timerEl = document.getElementById('wTimer');
   if (s.timerEnd && s.timerEnd > 0) {
     const rem = Math.max(0, Math.ceil((s.timerEnd - Date.now()) / 1000));
     if (rem > 0) {
       timerEl.style.display = 'block';
-      if (rem < 60) {
-        timerEl.textContent = rem + 's';
-      } else {
-        const m = Math.floor(rem/60), sec = rem%60;
-        timerEl.textContent = m + ':' + (sec < 10 ? '0' : '') + sec;
-      }
-      timerEl.className = 'ov-timer' + (rem <= 10 ? ' urgent' : '');
+      timerEl.textContent   = rem >= 60
+        ? Math.floor(rem/60) + ':' + String(rem%60).padStart(2,'0')
+        : rem + 's';
+      timerEl.className = 'w-timer' + (rem <= 10 ? ' urgent' : '');
     } else {
       timerEl.style.display = 'none';
     }
@@ -167,19 +306,28 @@ function render(s) {
   }
 }
 
-// ══ Leer localStorage cada 500ms (funciona entre panel OBS y Browser Source) ══
+let remontadaTimeout = null;
+function showRemontada(sub) {
+  const el    = document.getElementById('wRemontada');
+  const subEl = document.getElementById('wRemontadaSub');
+  subEl.textContent = sub;
+  el.classList.add('show');
+  if (remontadaTimeout) clearTimeout(remontadaTimeout);
+  remontadaTimeout = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ══ Polling localStorage cada 500ms ══
 setInterval(() => {
   try {
     const raw = localStorage.getItem(LS);
     if (!raw) return;
     const s = JSON.parse(raw);
-
-    const overlay = document.getElementById('overlay');
+    const w = document.getElementById('widget');
     if (s.active) {
-      overlay.classList.add('visible');
+      w.classList.add('visible');
       render(s);
     } else {
-      overlay.classList.remove('visible');
+      w.classList.remove('visible');
     }
   } catch(e) {}
 }, 500);
