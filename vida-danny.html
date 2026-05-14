@@ -7,71 +7,88 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 
-/* Flash rojo — daño — bordes pantalla completa */
+/* Flash rojo */
 #flashRed{
   position:fixed;inset:0;pointer-events:none;z-index:100;opacity:0;
-  background:radial-gradient(ellipse at center, rgba(255,0,0,0) 25%, rgba(255,0,0,0.9) 100%);
+  background:radial-gradient(ellipse at center, rgba(255,0,0,0) 20%, rgba(255,0,0,0.88) 100%);
   transition:opacity .07s;
 }
 #flashRed.show{opacity:1;}
 
-/* Flash verde — curación */
+/* Flash verde */
 #flashGreen{
   position:fixed;inset:0;pointer-events:none;z-index:100;opacity:0;
-  background:radial-gradient(ellipse at center, rgba(0,255,0,0) 25%, rgba(0,255,0,0.75) 100%);
+  background:radial-gradient(ellipse at center, rgba(0,255,0,0) 20%, rgba(0,255,0,0.72) 100%);
   transition:opacity .07s;
 }
 #flashGreen.show{opacity:1;}
 
-/* ══ Corazones — ocultos por defecto, aparecen solo al recibir daño/curar ══ */
+/* ══ Widget — ocupa todo el lienzo, centrado ══ */
 #widget{
   position:fixed;
-  top:24px;left:24px;
-  display:flex;flex-direction:column;
-  align-items:flex-start;gap:8px;
-  opacity:0;
-  transition:opacity .3s;
-  pointer-events:none;
-  z-index:50;
+  bottom:60px;
+  left:0;right:0;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  opacity:0;transform:translateY(20px);
+  transition:opacity .35s ease, transform .35s ease;
+  pointer-events:none;z-index:50;
 }
-#widget.visible{opacity:1;}
+#widget.visible{opacity:1;transform:translateY(0);}
+
+/* Fondo oscuro detrás de los corazones */
+.w-bg{
+  background:rgba(0,0,0,0.55);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:20px;
+  padding:20px 48px 18px;
+  backdrop-filter:blur(4px);
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
 
 .w-label{
   font-family:'Courier New',monospace;
-  font-size:16px;font-weight:700;letter-spacing:3px;
-  color:rgba(255,255,255,.7);text-transform:uppercase;
-  text-shadow:0 0 10px rgba(0,0,0,1), 0 1px 4px rgba(0,0,0,1);
+  font-size:18px;font-weight:700;letter-spacing:6px;
+  color:rgba(255,255,255,.55);text-transform:uppercase;
+  text-shadow:0 0 12px rgba(255,50,50,.4);
 }
 
 .hearts-row{
-  display:flex;gap:8px;
-  filter:drop-shadow(0 3px 10px rgba(0,0,0,1));
+  display:flex;gap:20px;
+  filter:drop-shadow(0 4px 16px rgba(255,0,0,.6)) drop-shadow(0 0 30px rgba(255,0,0,.25));
 }
 
-.heart-wrap{width:80px;height:80px;}
-.heart-wrap.hit{animation:heartHit .5s ease-out;}
-.heart-wrap.heal{animation:heartHeal .4s ease-out;}
+.heart-wrap{
+  width:120px;height:120px;
+  transition:transform .1s;
+}
 
+/* Animación daño */
+.heart-wrap.hit{animation:heartHit .55s cubic-bezier(.36,.07,.19,.97);}
 @keyframes heartHit{
-  0%{transform:scale(1.5) rotate(-10deg);}
-  40%{transform:scale(0.8) rotate(5deg);}
+  0%{transform:scale(1.6) rotate(-12deg);}
+  25%{transform:scale(0.75) rotate(8deg);}
+  50%{transform:scale(1.15) rotate(-4deg);}
   100%{transform:scale(1) rotate(0);}
 }
+
+/* Animación curación */
+.heart-wrap.heal{animation:heartHeal .5s ease-out;}
 @keyframes heartHeal{
   0%{transform:scale(1);}
-  50%{transform:scale(1.5);}
+  40%{transform:scale(1.5);}
+  70%{transform:scale(0.9);}
   100%{transform:scale(1);}
 }
 
-#widget.shake{animation:wShake .45s ease-out;}
+/* Shake del widget completo */
+#widget.shake{animation:wShake .5s ease-out;}
 @keyframes wShake{
-  0%{transform:translateX(0);}
-  15%{transform:translateX(-12px) rotate(-1.5deg);}
-  30%{transform:translateX(12px) rotate(1.5deg);}
-  50%{transform:translateX(-8px);}
-  70%{transform:translateX(8px);}
-  85%{transform:translateX(-4px);}
-  100%{transform:translateX(0);}
+  0%,100%{transform:translateY(0) translateX(0);}
+  15%{transform:translateY(0) translateX(-16px) rotate(-1deg);}
+  30%{transform:translateY(0) translateX(16px) rotate(1deg);}
+  50%{transform:translateY(0) translateX(-10px);}
+  70%{transform:translateY(0) translateX(10px);}
+  85%{transform:translateY(0) translateX(-5px);}
 }
 
 /* ══ YOU DIED ══ */
@@ -82,224 +99,203 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 }
 #deathScreen.show{opacity:1;}
 
-/* Overlay rojo sobre la zona del chat (derecha) */
 #chatRedOverlay{
-  position:fixed;
-  top:0;right:0;
-  width:420px; /* Ajusta este valor si tu chat es más ancho/angosto */
-  height:100%;
-  background:rgba(200,0,0,0.55);
-  pointer-events:none;
-  z-index:98;
+  position:fixed;top:0;right:0;
+  width:420px;height:100%;
+  background:rgba(180,0,0,0.6);
+  pointer-events:none;z-index:98;
   opacity:0;transition:opacity .6s;
 }
 #chatRedOverlay.show{opacity:1;}
 
 .death-text{
   font-family:'Courier New',monospace;
-  font-size:100px;font-weight:900;
-  color:#FF0000;letter-spacing:8px;
-  text-shadow:0 0 40px rgba(255,0,0,.9), 0 0 80px rgba(255,0,0,.5), 0 4px 20px rgba(0,0,0,1);
-  animation:deathPulse 1s infinite alternate;
+  font-size:120px;font-weight:900;
+  color:#FF0000;letter-spacing:10px;
+  text-shadow:0 0 50px rgba(255,0,0,1), 0 0 100px rgba(255,0,0,.6), 0 6px 30px rgba(0,0,0,1);
+  animation:deathPulse .9s infinite alternate;
 }
-@keyframes deathPulse{from{opacity:.5;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
+@keyframes deathPulse{
+  from{opacity:.5;transform:scale(.96);}
+  to{opacity:1;transform:scale(1);}
+}
 </style>
 </head>
 <body>
-
 <div id="flashRed"></div>
 <div id="flashGreen"></div>
 <div id="chatRedOverlay"></div>
-
-<div id="deathScreen">
-  <div class="death-text">YOU DIED</div>
-</div>
+<div id="deathScreen"><div class="death-text">YOU DIED</div></div>
 
 <div id="widget">
-  <div class="w-label">Sam</div>
-  <div class="hearts-row" id="heartsRow"></div>
+  <div class="w-bg">
+    <div class="w-label">Sam</div>
+    <div class="hearts-row" id="heartsRow"></div>
+  </div>
 </div>
 
 <script>
 const LS = 'battle_state';
-let lastHit = 0, lastHeal = 0, lastHp = 6, lastDead = false;
-let hideTimeout = null;
+let lastHit=0, lastHeal=0, lastHp=6, lastDead=false, hideTimeout=null;
+const AC = new (window.AudioContext||window.webkitAudioContext)();
 
-const AC = new (window.AudioContext || window.webkitAudioContext)();
-
-function playHit() {
+function playHit(){
   AC.resume();
-  const o = AC.createOscillator(), g = AC.createGain();
-  o.connect(g); g.connect(AC.destination);
-  o.type = 'square';
-  o.frequency.setValueAtTime(220, AC.currentTime);
-  o.frequency.exponentialRampToValueAtTime(80, AC.currentTime + 0.22);
-  g.gain.setValueAtTime(0.45, AC.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + 0.25);
-  o.start(); o.stop(AC.currentTime + 0.25);
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.connect(g);g.connect(AC.destination);
+  o.type='square';
+  o.frequency.setValueAtTime(220,AC.currentTime);
+  o.frequency.exponentialRampToValueAtTime(80,AC.currentTime+.22);
+  g.gain.setValueAtTime(.45,AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+.25);
+  o.start();o.stop(AC.currentTime+.25);
 }
 
-function playHeal() {
+function playHeal(){
   AC.resume();
-  [330, 392, 523, 659].forEach((freq, i) => {
-    const o = AC.createOscillator(), g = AC.createGain();
-    o.connect(g); g.connect(AC.destination);
-    o.type = 'sine';
-    const t = AC.currentTime + i * 0.09;
-    o.frequency.value = freq;
-    g.gain.setValueAtTime(0.25, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-    o.start(t); o.stop(t + 0.15);
+  [330,392,523,659].forEach((f,i)=>{
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.connect(g);g.connect(AC.destination);
+    o.type='sine';const t=AC.currentTime+i*.09;
+    o.frequency.value=f;
+    g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);
+    o.start(t);o.stop(t+.15);
   });
 }
 
-function playDeath() {
+function playDeath(){
   AC.resume();
-  [220,196,165,147,110,98].forEach((freq,i) => {
-    const o = AC.createOscillator(), g = AC.createGain();
-    o.connect(g); g.connect(AC.destination);
-    o.type = 'square';
-    const t = AC.currentTime + i * 0.16;
-    o.frequency.value = freq;
-    g.gain.setValueAtTime(0.45, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-    o.start(t); o.stop(t + 0.2);
+  [220,196,165,147,110,98].forEach((f,i)=>{
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.connect(g);g.connect(AC.destination);
+    o.type='square';const t=AC.currentTime+i*.16;
+    o.frequency.value=f;
+    g.gain.setValueAtTime(.45,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);
+    o.start(t);o.stop(t+.2);
   });
 }
 
-function doFlash(elId) {
-  const el = document.getElementById(elId);
+function doFlash(id){
+  const el=document.getElementById(id);
   el.classList.add('show');
-  setTimeout(() => {
+  setTimeout(()=>{
     el.classList.remove('show');
-    setTimeout(() => { el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 90); }, 110);
-  }, 90);
+    setTimeout(()=>{el.classList.add('show');setTimeout(()=>el.classList.remove('show'),90);},110);
+  },90);
 }
 
-// SVG corazón pixel art rojo
-function heartSVG(filled) {
-  const c  = filled===2?'#FF2222':filled===1?'#FF2222':'#222';
-  const cr = filled===2?'#FF2222':'#222';
-  const sh = filled>=1 ?'#FF6666':'#333';
-  return `<svg viewBox="0 0 16 14" xmlns="http://www.w3.org/2000/svg" width="80" height="80" style="display:block;image-rendering:pixelated">
+function heartSVG(filled){
+  const c=filled===2?'#FF2222':filled===1?'#FF2222':'#1a1a1a';
+  const cr=filled===2?'#FF2222':'#1a1a1a';
+  const sh=filled>=1?'#FF7777':'#2a2a2a';
+  return `<svg viewBox="0 0 16 14" xmlns="http://www.w3.org/2000/svg" width="120" height="120" style="display:block;image-rendering:pixelated">
     <rect x="1" y="0" width="3" height="2" fill="${sh}"/>
     <rect x="4" y="0" width="4" height="1" fill="${c}"/>
     <rect x="8" y="0" width="4" height="1" fill="${cr}"/>
-    <rect x="12" y="0" width="3" height="2" fill="${filled===2?sh:filled===1?cr:'#333'}"/>
+    <rect x="12" y="0" width="3" height="2" fill="${filled===2?sh:filled===1?cr:'#2a2a2a'}"/>
     <rect x="0" y="1" width="8" height="4" fill="${c}"/>
     <rect x="8" y="1" width="8" height="4" fill="${cr}"/>
-    <rect x="0" y="5" width="16" height="3" fill="${filled>=1?'#FF2222':'#222'}"/>
-    <rect x="1" y="8" width="14" height="2" fill="${filled>=1?'#FF2222':'#222'}"/>
-    <rect x="2" y="10" width="12" height="2" fill="${filled>=1?'#FF2222':'#222'}"/>
-    <rect x="4" y="12" width="8" height="1" fill="${filled>=1?'#FF2222':'#222'}"/>
-    <rect x="6" y="13" width="4" height="1" fill="${filled>=1?'#FF2222':'#222'}"/>
+    <rect x="0" y="5" width="16" height="3" fill="${filled>=1?'#FF2222':'#1a1a1a'}"/>
+    <rect x="1" y="8" width="14" height="2" fill="${filled>=1?'#FF2222':'#1a1a1a'}"/>
+    <rect x="2" y="10" width="12" height="2" fill="${filled>=1?'#FF2222':'#1a1a1a'}"/>
+    <rect x="4" y="12" width="8" height="1" fill="${filled>=1?'#FF2222':'#1a1a1a'}"/>
+    <rect x="6" y="13" width="4" height="1" fill="${filled>=1?'#FF2222':'#1a1a1a'}"/>
   </svg>`;
 }
 
-function renderHearts(hp) {
-  const row = document.getElementById('heartsRow');
-  row.innerHTML = '';
-  for (let i = 0; i < 3; i++) {
-    const base   = i * 2;
-    const filled = hp >= base+2 ? 2 : hp >= base+1 ? 1 : 0;
-    const wrap   = document.createElement('div');
-    wrap.className = 'heart-wrap';
-    wrap.id = 'heart_' + i;
-    wrap.innerHTML = heartSVG(filled);
-    row.appendChild(wrap);
+function renderHearts(hp){
+  const row=document.getElementById('heartsRow');
+  row.innerHTML='';
+  for(let i=0;i<3;i++){
+    const base=i*2,filled=hp>=base+2?2:hp>=base+1?1:0;
+    const w=document.createElement('div');
+    w.className='heart-wrap';w.id='heart_'+i;
+    w.innerHTML=heartSVG(filled);
+    row.appendChild(w);
   }
 }
 
-function showWidgetThen(animClass, heartIdx, newHp) {
-  const widget = document.getElementById('widget');
-
-  // Mostrar widget
+function showWidget(animClass, heartIdx, newHp){
+  const widget=document.getElementById('widget');
   widget.classList.add('visible');
-
-  // Renderizar estado ANTES de la animación
   renderHearts(lastHp);
 
   // Shake
   widget.classList.remove('shake');
   void widget.offsetWidth;
   widget.classList.add('shake');
-  setTimeout(() => widget.classList.remove('shake'), 500);
+  setTimeout(()=>widget.classList.remove('shake'),500);
 
   // Animar corazón
-  const heartEl = document.getElementById('heart_' + heartIdx);
-  if (heartEl) {
-    heartEl.classList.remove('hit','heal');
-    void heartEl.offsetWidth;
-    heartEl.classList.add(animClass);
-    setTimeout(() => heartEl.classList.remove(animClass), 500);
+  const el=document.getElementById('heart_'+heartIdx);
+  if(el){
+    el.classList.remove('hit','heal');void el.offsetWidth;
+    el.classList.add(animClass);
+    setTimeout(()=>el.classList.remove(animClass),550);
   }
 
-  // Actualizar corazones después de la animación
-  setTimeout(() => renderHearts(newHp), 350);
+  // Actualizar tras animación
+  setTimeout(()=>renderHearts(newHp),380);
 
-  // Ocultar widget después de 3 segundos
-  if (hideTimeout) clearTimeout(hideTimeout);
-  hideTimeout = setTimeout(() => {
+  // Auto-ocultar después de 3.5s
+  if(hideTimeout)clearTimeout(hideTimeout);
+  hideTimeout=setTimeout(()=>{
     widget.classList.remove('visible');
-  }, 3200);
+  },3500);
 }
 
-setInterval(() => {
-  try {
-    const raw = localStorage.getItem(LS);
-    if (!raw) return;
-    const s = JSON.parse(raw);
+setInterval(()=>{
+  try{
+    const raw=localStorage.getItem(LS);
+    if(!raw)return;
+    const s=JSON.parse(raw);
 
     // DAÑO
-    if (s.dannyHit && s.dannyHit !== lastHit && s.dannyHp < lastHp) {
-      const oldHp = lastHp;
-      lastHit = s.dannyHit;
-
-      if (s.dannyHp <= 0) {
+    if(s.dannyHit&&s.dannyHit!==lastHit&&s.dannyHp<lastHp){
+      const old=lastHp;
+      lastHit=s.dannyHit;
+      if(s.dannyHp<=0){
         playDeath();
         renderHearts(0);
         document.getElementById('widget').classList.add('visible');
-        if (hideTimeout) clearTimeout(hideTimeout);
+        if(hideTimeout)clearTimeout(hideTimeout);
       } else {
-        doFlash('flashRed');
-        playHit();
-        const idx = Math.min(2, Math.floor((oldHp - 1) / 2));
-        showWidgetThen('hit', idx, s.dannyHp);
+        doFlash('flashRed');playHit();
+        const idx=Math.min(2,Math.floor((old-1)/2));
+        showWidget('hit',idx,s.dannyHp);
       }
-      lastHp = s.dannyHp;
+      lastHp=s.dannyHp;
     }
 
     // CURACIÓN
-    if (s.dannyHeal && s.dannyHeal !== lastHeal && s.dannyHp > lastHp) {
-      const oldHp = lastHp;
-      lastHeal = s.dannyHeal;
-      lastHp   = s.dannyHp;
-      doFlash('flashGreen');
-      playHeal();
-      const idx = Math.min(2, Math.floor(s.dannyHp / 2) - 1);
-      showWidgetThen('heal', Math.max(0, idx), s.dannyHp);
+    if(s.dannyHeal&&s.dannyHeal!==lastHeal&&s.dannyHp>lastHp){
+      lastHeal=s.dannyHeal;
+      const old=lastHp;lastHp=s.dannyHp;
+      doFlash('flashGreen');playHeal();
+      const idx=Math.max(0,Math.min(2,Math.floor((s.dannyHp-1)/2)));
+      showWidget('heal',idx,s.dannyHp);
     }
 
-    // Sync HP sin animación (reset)
-    if (s.dannyHp !== lastHp && s.dannyHit === lastHit && s.dannyHeal === lastHeal) {
-      lastHp = s.dannyHp;
+    // Sync silencioso (reset)
+    if(s.dannyHp!==lastHp&&s.dannyHit===lastHit&&s.dannyHeal===lastHeal){
+      lastHp=s.dannyHp;
       renderHearts(s.dannyHp);
     }
 
     // YOU DIED
-    if (s.dannyDead && !lastDead) {
-      lastDead = true;
+    if(s.dannyDead&&!lastDead){
+      lastDead=true;
       document.getElementById('deathScreen').classList.add('show');
       document.getElementById('chatRedOverlay').classList.add('show');
-    } else if (!s.dannyDead && lastDead) {
-      lastDead = false;
+      document.getElementById('widget').classList.add('visible');
+      if(hideTimeout)clearTimeout(hideTimeout);
+    } else if(!s.dannyDead&&lastDead){
+      lastDead=false;
       document.getElementById('deathScreen').classList.remove('show');
       document.getElementById('chatRedOverlay').classList.remove('show');
-      document.getElementById('widget').classList.remove('visible');
     }
-
-  } catch(e) {}
-}, 200);
+  }catch(e){}
+},200);
 
 renderHearts(6);
 </script>
