@@ -59,6 +59,11 @@ input:focus{border-color:rgba(255,185,0,.4);}
 .btn-limpiar{width:100%;padding:9px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.35);transition:.15s;font-family:'Inter',sans-serif;}
 .btn-limpiar:hover{color:#fff;background:rgba(255,255,255,.1);}
 .btn-demo{width:100%;padding:9px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(100,200,100,.2);background:rgba(100,200,100,.07);color:rgba(100,200,100,.6);transition:.15s;font-family:'Inter',sans-serif;margin-top:8px;}
+.tts-test-row{display:flex;gap:6px;margin-top:8px;}
+.tts-test-row input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 10px;color:#fff;font-size:12px;font-family:'Inter',sans-serif;outline:none;}
+.tts-test-row input:focus{border-color:rgba(255,208,0,.4);}
+.btn-tts{padding:7px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,208,0,.3);background:rgba(255,208,0,.1);color:#FFD000;white-space:nowrap;font-family:'Inter',sans-serif;transition:.15s;}
+.btn-tts:hover{background:rgba(255,208,0,.2);}
 .btn-demo:hover{color:#8eff8e;background:rgba(100,200,100,.15);}
 .btn-connect{width:100%;padding:10px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,185,0,.3);background:rgba(255,185,0,.1);color:#FFD000;transition:.15s;font-family:'Inter',sans-serif;margin-top:6px;}
 .btn-connect:hover{background:rgba(255,185,0,.2);}
@@ -131,6 +136,10 @@ input:focus{border-color:rgba(255,185,0,.4);}
 </div>
 <button class="btn-limpiar" onclick="limpiarRep()">✕ Quitar representante</button>
 <button class="btn-demo" onclick="modoDemo()">🧪 Modo prueba (sin stream)</button>
+<div class="tts-test-row">
+  <input type="text" id="ttsTestInput" placeholder="Escribe un mensaje de prueba..." />
+  <button class="btn-tts" onclick="testTTS()">🔊 Probar voz</button>
+</div>
 
 <div class="status" id="statusBar">Conecta los chats primero</div>
 
@@ -340,6 +349,20 @@ function setStatus(msg, type) {
 }
 
 function openKickApi() { window.open('https://kick.com/api/v1/channels/sdsam', '_blank'); }
+
+function testTTS() {
+  if (!currentRep) { setStatus("⚠️ Primero elige un representante", "err"); return; }
+  const text = document.getElementById("ttsTestInput").value.trim();
+  if (!text) { setStatus("⚠️ Escribe algo para probar", "err"); return; }
+  localStorage.setItem(LS_MSG, JSON.stringify({
+    userId: currentRep.userId,
+    username: currentRep.username,
+    text,
+    ts: Date.now()
+  }));
+  setStatus("🔊 Reproduciendo con voz de " + currentRep.username, "ok");
+  setTimeout(() => setStatus("", ""), 3000);
+}
 
 function modoDemo() {
   const fakeUsers = [
