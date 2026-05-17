@@ -8,137 +8,231 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 
+/* ══ Widget ══ */
 #widget{
-  position:fixed;bottom:28px;left:50%;
-  transform:translateX(-50%);width:520px;
-  opacity:0;transition:opacity .4s;pointer-events:none;
+  position:fixed;bottom:32px;left:50%;
+  transform:translateX(-50%);
+  width:600px;
+  opacity:0;transform:translateX(-50%) translateY(12px);
+  transition:opacity .6s ease, transform .6s ease;
+  pointer-events:none;
 }
-#widget.visible{opacity:1;}
+#widget.visible{opacity:1;transform:translateX(-50%) translateY(0);}
 
-.w-header{text-align:center;margin-bottom:6px;}
+/* Header */
+.w-header{text-align:center;margin-bottom:10px;}
 .w-timer{
   font-family:'Bebas Neue',sans-serif;
-  font-size:36px;color:#fff;letter-spacing:2px;line-height:1;
-  text-shadow:0 0 20px rgba(255,255,255,.9), 0 0 40px rgba(255,255,255,.4), 0 2px 8px rgba(0,0,0,.9);
-  text-shadow:0 2px 12px rgba(0,0,0,.9);display:none;
+  font-size:40px;color:#fff;letter-spacing:3px;line-height:1;
+  text-shadow:0 0 24px rgba(255,255,255,.8), 0 0 48px rgba(255,255,255,.3);
+  display:none;
 }
-.w-timer.urgent{color:#ff4444;text-shadow:0 0 20px rgba(255,68,68,1), 0 0 50px rgba(255,68,68,.6);animation:tblink .5s infinite;}
-@keyframes tblink{0%,100%{opacity:1;}50%{opacity:.3;}}
+.w-timer.urgent{
+  color:#ff3333;
+  text-shadow:0 0 20px rgba(255,50,50,1), 0 0 50px rgba(255,50,50,.6);
+  animation:tblink .45s infinite;
+}
+@keyframes tblink{0%,100%{opacity:1;}50%{opacity:.25;}}
 .w-question{
   font-family:'Bebas Neue',sans-serif;
-  font-size:17px;color:rgba(255,255,255,.7);
-  letter-spacing:1.5px;margin-top:2px;
-  text-shadow:0 2px 8px rgba(0,0,0,.9);
+  font-size:16px;color:rgba(255,255,255,.5);
+  letter-spacing:3px;margin-top:4px;
+  text-transform:uppercase;
 }
 
-/* ══ Box ══ */
+/* ══ Box principal ══ */
 .w-box{
-  position:relative;height:120px;border-radius:12px;
-  overflow:hidden;background:rgba(10,10,10,0.6);
-  box-shadow:0 8px 40px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.06), 0 0 30px rgba(255,150,0,.12), 0 0 60px rgba(200,0,0,.08);
+  position:relative;
+  height:100px;
+  border-radius:16px;
+  overflow:hidden;
+  background:rgba(6,6,10,0.7);
+  /* Borde elegante */
+  outline:1px solid rgba(255,255,255,.06);
+  box-shadow:
+    0 16px 48px rgba(0,0,0,.8),
+    0 0 0 1px rgba(255,255,255,.04);
+  backdrop-filter:blur(8px);
 }
 
-/* Fills normales */
+/* ══ Fills que se invaden ══ */
 .fill-a{
   position:absolute;top:0;left:0;bottom:0;
-  background:#FFB800;opacity:.38;
-  box-shadow:inset -6px 0 24px rgba(255,184,0,.7), inset 0 0 40px rgba(255,220,0,.2);
-  transition:width .7s cubic-bezier(.4,0,.2,1), opacity .4s;z-index:1;
+  background:linear-gradient(90deg, #FFB800, #FF8800);
+  opacity:.32;
+  transition:width 1.2s cubic-bezier(.25,.46,.45,.94);
+  z-index:1;
 }
 .fill-b{
   position:absolute;top:0;right:0;bottom:0;
-  background:#CC1100;opacity:.38;
-  box-shadow:inset 6px 0 24px rgba(220,30,0,.7), inset 0 0 40px rgba(255,40,0,.2);
-  transition:width .7s cubic-bezier(.4,0,.2,1), opacity .4s;z-index:1;
+  background:linear-gradient(270deg, #CC1100, #FF3300);
+  opacity:.32;
+  transition:width 1.2s cubic-bezier(.25,.46,.45,.94);
+  z-index:1;
 }
-/* Ocultar fills cuando hay ganador */
-.w-box.winner-mode .fill-a,
-.w-box.winner-mode .fill-b{opacity:0;}
 
-/* Contenido normal */
+/* Pulso del ganador */
+.fill-a.pulse{animation:pulseA 1.8s ease-in-out infinite;}
+.fill-b.pulse{animation:pulseB 1.8s ease-in-out infinite;}
+@keyframes pulseA{
+  0%,100%{opacity:.32;box-shadow:none;}
+  50%{opacity:.52;box-shadow:inset -20px 0 40px rgba(255,184,0,.4);}
+}
+@keyframes pulseB{
+  0%,100%{opacity:.32;box-shadow:none;}
+  50%{opacity:.52;box-shadow:inset 20px 0 40px rgba(220,30,0,.4);}
+}
+
+/* Línea de energía en el borde superior del ganador */
+.energy-bar{
+  position:absolute;top:0;left:0;right:0;height:2px;z-index:3;
+  opacity:0;transition:opacity .6s;
+}
+.energy-bar.show-a{
+  opacity:1;
+  background:linear-gradient(90deg, #FFD000 0%, rgba(255,208,0,0) 60%);
+  animation:energyA 2s ease-in-out infinite;
+}
+.energy-bar.show-b{
+  opacity:1;
+  background:linear-gradient(270deg, #FF4400 0%, rgba(255,68,0,0) 60%);
+  animation:energyB 2s ease-in-out infinite;
+}
+@keyframes energyA{0%,100%{opacity:.6;}50%{opacity:1;}}
+@keyframes energyB{0%,100%{opacity:.6;}50%{opacity:1;}}
+
+/* ══ Contenido ══ */
 .w-content{
   position:absolute;inset:0;display:flex;z-index:2;
-  transition:opacity .4s;
+  transition:opacity .5s;
 }
 .w-box.winner-mode .w-content{opacity:0;}
+.w-box.winner-mode .fill-a,
+.w-box.winner-mode .fill-b{opacity:0;}
+.w-box.winner-mode .energy-bar{opacity:0;}
 
 .w-side{
   flex:1;display:flex;flex-direction:column;
-  justify-content:center;padding:10px 16px;min-width:0;
+  justify-content:center;padding:10px 20px;min-width:0;
 }
 .w-side-b{align-items:flex-end;text-align:right;}
-.w-label{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:rgba(255,255,255,.5);margin-bottom:1px;}
-.w-name{
-  font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;
-  color:#fff;line-height:1;margin-bottom:2px;
-  text-shadow:0 0 15px rgba(255,184,0,.7), 0 1px 6px rgba(0,0,0,.8);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
-}
-.w-pct{
-  font-family:'Bebas Neue',sans-serif;font-size:54px;color:#fff;
-  letter-spacing:-1px;line-height:1;
-  text-shadow:0 0 20px rgba(255,184,0,.9), 0 0 40px rgba(255,184,0,.4), 0 2px 8px rgba(0,0,0,.6);transition:font-size .3s;
-}
-.w-pct.winner{font-size:62px;}
-.w-pct.loser{font-size:42px;color:rgba(255,255,255,.55);}
-.w-votes-txt{font-size:11px;color:rgba(255,255,255,.5);font-weight:700;letter-spacing:.5px;margin-top:3px;}
 
-.w-total{text-align:center;font-size:11px;color:rgba(255,255,255,.4);font-weight:700;letter-spacing:.5px;margin-top:5px;}
+/* VS central */
+.w-vs{
+  display:flex;align-items:center;justify-content:center;
+  width:44px;flex-shrink:0;position:relative;z-index:2;
+}
+.vs-text{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:16px;letter-spacing:2px;
+  color:rgba(255,255,255,.2);
+}
+/* Línea divisoria sutil */
+.w-vs::before{
+  content:'';
+  position:absolute;top:14px;bottom:14px;left:50%;
+  width:1px;background:rgba(255,255,255,.07);
+  transform:translateX(-50%);
+}
+
+.w-label{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:11px;letter-spacing:3px;
+  color:rgba(255,255,255,.35);margin-bottom:2px;
+}
+.w-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:22px;letter-spacing:2px;color:#fff;
+  line-height:1;margin-bottom:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:text-shadow .6s;
+}
+.w-name.leading-a{text-shadow:0 0 16px rgba(255,184,0,.8),0 0 32px rgba(255,184,0,.3);}
+.w-name.leading-b{text-shadow:0 0 16px rgba(220,60,0,.8),0 0 32px rgba(220,60,0,.3);}
+
+.w-pct{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:52px;color:#fff;
+  letter-spacing:-1px;line-height:1;
+  transition:font-size .5s ease, opacity .5s, text-shadow .6s;
+}
+.w-pct.leading-a{
+  font-size:62px;
+  text-shadow:0 0 24px rgba(255,184,0,.9),0 0 50px rgba(255,184,0,.4);
+}
+.w-pct.leading-b{
+  font-size:62px;
+  text-shadow:0 0 24px rgba(220,60,0,.9),0 0 50px rgba(220,60,0,.4);
+}
+.w-pct.trailing{font-size:40px;opacity:.55;}
+
+.w-votes-txt{
+  font-size:11px;color:rgba(255,255,255,.35);
+  font-weight:700;letter-spacing:.5px;margin-top:4px;
+  font-family:'Inter',sans-serif;
+}
+
+/* Total */
+.w-total{
+  text-align:center;font-size:11px;
+  color:rgba(255,255,255,.3);font-weight:700;
+  letter-spacing:1px;margin-top:6px;
+  font-family:'Inter',sans-serif;
+}
 
 /* ══ Remontada ══ */
 .w-remontada{
   position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%) scale(.85);
-  background:rgba(8,8,8,.92);border:2px solid #FFD000;border-radius:10px;
-  padding:7px 18px;text-align:center;z-index:10;
-  opacity:0;transition:opacity .3s,transform .3s;
+  background:rgba(4,4,8,.95);
+  border:1px solid rgba(255,208,0,.5);
+  border-radius:10px;padding:7px 20px;
+  text-align:center;z-index:10;
+  opacity:0;transition:opacity .35s,transform .35s;
   pointer-events:none;white-space:nowrap;
+  box-shadow:0 0 20px rgba(255,208,0,.2);
 }
 .w-remontada.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
-.w-rem-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:#FFD000;letter-spacing:2px;text-shadow:0 0 15px rgba(255,208,0,.9), 0 0 30px rgba(255,208,0,.5);}
-.w-rem-sub{font-size:10px;color:rgba(255,255,255,.6);font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.w-rem-title{
+  font-family:'Bebas Neue',sans-serif;font-size:20px;
+  color:#FFD000;letter-spacing:2px;
+  text-shadow:0 0 12px rgba(255,208,0,.8);
+}
+.w-rem-sub{font-size:10px;color:rgba(255,255,255,.5);font-weight:700;letter-spacing:1px;text-transform:uppercase;}
 
 /* ══ WINNER ══ */
 .w-winner-overlay{
   position:absolute;inset:0;z-index:20;
   display:flex;align-items:center;justify-content:center;flex-direction:column;
-  opacity:0;transition:opacity .5s;pointer-events:none;
+  opacity:0;transition:opacity .6s;pointer-events:none;
 }
 .w-winner-overlay.show{opacity:1;}
-
-/* Canvas confeti dentro del box */
 #confettiCanvas{
   position:absolute;inset:0;z-index:0;
   width:100%;height:100%;
   opacity:0;transition:opacity .5s;
 }
 .w-winner-overlay.show #confettiCanvas{opacity:1;}
-
-/* Fondo ganador */
 .w-winner-bg{
   position:absolute;inset:0;z-index:1;
-  opacity:0;transition:opacity .6s;
+  opacity:0;transition:opacity .7s;
 }
-.w-winner-overlay.show .w-winner-bg{opacity:.7;}
-
-/* Texto ganador */
-.w-winner-content{
-  position:relative;z-index:2;text-align:center;
-}
+.w-winner-overlay.show .w-winner-bg{opacity:.65;}
+.w-winner-content{position:relative;z-index:2;text-align:center;}
 .w-winner-label{
-  font-family:'Bebas Neue',sans-serif;font-size:13px;
-  letter-spacing:3px;color:rgba(255,255,255,.65);margin-bottom:0;
+  font-family:'Bebas Neue',sans-serif;font-size:12px;
+  letter-spacing:4px;color:rgba(255,255,255,.55);margin-bottom:0;
 }
 .w-winner-name{
-  font-family:'Bebas Neue',sans-serif;font-size:58px;
+  font-family:'Bebas Neue',sans-serif;font-size:60px;
   letter-spacing:3px;color:#fff;line-height:1;
-  text-shadow:0 0 30px rgba(255,255,255,.4), 0 2px 20px rgba(0,0,0,.6);
-  animation:winPulse 1.2s ease-in-out infinite alternate;
+  text-shadow:0 0 40px rgba(255,255,255,.5), 0 2px 20px rgba(0,0,0,.8);
+  animation:winPulse 1.4s ease-in-out infinite alternate;
 }
 @keyframes winPulse{from{transform:scale(1);}to{transform:scale(1.04);}}
 .w-winner-pct{
-  font-family:'Bebas Neue',sans-serif;font-size:26px;
-  color:rgba(255,255,255,.7);letter-spacing:2px;margin-top:2px;
+  font-family:'Bebas Neue',sans-serif;font-size:24px;
+  color:rgba(255,255,255,.6);letter-spacing:2px;margin-top:2px;
 }
 </style>
 </head>
@@ -153,6 +247,7 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
   <div class="w-box" id="wBox">
     <div class="fill-a" id="fillA" style="width:50%"></div>
     <div class="fill-b" id="fillB" style="width:50%"></div>
+    <div class="energy-bar" id="energyBar"></div>
 
     <div class="w-content">
       <div class="w-side">
@@ -161,6 +256,9 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
         <div class="w-pct" id="wPctA">50%</div>
         <div class="w-votes-txt"><span id="wVotesA">0</span> votos</div>
       </div>
+
+      <div class="w-vs"><span class="vs-text">VS</span></div>
+
       <div class="w-side w-side-b">
         <div class="w-label">B</div>
         <div class="w-name" id="wNameB">BART</div>
@@ -170,11 +268,10 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
     </div>
 
     <div class="w-remontada" id="wRemontada">
-      <div class="w-rem-title">¡REMONTADA!</div>
+      <div class="w-rem-title">⚡ REMONTADA</div>
       <div class="w-rem-sub" id="wRemSub">A ESTÁ SUBIENDO</div>
     </div>
 
-    <!-- Winner overlay -->
     <div class="w-winner-overlay" id="wWinner">
       <canvas id="confettiCanvas"></canvas>
       <div class="w-winner-bg" id="wWinnerBg"></div>
@@ -191,185 +288,164 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 
 <script>
 const LS = 'poll_state';
-let prevLeader = null, prevDiff = 0;
-let remTimeout = null, winnerShown = false, lastTimerEnd = 0;
-let confettiRAF = null, confettiParticles = [];
+let prevLeader=null, prevDiff=0;
+let remTimeout=null, winnerShown=false, lastTimerEnd=0;
+let confettiRAF=null, confettiParticles=[];
 
 // ══ Confeti neón ══
 function startConfetti(color) {
   const canvas = document.getElementById('confettiCanvas');
-  const ctx    = canvas.getContext('2d');
-  canvas.width  = canvas.offsetWidth;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth;
   canvas.height = canvas.offsetHeight;
-
-  // Colores neón basados en el ganador
   const neonColors = color === '#FFB800'
     ? ['#FFD000','#FFEC00','#FFA500','#fff700','#ffffff','#FF6B00']
     : ['#FF2222','#FF6666','#FF0066','#FF44AA','#ffffff','#CC0044'];
-
-  confettiParticles = [];
-  for (let i = 0; i < 80; i++) {
-    confettiParticles.push({
-      x:     Math.random() * canvas.width,
-      y:     Math.random() * canvas.height - canvas.height,
-      w:     Math.random() * 8 + 3,
-      h:     Math.random() * 4 + 2,
-      color: neonColors[Math.floor(Math.random() * neonColors.length)],
-      speed: Math.random() * 2 + 1,
-      angle: Math.random() * Math.PI * 2,
-      spin:  (Math.random() - 0.5) * 0.15,
-      wobble: Math.random() * 0.05,
-      opacity: Math.random() * 0.5 + 0.5,
-    });
-  }
-
+  confettiParticles = Array.from({length:80},()=>({
+    x:Math.random()*canvas.width, y:Math.random()*canvas.height-canvas.height,
+    w:Math.random()*8+3, h:Math.random()*4+2,
+    color:neonColors[Math.floor(Math.random()*neonColors.length)],
+    speed:Math.random()*2+1, angle:Math.random()*Math.PI*2,
+    spin:(Math.random()-.5)*.15, wobble:Math.random()*.05,
+    opacity:Math.random()*.5+.5,
+  }));
   function loop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    confettiParticles.forEach(p => {
-      p.y     += p.speed;
-      p.angle += p.spin;
-      p.x     += Math.sin(p.angle * 3) * p.wobble * 20;
-
-      // Neón glow
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.angle);
-      ctx.globalAlpha = p.opacity;
-      ctx.shadowColor = p.color;
-      ctx.shadowBlur  = 8;
-      ctx.fillStyle   = p.color;
-      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
-      ctx.restore();
-
-      // Reciclar
-      if (p.y > canvas.height + 10) {
-        p.y = -10;
-        p.x = Math.random() * canvas.width;
-      }
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    confettiParticles.forEach(p=>{
+      p.y+=p.speed; p.angle+=p.spin;
+      p.x+=Math.sin(p.angle*3)*p.wobble*20;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.angle);
+      ctx.globalAlpha=p.opacity; ctx.shadowColor=p.color; ctx.shadowBlur=8;
+      ctx.fillStyle=p.color; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+      if(p.y>canvas.height+10){p.y=-10;p.x=Math.random()*canvas.width;}
     });
-    confettiRAF = requestAnimationFrame(loop);
+    confettiRAF=requestAnimationFrame(loop);
   }
-  if (confettiRAF) cancelAnimationFrame(confettiRAF);
+  if(confettiRAF)cancelAnimationFrame(confettiRAF);
   loop();
 }
 
-function stopConfetti() {
-  if (confettiRAF) { cancelAnimationFrame(confettiRAF); confettiRAF = null; }
-  const canvas = document.getElementById('confettiCanvas');
-  const ctx    = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function stopConfetti(){
+  if(confettiRAF){cancelAnimationFrame(confettiRAF);confettiRAF=null;}
+  const c=document.getElementById('confettiCanvas');
+  c.getContext('2d').clearRect(0,0,c.width,c.height);
 }
 
-// ══ Winner ══
-function showWinner(s) {
-  const vA = s.vA || 0, vB = s.vB || 0;
-  const total = vA + vB;
-  if (total === 0) return;
-
-  const pA = Math.round(vA / total * 100);
-  const pB = 100 - pA;
-  const isA  = pA >= pB;
-  const name  = (isA ? s.nameA : s.nameB || 'B').toUpperCase();
-  const pct   = (isA ? pA : pB) + '%';
-  const color = isA ? '#FFB800' : '#CC1100';
-
-  document.getElementById('wWinnerName').textContent = name;
-  document.getElementById('wWinnerPct').textContent  = pct;
-  document.getElementById('wWinnerBg').style.background = color;
-
+function showWinner(s){
+  const vA=s.vA||0, vB=s.vB||0, total=vA+vB;
+  if(!total)return;
+  const pA=Math.round(vA/total*100), pB=100-pA;
+  const isA=pA>=pB;
+  const name=(isA?s.nameA:s.nameB||'B').toUpperCase();
+  const pct=(isA?pA:pB)+'%';
+  const color=isA?'#FFB800':'#CC1100';
+  document.getElementById('wWinnerName').textContent=name;
+  document.getElementById('wWinnerPct').textContent=pct;
+  document.getElementById('wWinnerBg').style.background=color;
   document.getElementById('wBox').classList.add('winner-mode');
   document.getElementById('wWinner').classList.add('show');
-
   startConfetti(color);
 }
 
-function hideWinner() {
+function hideWinner(){
   document.getElementById('wBox').classList.remove('winner-mode');
   document.getElementById('wWinner').classList.remove('show');
   stopConfetti();
-  winnerShown = false;
+  winnerShown=false;
 }
 
-// ══ Render ══
-function render(s) {
-  const vA = s.vA || 0, vB = s.vB || 0;
-  const total = vA + vB;
-  const pA = total === 0 ? 50 : Math.round(vA / total * 100);
-  const pB = total === 0 ? 50 : 100 - pA;
+function render(s){
+  const vA=s.vA||0, vB=s.vB||0;
+  const total=vA+vB;
+  const pA=total===0?50:Math.round(vA/total*100);
+  const pB=total===0?50:100-pA;
 
-  document.getElementById('wQuestion').textContent  = s.question || '¿Qué eligen?';
-  document.getElementById('wNameA').textContent     = (s.nameA || 'A').toUpperCase();
-  document.getElementById('wNameB').textContent     = (s.nameB || 'B').toUpperCase();
-  document.getElementById('wPctA').textContent      = pA + '%';
-  document.getElementById('wPctB').textContent      = pB + '%';
-  document.getElementById('wVotesA').textContent    = vA;
-  document.getElementById('wVotesB').textContent    = vB;
-  document.getElementById('wTotal').textContent     = total + (total === 1 ? ' voto total' : ' votos totales');
+  document.getElementById('wQuestion').textContent=s.question||'¿Qué eligen?';
+  document.getElementById('wNameA').textContent=(s.nameA||'A').toUpperCase();
+  document.getElementById('wNameB').textContent=(s.nameB||'B').toUpperCase();
+  document.getElementById('wPctA').textContent=pA+'%';
+  document.getElementById('wPctB').textContent=pB+'%';
+  document.getElementById('wVotesA').textContent=vA;
+  document.getElementById('wVotesB').textContent=vB;
+  document.getElementById('wTotal').textContent=total+(total===1?' voto total':' votos totales');
 
-  document.getElementById('fillA').style.width = pA + '%';
-  document.getElementById('wPctA').style.textShadow = '0 0 20px rgba(255,184,0,.95), 0 0 45px rgba(255,184,0,.5), 0 2px 8px rgba(0,0,0,.8)';
-  document.getElementById('wPctB').style.textShadow = '0 0 20px rgba(220,30,0,.95), 0 0 45px rgba(220,30,0,.5), 0 2px 8px rgba(0,0,0,.8)';
-  document.getElementById('wNameA').style.textShadow = '0 0 14px rgba(255,184,0,.7), 0 1px 4px rgba(0,0,0,.9)';
-  document.getElementById('wNameB').style.textShadow = '0 0 14px rgba(220,30,0,.7), 0 1px 4px rgba(0,0,0,.9)';
-  document.getElementById('fillB').style.width = pB + '%';
+  // Fills con transición suave
+  document.getElementById('fillA').style.width=pA+'%';
+  document.getElementById('fillB').style.width=pB+'%';
 
-  // Tamaño dinámico
-  const pctA = document.getElementById('wPctA');
-  const pctB = document.getElementById('wPctB');
-  if (total === 0) { pctA.className = pctB.className = 'w-pct'; }
-  else if (pA > pB) { pctA.className = 'w-pct winner'; pctB.className = 'w-pct loser'; }
-  else if (pB > pA) { pctB.className = 'w-pct winner'; pctA.className = 'w-pct loser'; }
-  else { pctA.className = pctB.className = 'w-pct'; }
+  // Clases de liderazgo para glow y pulso
+  const fillA=document.getElementById('fillA');
+  const fillB=document.getElementById('fillB');
+  const pctA=document.getElementById('wPctA');
+  const pctB=document.getElementById('wPctB');
+  const nameA=document.getElementById('wNameA');
+  const nameB=document.getElementById('wNameB');
+  const energyBar=document.getElementById('energyBar');
+
+  if(total===0){
+    fillA.className='fill-a'; fillB.className='fill-b';
+    pctA.className='w-pct'; pctB.className='w-pct';
+    nameA.className='w-name'; nameB.className='w-name';
+    energyBar.className='energy-bar';
+  } else if(pA>pB){
+    fillA.className='fill-a pulse'; fillB.className='fill-b';
+    pctA.className='w-pct leading-a'; pctB.className='w-pct trailing';
+    nameA.className='w-name leading-a'; nameB.className='w-name';
+    energyBar.className='energy-bar show-a';
+  } else if(pB>pA){
+    fillB.className='fill-b pulse'; fillA.className='fill-a';
+    pctB.className='w-pct leading-b'; pctA.className='w-pct trailing';
+    nameB.className='w-name leading-b'; nameA.className='w-name';
+    energyBar.className='energy-bar show-b';
+  } else {
+    fillA.className='fill-a'; fillB.className='fill-b';
+    pctA.className='w-pct'; pctB.className='w-pct';
+    nameA.className='w-name'; nameB.className='w-name';
+    energyBar.className='energy-bar';
+  }
 
   // Remontada
-  const leader = pA > pB ? 'a' : pA < pB ? 'b' : null;
-  const diff   = Math.abs(pA - pB);
-  if (total >= 10 && prevLeader && leader && leader !== prevLeader && prevDiff >= 15 && !winnerShown) {
-    const nm = (leader === 'a' ? (s.nameA||'A') : (s.nameB||'B')).toUpperCase();
-    document.getElementById('wRemSub').textContent = nm + ' ESTÁ SUBIENDO';
-    const rem = document.getElementById('wRemontada');
+  const leader=pA>pB?'a':pA<pB?'b':null;
+  const diff=Math.abs(pA-pB);
+  if(total>=10&&prevLeader&&leader&&leader!==prevLeader&&prevDiff>=15){
+    const nm=(leader==='a'?(s.nameA||'A'):(s.nameB||'B')).toUpperCase();
+    document.getElementById('wRemSub').textContent=nm+' ESTÁ SUBIENDO';
+    const rem=document.getElementById('wRemontada');
     rem.classList.add('show');
-    if (remTimeout) clearTimeout(remTimeout);
-    remTimeout = setTimeout(() => rem.classList.remove('show'), 3500);
+    if(remTimeout)clearTimeout(remTimeout);
+    remTimeout=setTimeout(()=>rem.classList.remove('show'),3500);
   }
-  prevLeader = leader;
-  prevDiff   = diff;
+  prevLeader=leader; prevDiff=diff;
 
   // Timer + winner
-  const timerEl = document.getElementById('wTimer');
-  if (s.timerEnd && s.timerEnd > 0) {
-    const rem = Math.max(0, Math.ceil((s.timerEnd - Date.now()) / 1000));
-    if (rem > 0) {
-      timerEl.style.display = 'block';
-      timerEl.textContent   = rem >= 60
-        ? Math.floor(rem/60) + ':' + String(rem%60).padStart(2,'0')
-        : rem + 's';
-      timerEl.className = 'w-timer' + (rem <= 10 ? ' urgent' : '');
-      if (winnerShown && s.timerEnd !== lastTimerEnd) hideWinner();
+  const timerEl=document.getElementById('wTimer');
+  if(s.timerEnd&&s.timerEnd>0){
+    const rem=Math.max(0,Math.ceil((s.timerEnd-Date.now())/1000));
+    if(rem>0){
+      timerEl.style.display='block';
+      timerEl.textContent=rem>=60?Math.floor(rem/60)+':'+String(rem%60).padStart(2,'0'):rem+'s';
+      timerEl.className='w-timer'+(rem<=10?' urgent':'');
+      if(winnerShown&&s.timerEnd!==lastTimerEnd)hideWinner();
     } else {
-      timerEl.style.display = 'none';
-      if (!winnerShown) {
-        winnerShown  = true;
-        lastTimerEnd = s.timerEnd;
-        showWinner(s);
-      }
+      timerEl.style.display='none';
+      if(!winnerShown){winnerShown=true;lastTimerEnd=s.timerEnd;showWinner(s);}
     }
   } else {
-    timerEl.style.display = 'none';
-    if (winnerShown) hideWinner();
+    timerEl.style.display='none';
+    if(winnerShown)hideWinner();
   }
 }
 
-setInterval(() => {
-  try {
-    const raw = localStorage.getItem(LS);
-    if (!raw) return;
-    const s = JSON.parse(raw);
-    const w = document.getElementById('widget');
-    if (s.active) { w.classList.add('visible'); render(s); }
-    else { w.classList.remove('visible'); hideWinner(); }
-  } catch(e) {}
-}, 500);
+setInterval(()=>{
+  try{
+    const raw=localStorage.getItem(LS);
+    if(!raw)return;
+    const s=JSON.parse(raw);
+    const w=document.getElementById('widget');
+    if(s.active){w.classList.add('visible');render(s);}
+    else{w.classList.remove('visible');hideWinner();}
+  }catch(e){}
+},500);
 </script>
 </body>
 </html>
