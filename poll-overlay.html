@@ -11,7 +11,7 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 #widget{
   position:fixed;bottom:32px;left:50%;
   transform:translateX(-50%) translateY(10px);
-  width:520px;
+  width:440px;
   opacity:0;
   transition:opacity .5s ease, transform .5s ease;
   pointer-events:none;
@@ -287,15 +287,18 @@ function render(s){
   document.getElementById('wVotesB').textContent=vB;
   document.getElementById('wTotal').textContent=total+(total===1?' voto total':' votos totales');
 
-  // Split gradient — zero overlap, pure vibrant colors
-  document.getElementById('fillA').style.background=
-    'linear-gradient(90deg, #FFD000 '+pA+'%, #CC0000 '+pA+'%)';
-  // Update glow based on leader
+  // Split gradient — 55% opacity, colores vibrantes con glow
+  const gradA = 'rgba(255,200,0,0.55)';
+  const gradB = 'rgba(200,15,0,0.55)';
+  document.getElementById('fillA').style.background =
+    `linear-gradient(90deg, ${gradA} ${pA}%, ${gradB} ${pA}%)`;
+
+  // Glow del lado ganador
   const glow = document.getElementById('glowOverlay');
   if(pA>pB){
-    glow.style.boxShadow='inset 60px 0 80px rgba(255,184,0,.18), inset -20px 0 40px rgba(180,0,0,.1)';
+    glow.style.boxShadow='inset 80px 0 100px rgba(255,200,0,.22), inset -20px 0 40px rgba(200,0,0,.1)';
   } else if(pB>pA){
-    glow.style.boxShadow='inset -60px 0 80px rgba(180,0,0,.18), inset 20px 0 40px rgba(255,184,0,.1)';
+    glow.style.boxShadow='inset -80px 0 100px rgba(200,15,0,.22), inset 20px 0 40px rgba(255,184,0,.1)';
   } else {
     glow.style.boxShadow='none';
   }
