@@ -28,6 +28,10 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 .btn-reset:hover{background:rgba(255,255,255,.1);}
 .btn-full-reset{width:100%;padding:10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.35);transition:.15s;font-family:'Inter',sans-serif;}
 .btn-full-reset:hover{background:rgba(255,255,255,.1);color:#fff;}
+.btn-hide{width:100%;padding:7px;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(150,150,255,.2);background:rgba(150,150,255,.07);color:rgba(150,150,255,.6);transition:.15s;font-family:'Inter',sans-serif;margin-top:4px;}
+.btn-hide:hover{background:rgba(150,150,255,.18);}
+.btn-hide.oculto{background:rgba(255,220,0,.1);border-color:rgba(255,220,0,.3);color:#ffdd44;}
+.hide-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;}
 .status{font-size:11px;text-align:center;margin-top:10px;min-height:16px;color:rgba(255,255,255,.3);}
 .status.ok{color:#4ade80;} .status.heal{color:#66FF88;} .status.dmg{color:#FF6666;}
 .dead-banner{display:none;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:1px;margin-bottom:8px;background:rgba(255,68,68,.15);border:1px solid rgba(255,68,68,.3);color:#FF6666;}
@@ -56,6 +60,7 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
       <button class="btn btn-heal" onclick="heal('danny',.5)">+½</button>
     </div>
     <button class="btn-reset" onclick="resetOne('danny')">↺ Reset Danny</button>
+    <button class="btn-hide" id="btnHideDanny" onclick="toggleHide('danny')">👁 Ocultar overlay</button>
   </div>
 
   <!-- CHAT -->
@@ -72,6 +77,7 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
       <button class="btn btn-heal" onclick="heal('chat',.5)">+½</button>
     </div>
     <button class="btn-reset" onclick="resetOne('chat')">↺ Reset Chat</button>
+    <button class="btn-hide" id="btnHideChat" onclick="toggleHide('chat')">👁 Ocultar overlay</button>
   </div>
 </div>
 
@@ -80,7 +86,7 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 
 <script>
 const LS = 'battle_state';
-const state = { dannyHp:6, chatHp:6, dannyHit:0, chatHit:0, dannyHeal:0, chatHeal:0, dannyDead:false, chatDead:false };
+const state = { dannyHp:6, chatHp:6, dannyHit:0, chatHit:0, dannyHeal:0, chatHeal:0, dannyDead:false, chatDead:false, dannyHidden:false, chatHidden:false };
 
 function save(){ localStorage.setItem(LS, JSON.stringify(state)); }
 
@@ -168,6 +174,23 @@ function resetAll() {
   Object.assign(state,{dannyHp:6,chatHp:6,dannyHit:0,chatHit:0,dannyHeal:0,chatHeal:0,dannyDead:false,chatDead:false});
   save(); updateUI();
   setStatus('Nueva batalla iniciada ✅','ok');
+  setTimeout(()=>setStatus('Listo',''),2000);
+}
+
+function toggleHide(who) {
+  if (who === 'danny') {
+    state.dannyHidden = !state.dannyHidden;
+    const btn = document.getElementById('btnHideDanny');
+    btn.textContent = state.dannyHidden ? '👁 Mostrar overlay' : '👁 Ocultar overlay';
+    btn.classList.toggle('oculto', state.dannyHidden);
+  } else {
+    state.chatHidden = !state.chatHidden;
+    const btn = document.getElementById('btnHideChat');
+    btn.textContent = state.chatHidden ? '👁 Mostrar overlay' : '👁 Ocultar overlay';
+    btn.classList.toggle('oculto', state.chatHidden);
+  }
+  save();
+  setStatus((who==='danny'?'Sam':'Chat') + (state[who+'Hidden']?' overlay oculto':' overlay visible'), 'ok');
   setTimeout(()=>setStatus('Listo',''),2000);
 }
 
