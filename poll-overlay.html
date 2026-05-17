@@ -8,98 +8,79 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 
-/* ══ Widget ══ */
 #widget{
   position:fixed;bottom:32px;left:50%;
-  transform:translateX(-50%);
-  width:600px;
-  opacity:0;transform:translateX(-50%) translateY(12px);
-  transition:opacity .6s ease, transform .6s ease;
+  transform:translateX(-50%) translateY(10px);
+  width:520px;
+  opacity:0;
+  transition:opacity .5s ease, transform .5s ease;
   pointer-events:none;
 }
 #widget.visible{opacity:1;transform:translateX(-50%) translateY(0);}
 
 /* Header */
-.w-header{text-align:center;margin-bottom:10px;}
+.w-header{text-align:center;margin-bottom:8px;}
 .w-timer{
   font-family:'Bebas Neue',sans-serif;
-  font-size:40px;color:#fff;letter-spacing:3px;line-height:1;
-  text-shadow:0 0 24px rgba(255,255,255,.8), 0 0 48px rgba(255,255,255,.3);
+  font-size:38px;color:#fff;letter-spacing:3px;line-height:1;
+  text-shadow:0 0 20px rgba(255,255,255,.8),0 0 40px rgba(255,255,255,.3);
   display:none;
 }
-.w-timer.urgent{
-  color:#ff3333;
-  text-shadow:0 0 20px rgba(255,50,50,1), 0 0 50px rgba(255,50,50,.6);
-  animation:tblink .45s infinite;
-}
-@keyframes tblink{0%,100%{opacity:1;}50%{opacity:.25;}}
+.w-timer.urgent{color:#ff3333;text-shadow:0 0 20px rgba(255,50,50,1),0 0 50px rgba(255,50,50,.6);animation:tblink .45s infinite;}
+@keyframes tblink{0%,100%{opacity:1;}50%{opacity:.2;}}
 .w-question{
   font-family:'Bebas Neue',sans-serif;
-  font-size:16px;color:rgba(255,255,255,.5);
-  letter-spacing:3px;margin-top:4px;
-  text-transform:uppercase;
+  font-size:17px;color:rgba(255,255,255,.6);
+  letter-spacing:2px;margin-top:4px;
 }
 
-/* ══ Box principal ══ */
+/* ══ Box ══ */
 .w-box{
-  position:relative;
-  height:100px;
-  border-radius:16px;
+  position:relative;height:120px;border-radius:14px;
   overflow:hidden;
-  background:rgba(6,6,10,0.7);
-  /* Borde elegante */
-  outline:1px solid rgba(255,255,255,.06);
+  background:rgba(6,6,10,0.65);
   box-shadow:
-    0 16px 48px rgba(0,0,0,.8),
-    0 0 0 1px rgba(255,255,255,.04);
-  backdrop-filter:blur(8px);
+    0 12px 48px rgba(0,0,0,.8),
+    0 0 0 1px rgba(255,255,255,.05);
 }
 
-/* ══ Fills que se invaden ══ */
+/* ══ Fills vibrantes con glow completo ══ */
 .fill-a{
   position:absolute;top:0;left:0;bottom:0;
-  background:linear-gradient(90deg, #FFB800, #FF8800);
-  opacity:.32;
-  transition:width 1.2s cubic-bezier(.25,.46,.45,.94);
+  background:linear-gradient(90deg,
+    rgba(255,184,0,1) 0%,
+    rgba(255,140,0,.85) 60%,
+    rgba(255,100,0,.3) 100%
+  );
+  opacity:.6;
+  transition:width 1s cubic-bezier(.25,.46,.45,.94);
   z-index:1;
+  /* Glow completo en toda la barra */
+  filter:blur(0px);
+  box-shadow:
+    0 0 30px rgba(255,184,0,.6),
+    0 0 60px rgba(255,184,0,.3),
+    inset 0 0 40px rgba(255,220,0,.4);
 }
 .fill-b{
   position:absolute;top:0;right:0;bottom:0;
-  background:linear-gradient(270deg, #CC1100, #FF3300);
-  opacity:.32;
-  transition:width 1.2s cubic-bezier(.25,.46,.45,.94);
+  background:linear-gradient(270deg,
+    rgba(220,20,0,1) 0%,
+    rgba(200,10,0,.85) 60%,
+    rgba(180,0,0,.3) 100%
+  );
+  opacity:.6;
+  transition:width 1s cubic-bezier(.25,.46,.45,.94);
   z-index:1;
+  box-shadow:
+    0 0 30px rgba(220,20,0,.6),
+    0 0 60px rgba(220,20,0,.3),
+    inset 0 0 40px rgba(255,50,0,.4);
 }
 
-/* Pulso del ganador */
-.fill-a.pulse{animation:pulseA 1.8s ease-in-out infinite;}
-.fill-b.pulse{animation:pulseB 1.8s ease-in-out infinite;}
-@keyframes pulseA{
-  0%,100%{opacity:.32;box-shadow:none;}
-  50%{opacity:.52;box-shadow:inset -20px 0 40px rgba(255,184,0,.4);}
-}
-@keyframes pulseB{
-  0%,100%{opacity:.32;box-shadow:none;}
-  50%{opacity:.52;box-shadow:inset 20px 0 40px rgba(220,30,0,.4);}
-}
-
-/* Línea de energía en el borde superior del ganador */
-.energy-bar{
-  position:absolute;top:0;left:0;right:0;height:2px;z-index:3;
-  opacity:0;transition:opacity .6s;
-}
-.energy-bar.show-a{
-  opacity:1;
-  background:linear-gradient(90deg, #FFD000 0%, rgba(255,208,0,0) 60%);
-  animation:energyA 2s ease-in-out infinite;
-}
-.energy-bar.show-b{
-  opacity:1;
-  background:linear-gradient(270deg, #FF4400 0%, rgba(255,68,0,0) 60%);
-  animation:energyB 2s ease-in-out infinite;
-}
-@keyframes energyA{0%,100%{opacity:.6;}50%{opacity:1;}}
-@keyframes energyB{0%,100%{opacity:.6;}50%{opacity:1;}}
+/* Ocultar fills en modo ganador */
+.w-box.winner-mode .fill-a,
+.w-box.winner-mode .fill-b{opacity:0;transition:opacity .5s;}
 
 /* ══ Contenido ══ */
 .w-content{
@@ -107,72 +88,42 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
   transition:opacity .5s;
 }
 .w-box.winner-mode .w-content{opacity:0;}
-.w-box.winner-mode .fill-a,
-.w-box.winner-mode .fill-b{opacity:0;}
-.w-box.winner-mode .energy-bar{opacity:0;}
 
 .w-side{
   flex:1;display:flex;flex-direction:column;
-  justify-content:center;padding:10px 20px;min-width:0;
+  justify-content:center;padding:10px 18px;min-width:0;
 }
 .w-side-b{align-items:flex-end;text-align:right;}
 
-/* VS central */
-.w-vs{
-  display:flex;align-items:center;justify-content:center;
-  width:44px;flex-shrink:0;position:relative;z-index:2;
-}
-.vs-text{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:16px;letter-spacing:2px;
-  color:rgba(255,255,255,.2);
-}
-/* Línea divisoria sutil */
-.w-vs::before{
-  content:'';
-  position:absolute;top:14px;bottom:14px;left:50%;
-  width:1px;background:rgba(255,255,255,.07);
-  transform:translateX(-50%);
-}
-
 .w-label{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:11px;letter-spacing:3px;
-  color:rgba(255,255,255,.35);margin-bottom:2px;
+  font-family:'Bebas Neue',sans-serif;font-size:12px;
+  letter-spacing:2px;color:rgba(255,255,255,.45);margin-bottom:2px;
 }
 .w-name{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:22px;letter-spacing:2px;color:#fff;
-  line-height:1;margin-bottom:3px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  transition:text-shadow .6s;
+  font-family:'Bebas Neue',sans-serif;font-size:22px;
+  letter-spacing:2px;color:#fff;line-height:1;margin-bottom:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+  transition:text-shadow .5s;
 }
-.w-name.leading-a{text-shadow:0 0 16px rgba(255,184,0,.8),0 0 32px rgba(255,184,0,.3);}
-.w-name.leading-b{text-shadow:0 0 16px rgba(220,60,0,.8),0 0 32px rgba(220,60,0,.3);}
+.w-name.win{text-shadow:0 0 20px rgba(255,255,255,.7),0 0 40px rgba(255,255,255,.3);}
 
 .w-pct{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:52px;color:#fff;
-  letter-spacing:-1px;line-height:1;
-  transition:font-size .5s ease, opacity .5s, text-shadow .6s;
+  font-family:'Bebas Neue',sans-serif;font-size:56px;
+  color:#fff;letter-spacing:-1px;line-height:1;
+  transition:font-size .5s ease,opacity .5s,text-shadow .5s;
 }
-.w-pct.leading-a{
-  font-size:62px;
-  text-shadow:0 0 24px rgba(255,184,0,.9),0 0 50px rgba(255,184,0,.4);
+.w-pct.win{
+  font-size:64px;
+  text-shadow:0 0 24px rgba(255,255,255,.8),0 0 50px rgba(255,255,255,.35);
 }
-.w-pct.leading-b{
-  font-size:62px;
-  text-shadow:0 0 24px rgba(220,60,0,.9),0 0 50px rgba(220,60,0,.4);
-}
-.w-pct.trailing{font-size:40px;opacity:.55;}
+.w-pct.lose{font-size:42px;opacity:.5;}
 
 .w-votes-txt{
-  font-size:11px;color:rgba(255,255,255,.35);
-  font-weight:700;letter-spacing:.5px;margin-top:4px;
+  font-size:11px;color:rgba(255,255,255,.4);
+  font-weight:700;letter-spacing:.5px;margin-top:3px;
   font-family:'Inter',sans-serif;
 }
 
-/* Total */
 .w-total{
   text-align:center;font-size:11px;
   color:rgba(255,255,255,.3);font-weight:700;
@@ -184,10 +135,8 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 .w-remontada{
   position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%) scale(.85);
-  background:rgba(4,4,8,.95);
-  border:1px solid rgba(255,208,0,.5);
-  border-radius:10px;padding:7px 20px;
-  text-align:center;z-index:10;
+  background:rgba(4,4,8,.95);border:1px solid rgba(255,208,0,.5);
+  border-radius:10px;padding:7px 20px;text-align:center;z-index:10;
   opacity:0;transition:opacity .35s,transform .35s;
   pointer-events:none;white-space:nowrap;
   box-shadow:0 0 20px rgba(255,208,0,.2);
@@ -208,8 +157,7 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 }
 .w-winner-overlay.show{opacity:1;}
 #confettiCanvas{
-  position:absolute;inset:0;z-index:0;
-  width:100%;height:100%;
+  position:absolute;inset:0;z-index:0;width:100%;height:100%;
   opacity:0;transition:opacity .5s;
 }
 .w-winner-overlay.show #confettiCanvas{opacity:1;}
@@ -221,12 +169,12 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 .w-winner-content{position:relative;z-index:2;text-align:center;}
 .w-winner-label{
   font-family:'Bebas Neue',sans-serif;font-size:12px;
-  letter-spacing:4px;color:rgba(255,255,255,.55);margin-bottom:0;
+  letter-spacing:4px;color:rgba(255,255,255,.5);
 }
 .w-winner-name{
   font-family:'Bebas Neue',sans-serif;font-size:60px;
   letter-spacing:3px;color:#fff;line-height:1;
-  text-shadow:0 0 40px rgba(255,255,255,.5), 0 2px 20px rgba(0,0,0,.8);
+  text-shadow:0 0 40px rgba(255,255,255,.5),0 2px 20px rgba(0,0,0,.8);
   animation:winPulse 1.4s ease-in-out infinite alternate;
 }
 @keyframes winPulse{from{transform:scale(1);}to{transform:scale(1.04);}}
@@ -247,7 +195,6 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
   <div class="w-box" id="wBox">
     <div class="fill-a" id="fillA" style="width:50%"></div>
     <div class="fill-b" id="fillB" style="width:50%"></div>
-    <div class="energy-bar" id="energyBar"></div>
 
     <div class="w-content">
       <div class="w-side">
@@ -256,9 +203,6 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
         <div class="w-pct" id="wPctA">50%</div>
         <div class="w-votes-txt"><span id="wVotesA">0</span> votos</div>
       </div>
-
-      <div class="w-vs"><span class="vs-text">VS</span></div>
-
       <div class="w-side w-side-b">
         <div class="w-label">B</div>
         <div class="w-name" id="wNameB">BART</div>
@@ -287,36 +231,32 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 </div>
 
 <script>
-const LS = 'poll_state';
-let prevLeader=null, prevDiff=0;
-let remTimeout=null, winnerShown=false, lastTimerEnd=0;
-let confettiRAF=null, confettiParticles=[];
+const LS='poll_state';
+let prevLeader=null,prevDiff=0;
+let remTimeout=null,winnerShown=false,lastTimerEnd=0;
+let confettiRAF=null,confettiParticles=[];
 
-// ══ Confeti neón ══
-function startConfetti(color) {
-  const canvas = document.getElementById('confettiCanvas');
-  const ctx = canvas.getContext('2d');
-  canvas.width = canvas.offsetWidth;
-  canvas.height = canvas.offsetHeight;
-  const neonColors = color === '#FFB800'
-    ? ['#FFD000','#FFEC00','#FFA500','#fff700','#ffffff','#FF6B00']
-    : ['#FF2222','#FF6666','#FF0066','#FF44AA','#ffffff','#CC0044'];
-  confettiParticles = Array.from({length:80},()=>({
-    x:Math.random()*canvas.width, y:Math.random()*canvas.height-canvas.height,
-    w:Math.random()*8+3, h:Math.random()*4+2,
-    color:neonColors[Math.floor(Math.random()*neonColors.length)],
-    speed:Math.random()*2+1, angle:Math.random()*Math.PI*2,
-    spin:(Math.random()-.5)*.15, wobble:Math.random()*.05,
-    opacity:Math.random()*.5+.5,
+function startConfetti(color){
+  const canvas=document.getElementById('confettiCanvas');
+  const ctx=canvas.getContext('2d');
+  canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;
+  const colors=color==='#FFB800'
+    ?['#FFD000','#FFEC00','#FFA500','#fff700','#ffffff','#FF6B00']
+    :['#FF2222','#FF6666','#FF0066','#FF44AA','#ffffff','#CC0044'];
+  confettiParticles=Array.from({length:80},()=>({
+    x:Math.random()*canvas.width,y:Math.random()*canvas.height-canvas.height,
+    w:Math.random()*8+3,h:Math.random()*4+2,
+    color:colors[Math.floor(Math.random()*colors.length)],
+    speed:Math.random()*2+1,angle:Math.random()*Math.PI*2,
+    spin:(Math.random()-.5)*.15,wobble:Math.random()*.05,opacity:Math.random()*.5+.5,
   }));
-  function loop() {
+  function loop(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     confettiParticles.forEach(p=>{
-      p.y+=p.speed; p.angle+=p.spin;
-      p.x+=Math.sin(p.angle*3)*p.wobble*20;
-      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.angle);
-      ctx.globalAlpha=p.opacity; ctx.shadowColor=p.color; ctx.shadowBlur=8;
-      ctx.fillStyle=p.color; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+      p.y+=p.speed;p.angle+=p.spin;p.x+=Math.sin(p.angle*3)*p.wobble*20;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);
+      ctx.globalAlpha=p.opacity;ctx.shadowColor=p.color;ctx.shadowBlur=8;
+      ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();
       if(p.y>canvas.height+10){p.y=-10;p.x=Math.random()*canvas.width;}
     });
     confettiRAF=requestAnimationFrame(loop);
@@ -332,31 +272,26 @@ function stopConfetti(){
 }
 
 function showWinner(s){
-  const vA=s.vA||0, vB=s.vB||0, total=vA+vB;
+  const vA=s.vA||0,vB=s.vB||0,total=vA+vB;
   if(!total)return;
-  const pA=Math.round(vA/total*100), pB=100-pA;
-  const isA=pA>=pB;
+  const pA=Math.round(vA/total*100),pB=100-pA,isA=pA>=pB;
   const name=(isA?s.nameA:s.nameB||'B').toUpperCase();
-  const pct=(isA?pA:pB)+'%';
-  const color=isA?'#FFB800':'#CC1100';
   document.getElementById('wWinnerName').textContent=name;
-  document.getElementById('wWinnerPct').textContent=pct;
-  document.getElementById('wWinnerBg').style.background=color;
+  document.getElementById('wWinnerPct').textContent=(isA?pA:pB)+'%';
+  document.getElementById('wWinnerBg').style.background=isA?'#FFB800':'#CC1100';
   document.getElementById('wBox').classList.add('winner-mode');
   document.getElementById('wWinner').classList.add('show');
-  startConfetti(color);
+  startConfetti(isA?'#FFB800':'#CC1100');
 }
 
 function hideWinner(){
   document.getElementById('wBox').classList.remove('winner-mode');
   document.getElementById('wWinner').classList.remove('show');
-  stopConfetti();
-  winnerShown=false;
+  stopConfetti();winnerShown=false;
 }
 
 function render(s){
-  const vA=s.vA||0, vB=s.vB||0;
-  const total=vA+vB;
+  const vA=s.vA||0,vB=s.vB||0,total=vA+vB;
   const pA=total===0?50:Math.round(vA/total*100);
   const pB=total===0?50:100-pA;
 
@@ -369,42 +304,28 @@ function render(s){
   document.getElementById('wVotesB').textContent=vB;
   document.getElementById('wTotal').textContent=total+(total===1?' voto total':' votos totales');
 
-  // Fills con transición suave
   document.getElementById('fillA').style.width=pA+'%';
   document.getElementById('fillB').style.width=pB+'%';
 
-  // Clases de liderazgo para glow y pulso
-  const fillA=document.getElementById('fillA');
-  const fillB=document.getElementById('fillB');
   const pctA=document.getElementById('wPctA');
   const pctB=document.getElementById('wPctB');
   const nameA=document.getElementById('wNameA');
   const nameB=document.getElementById('wNameB');
-  const energyBar=document.getElementById('energyBar');
 
   if(total===0){
-    fillA.className='fill-a'; fillB.className='fill-b';
-    pctA.className='w-pct'; pctB.className='w-pct';
-    nameA.className='w-name'; nameB.className='w-name';
-    energyBar.className='energy-bar';
+    pctA.className='w-pct';pctB.className='w-pct';
+    nameA.className='w-name';nameB.className='w-name';
   } else if(pA>pB){
-    fillA.className='fill-a pulse'; fillB.className='fill-b';
-    pctA.className='w-pct leading-a'; pctB.className='w-pct trailing';
-    nameA.className='w-name leading-a'; nameB.className='w-name';
-    energyBar.className='energy-bar show-a';
+    pctA.className='w-pct win';pctB.className='w-pct lose';
+    nameA.className='w-name win';nameB.className='w-name';
   } else if(pB>pA){
-    fillB.className='fill-b pulse'; fillA.className='fill-a';
-    pctB.className='w-pct leading-b'; pctA.className='w-pct trailing';
-    nameB.className='w-name leading-b'; nameA.className='w-name';
-    energyBar.className='energy-bar show-b';
+    pctB.className='w-pct win';pctA.className='w-pct lose';
+    nameB.className='w-name win';nameA.className='w-name';
   } else {
-    fillA.className='fill-a'; fillB.className='fill-b';
-    pctA.className='w-pct'; pctB.className='w-pct';
-    nameA.className='w-name'; nameB.className='w-name';
-    energyBar.className='energy-bar';
+    pctA.className='w-pct';pctB.className='w-pct';
+    nameA.className='w-name';nameB.className='w-name';
   }
 
-  // Remontada
   const leader=pA>pB?'a':pA<pB?'b':null;
   const diff=Math.abs(pA-pB);
   if(total>=10&&prevLeader&&leader&&leader!==prevLeader&&prevDiff>=15){
@@ -415,9 +336,8 @@ function render(s){
     if(remTimeout)clearTimeout(remTimeout);
     remTimeout=setTimeout(()=>rem.classList.remove('show'),3500);
   }
-  prevLeader=leader; prevDiff=diff;
+  prevLeader=leader;prevDiff=diff;
 
-  // Timer + winner
   const timerEl=document.getElementById('wTimer');
   if(s.timerEnd&&s.timerEnd>0){
     const rem=Math.max(0,Math.ceil((s.timerEnd-Date.now())/1000));
