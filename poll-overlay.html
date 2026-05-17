@@ -44,43 +44,25 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
     0 0 0 1px rgba(255,255,255,.05);
 }
 
-/* ══ Fills vibrantes con glow completo ══ */
-.fill-a{
-  position:absolute;top:0;left:0;bottom:0;
-  background:linear-gradient(90deg,
-    rgba(255,184,0,1) 0%,
-    rgba(255,140,0,.85) 60%,
-    rgba(255,100,0,.3) 100%
-  );
-  opacity:.6;
-  transition:width 1s cubic-bezier(.25,.46,.45,.94);
+/* ══ Single gradient bar — split limpio sin overlap ══ */
+#fillA{
+  position:absolute;inset:0;
+  background:linear-gradient(90deg, #FFD000 50%, #CC0000 50%);
+  transition:background .0s;
   z-index:1;
-  /* Glow completo en toda la barra */
-  filter:blur(0px);
-  box-shadow:
-    0 0 30px rgba(255,184,0,.6),
-    0 0 60px rgba(255,184,0,.3),
-    inset 0 0 40px rgba(255,220,0,.4);
 }
-.fill-b{
-  position:absolute;top:0;right:0;bottom:0;
-  background:linear-gradient(270deg,
-    rgba(220,20,0,1) 0%,
-    rgba(200,10,0,.85) 60%,
-    rgba(180,0,0,.3) 100%
-  );
-  opacity:.6;
-  transition:width 1s cubic-bezier(.25,.46,.45,.94);
-  z-index:1;
-  box-shadow:
-    0 0 30px rgba(220,20,0,.6),
-    0 0 60px rgba(220,20,0,.3),
-    inset 0 0 40px rgba(255,50,0,.4);
+#fillB{ display:none; }
+
+/* Glow overlay encima del fill */
+#glowOverlay{
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:transparent;
+  transition:box-shadow .8s;
 }
 
 /* Ocultar fills en modo ganador */
-.w-box.winner-mode .fill-a,
-.w-box.winner-mode .fill-b{opacity:0;transition:opacity .5s;}
+.w-box.winner-mode #fillA{opacity:0;transition:opacity .5s;}
+.w-box.winner-mode #glowOverlay{opacity:0;}
 
 /* ══ Contenido ══ */
 .w-content{
@@ -193,8 +175,9 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
   </div>
 
   <div class="w-box" id="wBox">
-    <div class="fill-a" id="fillA" style="width:50%"></div>
-    <div class="fill-b" id="fillB" style="width:50%"></div>
+    <div id="fillA"></div>
+    <div id="fillB"></div>
+    <div id="glowOverlay"></div>
 
     <div class="w-content">
       <div class="w-side">
@@ -304,8 +287,18 @@ function render(s){
   document.getElementById('wVotesB').textContent=vB;
   document.getElementById('wTotal').textContent=total+(total===1?' voto total':' votos totales');
 
-  document.getElementById('fillA').style.width=pA+'%';
-  document.getElementById('fillB').style.width=pB+'%';
+  // Split gradient — zero overlap, pure vibrant colors
+  document.getElementById('fillA').style.background=
+    'linear-gradient(90deg, #FFD000 '+pA+'%, #CC0000 '+pA+'%)';
+  // Update glow based on leader
+  const glow = document.getElementById('glowOverlay');
+  if(pA>pB){
+    glow.style.boxShadow='inset 60px 0 80px rgba(255,184,0,.18), inset -20px 0 40px rgba(180,0,0,.1)';
+  } else if(pB>pA){
+    glow.style.boxShadow='inset -60px 0 80px rgba(180,0,0,.18), inset 20px 0 40px rgba(255,184,0,.1)';
+  } else {
+    glow.style.boxShadow='none';
+  }
 
   const pctA=document.getElementById('wPctA');
   const pctB=document.getElementById('wPctB');
