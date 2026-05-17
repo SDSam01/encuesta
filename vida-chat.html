@@ -234,9 +234,13 @@ setInterval(()=>{
       showWidget('heal',idx,s.chatHp);
     }
 
-    // Sync silencioso
+    // Sync silencioso (reset)
     if(s.chatHp!==lastHp&&s.chatHit===lastHit&&s.chatHeal===lastHeal){
-      lastHp=s.chatHp;renderHearts(s.chatHp);
+      lastHp=s.chatHp;
+      renderHearts(s.chatHp);
+      // Ocultar widget al resetear
+      if(hideTimeout)clearTimeout(hideTimeout);
+      document.getElementById('widget').classList.remove('visible');
     }
 
     // DEAD
