@@ -275,10 +275,13 @@ setInterval(()=>{
       showWidget('heal',idx,s.dannyHp);
     }
 
-    // Sync silencioso (reset)
+    // Sync silencioso (reset u otras actualizaciones sin hit/heal)
     if(s.dannyHp!==lastHp&&s.dannyHit===lastHit&&s.dannyHeal===lastHeal){
       lastHp=s.dannyHp;
       renderHearts(s.dannyHp);
+      // Ocultar widget al resetear
+      if(hideTimeout)clearTimeout(hideTimeout);
+      document.getElementById('widget').classList.remove('visible');
     }
 
     // YOU DIED
