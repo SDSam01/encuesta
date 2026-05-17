@@ -99,8 +99,6 @@ input:focus{border-color:rgba(255,185,0,.4);}
   <input type="password" id="channelId" placeholder="UCxxxxxxx...">
   <div class="saved" id="savedCh">✓ Guardado</div>
   <label>Chatroom ID de Kick</label>
-  <input type="text" id="kickRoom" placeholder="ej: 6043540">
-  <div class="kick-note">→ Abre <a onclick="openKickApi()">kick.com/api/v1/channels/sdsam</a>, busca "chatroom" → "id"</div>
   <div class="conn-row">
     <span class="cbadge cb-yt" id="dotYT">▶ YouTube</span>
     <span class="cbadge cb-kick" id="dotKick">⚡ Kick</span>
@@ -155,6 +153,7 @@ const API_KEYS = [
   'AIzaSyD51Nwd1mMiLo8RfrQBiPdXi1J0ejNkHOQ',
   'AIzaSyAivMGIzQtJozYnrdRpfOMZaAtcAQP0BaE'
 ];
+const KICK_ROOM_ID = "6043540"; // hardcoded
 let keyIdx = 0;
 const getKey = () => API_KEYS[keyIdx];
 
@@ -174,7 +173,7 @@ function setWindow(s, btn) {
 // ══ Conectar chats ══
 async function connectChats() {
   const channelId = document.getElementById('channelId').value.trim();
-  const kickRoom  = document.getElementById('kickRoom').value.trim();
+  const kickRoom  = KICK_ROOM_ID;
 
   if (!channelId) { setStatus('⚠️ Necesitas el Channel ID de YouTube', 'err'); return; }
 
@@ -396,7 +395,6 @@ function modoDemo() {
   const c = localStorage.getItem('yt_channel_id') || '';
   if (c) { document.getElementById('channelId').value = c; document.getElementById('savedCh').style.display = 'block'; }
   const k = localStorage.getItem('kick_room_id') || '';
-  if (k) document.getElementById('kickRoom').value = k;
 })();
 </script>
 </body>
