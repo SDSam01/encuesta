@@ -77,12 +77,8 @@ input:focus{border-color:rgba(255,185,0,0.4);}
   <a class="help-link" href="https://www.youtube.com/account_advanced" target="_blank">→ Encontrar Channel ID</a>
 </div>
 
-<!-- KICK -->
-<div class="section">
-  <div class="section-title">Kick <span style="font-size:9px;color:rgba(83,252,83,0.4);font-weight:400;letter-spacing:0;">(opcional)</span></div>
+<!-- KICK hardcoded: 6043540 -->
   <label>Chatroom ID</label>
-  <input type="text" id="kickRoom" placeholder="ej: 6043540">
-  <div class="kick-note">→ Abre <a onclick="openKickApi()">kick.com/api/v1/channels/sdsam</a>, busca <strong>"chatroom"</strong> → <strong>"id"</strong></div>
 </div>
 
 <!-- ENCUESTA -->
@@ -153,6 +149,7 @@ const API_KEYS = [
   'AIzaSyD51Nwd1mMiLo8RfrQBiPdXi1J0ejNkHOQ',
   'AIzaSyAivMGIzQtJozYnrdRpfOMZaAtcAQP0BaE'
 ];
+const KICK_ROOM_ID = "6043540"; // hardcoded
 let keyIdx = 0;
 const getKey = () => API_KEYS[keyIdx];
 function rotateKey() {
@@ -270,7 +267,7 @@ async function startPoll() {
     if (!chatId) throw new Error('No se pudo obtener el chat en vivo.');
 
     localStorage.setItem('yt_channel_id', channelId);
-    if ($('kickRoom').value.trim()) localStorage.setItem('kick_room_id', $('kickRoom').value.trim());
+    if (KICK_ROOM_ID) localStorage.setItem('kick_room_id', KICK_ROOM_ID);
 
     state.channelId = channelId;
     state.liveChatId = chatId;
@@ -285,7 +282,7 @@ async function startPoll() {
     setStatus(`🟢 Conectado — key ${keyIdx+1} activa`, 'ok');
 
     // Conectar Kick si hay chatroom ID
-    const kickRoom = $('kickRoom').value.trim();
+    const kickRoom = KICK_ROOM_ID;
     if (kickRoom) initKick(kickRoom);
 
     await fetchMessages();
@@ -417,7 +414,6 @@ function openKickApi(){ window.open('https://kick.com/api/v1/channels/sdsam','_b
   const c = localStorage.getItem('yt_channel_id')||'';
   if(c){$('channelId').value=c;$('savedCh').style.display='block';}
   const k = localStorage.getItem('kick_room_id')||'';
-  if(k) $('kickRoom').value=k;
 })();
 updateTimerDisplay(2*60);
 </script>
