@@ -243,6 +243,13 @@ setInterval(()=>{
       document.getElementById('widget').classList.remove('visible');
     }
 
+    // OCULTAR/MOSTRAR manual desde control
+    if (s.chatHidden) {
+      document.getElementById('widget').classList.remove('visible');
+      document.getElementById('deadScreen').classList.remove('show');
+      return;
+    }
+
     // DEAD
     if(s.chatDead&&!lastDead){
       lastDead=true;
