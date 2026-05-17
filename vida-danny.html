@@ -284,6 +284,14 @@ setInterval(()=>{
       document.getElementById('widget').classList.remove('visible');
     }
 
+    // OCULTAR/MOSTRAR manual desde control
+    if (s.dannyHidden) {
+      document.getElementById('widget').classList.remove('visible');
+      document.getElementById('deathScreen').classList.remove('show');
+      document.getElementById('chatRedOverlay').classList.remove('show');
+      return;
+    }
+
     // YOU DIED
     if(s.dannyDead&&!lastDead){
       lastDead=true;
