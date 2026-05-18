@@ -119,7 +119,14 @@ input:focus{border-color:rgba(255,185,0,.4);}
     </div>
   </div>
   <div class="candidates">
-    <div class="cand-count" id="candCount">0 personas activas en el chat</div>
+    <div class="window-row" style="margin-top:8px;">
+    <span class="window-label">Candidatos:</span>
+    <div class="window-btns">
+      <button class="wbtn" id="btnTodos" onclick="setSubs(false,this)" style="background:rgba(255,185,0,.15);border-color:rgba(255,185,0,.35);color:#FFD000;">Todos</button>
+      <button class="wbtn" id="btnSubs" onclick="setSubs(true,this)">⭐ Solo suscritos</button>
+    </div>
+  </div>
+  <div class="cand-count" id="candCount">0 personas activas en el chat</div>
     <div class="cand-list" id="candList"></div>
   </div>
 </div>
@@ -158,10 +165,27 @@ let keyIdx = 0;
 const getKey = () => API_KEYS[keyIdx];
 
 let windowSecs = 10;
+let soloSubs   = false;
 let connected  = false;
 let ytChatId   = null, ytNextToken = '';
 let recentUsers = {}; // userId → { username, src, lastSeen }
 let currentRep  = null;
+
+// ══ Solo suscriptores ══
+function setSubs(val, btn) {
+  soloSubs = val;
+  document.querySelectorAll('#btnTodos, #btnSubs').forEach(b => {
+    b.style.background = '';
+    b.style.borderColor = '';
+    b.style.color = '';
+    b.classList.remove('on');
+  });
+  btn.style.background = 'rgba(255,185,0,.15)';
+  btn.style.borderColor = 'rgba(255,185,0,.35)';
+  btn.style.color = '#FFD000';
+  setStatus(val ? '⭐ Solo suscritos activo' : '👥 Todos los viewers activo', 'ok');
+  setTimeout(() => setStatus('', ''), 2000);
+}
 
 // ══ Ventana de tiempo ══
 function setWindow(s, btn) {
@@ -235,8 +259,12 @@ async function pollYouTube() {
         const text = item.snippet?.displayMessage || '';
         if (!uid) continue;
 
+        // Filtro suscriptores
+        const isMember = item.authorDetails?.isChatSponsor || item.authorDetails?.isChatModerator || item.authorDetails?.isChatOwner;
+        if (soloSubs && !isMember) continue;
+
         // Guardar usuario activo
-        recentUsers[uid] = { username: name, src: 'yt', lastSeen: Date.now(), text };
+        recentUsers[uid] = { username: name, src: 'yt', lastSeen: Date.now(), text, isMember: !!isMember };
 
         // Si es el rep actual, enviar TTS
         if (currentRep && uid === currentRep.userId) {
@@ -263,7 +291,9 @@ function connectKick(roomId) {
       const uid  = 'kick_' + (data?.sender?.id || '');
       const name = data?.sender?.username || 'Usuario';
       const text = data?.content || '';
-      recentUsers[uid] = { username: name, src: 'kick', lastSeen: Date.now(), text };
+      const isKickSub = !!(data?.sender?.subscribed_for > 0 || data?.sender?.is_subscribed || data?.sender?.subscription);
+      if (soloSubs && !isKickSub) return;
+      recentUsers[uid] = { username: name, src: 'kick', lastSeen: Date.now(), text, isMember: isKickSub };
       if (currentRep && uid === currentRep.userId) relayMessage(uid, name, text);
     });
   } catch(e) { setStatus('⚠️ Kick: ' + e.message, 'err'); }
