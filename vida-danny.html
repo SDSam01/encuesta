@@ -7,13 +7,31 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 
-/* Flash rojo */
+/* Flash rojo — más intenso, bordes agresivos */
 #flashRed{
   position:fixed;inset:0;pointer-events:none;z-index:100;opacity:0;
-  background:radial-gradient(ellipse at center, rgba(255,0,0,0) 20%, rgba(255,0,0,0.88) 100%);
-  transition:opacity .07s;
+  background:
+    radial-gradient(ellipse at center, rgba(255,0,0,0) 15%, rgba(255,0,0,0.95) 100%),
+    linear-gradient(rgba(200,0,0,0.3), rgba(200,0,0,0.3));
+  transition:opacity .05s;
 }
 #flashRed.show{opacity:1;}
+
+/* Shake de toda la pantalla */
+@keyframes screenShake{
+  0%{transform:translate(0,0) rotate(0);}
+  10%{transform:translate(-12px,-8px) rotate(-1deg);}
+  20%{transform:translate(14px,10px) rotate(1deg);}
+  30%{transform:translate(-10px,6px) rotate(-0.5deg);}
+  40%{transform:translate(10px,-8px) rotate(0.5deg);}
+  50%{transform:translate(-8px,4px) rotate(-0.3deg);}
+  60%{transform:translate(6px,-6px) rotate(0.3deg);}
+  70%{transform:translate(-4px,4px) rotate(0);}
+  80%{transform:translate(4px,-2px);}
+  90%{transform:translate(-2px,2px);}
+  100%{transform:translate(0,0);}
+}
+body.shake{animation:screenShake .5s cubic-bezier(.36,.07,.19,.97);}
 
 /* Flash verde */
 #flashGreen{
@@ -140,14 +158,57 @@ const AC = new (window.AudioContext||window.webkitAudioContext)();
 
 function playHit(){
   AC.resume();
-  const o=AC.createOscillator(),g=AC.createGain();
-  o.connect(g);g.connect(AC.destination);
-  o.type='square';
-  o.frequency.setValueAtTime(220,AC.currentTime);
-  o.frequency.exponentialRampToValueAtTime(80,AC.currentTime+.22);
-  g.gain.setValueAtTime(.45,AC.currentTime);
-  g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+.25);
-  o.start();o.stop(AC.currentTime+.25);
+  const t = AC.currentTime;
+
+  // Capa 1: Golpe sordo de bajo impacto (sub-bass punch)
+  const osc1 = AC.createOscillator();
+  const gain1 = AC.createGain();
+  osc1.connect(gain1); gain1.connect(AC.destination);
+  osc1.type = 'sine';
+  osc1.frequency.setValueAtTime(120, t);
+  osc1.frequency.exponentialRampToValueAtTime(40, t + 0.3);
+  gain1.gain.setValueAtTime(0.8, t);
+  gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+  osc1.start(t); osc1.stop(t + 0.35);
+
+  // Capa 2: Crack de impacto (high transient)
+  const osc2 = AC.createOscillator();
+  const gain2 = AC.createGain();
+  osc2.connect(gain2); gain2.connect(AC.destination);
+  osc2.type = 'sawtooth';
+  osc2.frequency.setValueAtTime(800, t);
+  osc2.frequency.exponentialRampToValueAtTime(100, t + 0.08);
+  gain2.gain.setValueAtTime(0.5, t);
+  gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+  osc2.start(t); osc2.stop(t + 0.1);
+
+  // Capa 3: Ruido blanco (impacto físico)
+  const bufferSize = AC.sampleRate * 0.15;
+  const buffer = AC.createBuffer(1, bufferSize, AC.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+  const noise = AC.createBufferSource();
+  const noiseGain = AC.createGain();
+  const noiseFilter = AC.createBiquadFilter();
+  noiseFilter.type = 'bandpass';
+  noiseFilter.frequency.value = 1200;
+  noiseFilter.Q.value = 0.5;
+  noise.buffer = buffer;
+  noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(AC.destination);
+  noiseGain.gain.setValueAtTime(0.4, t);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+  noise.start(t); noise.stop(t + 0.15);
+
+  // Capa 4: Reverb corto (eco de impacto)
+  const osc3 = AC.createOscillator();
+  const gain3 = AC.createGain();
+  osc3.connect(gain3); gain3.connect(AC.destination);
+  osc3.type = 'sine';
+  osc3.frequency.setValueAtTime(60, t + 0.05);
+  osc3.frequency.exponentialRampToValueAtTime(30, t + 0.4);
+  gain3.gain.setValueAtTime(0.3, t + 0.05);
+  gain3.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+  osc3.start(t + 0.05); osc3.stop(t + 0.4);
 }
 
 function playHeal(){
@@ -181,6 +242,13 @@ function doFlash(id){
     el.classList.remove('show');
     setTimeout(()=>{el.classList.add('show');setTimeout(()=>el.classList.remove('show'),90);},110);
   },90);
+}
+
+function doShake(){
+  document.body.classList.remove('shake');
+  void document.body.offsetWidth;
+  document.body.classList.add('shake');
+  setTimeout(()=>document.body.classList.remove('shake'), 500);
 }
 
 function heartSVG(filled){
@@ -259,7 +327,7 @@ setInterval(()=>{
         document.getElementById('widget').classList.add('visible');
         if(hideTimeout)clearTimeout(hideTimeout);
       } else {
-        doFlash('flashRed');playHit();
+        doFlash('flashRed');doShake();playHit();
         const idx=Math.min(2,Math.floor((old-1)/2));
         showWidget('hit',idx,s.dannyHp);
       }
