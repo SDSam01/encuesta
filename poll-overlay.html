@@ -44,24 +44,32 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
     0 0 0 1px rgba(255,255,255,.05);
 }
 
-/* ══ Single gradient bar — split limpio sin overlap ══ */
-#fillA{
+/* ══ Fills fluidos — rojo base, dorado crece encima ══ */
+#fillB{
   position:absolute;inset:0;
-  background:linear-gradient(90deg, #FFD000 50%, #CC0000 50%);
-  transition:background .0s;
+  background:rgba(200,15,0,0.55);
+  box-shadow:inset -60px 0 100px rgba(200,0,0,.3), 0 0 40px rgba(200,0,0,.2);
   z-index:1;
 }
-#fillB{ display:none; }
+#fillA{
+  position:absolute;top:0;left:0;bottom:0;
+  background:rgba(255,200,0,0.55);
+  transition:width 1.4s cubic-bezier(.25,.46,.45,.94);
+  will-change:width;
+  transform:translateZ(0);
+  z-index:2;
+}
 
-/* Glow overlay encima del fill */
+/* Glow overlay */
 #glowOverlay{
-  position:absolute;inset:0;z-index:2;pointer-events:none;
+  position:absolute;inset:0;z-index:3;pointer-events:none;
   background:transparent;
-  transition:box-shadow .8s;
+  transition:box-shadow 1s ease;
 }
 
 /* Ocultar fills en modo ganador */
-.w-box.winner-mode #fillA{opacity:0;transition:opacity .5s;}
+.w-box.winner-mode #fillA,
+.w-box.winner-mode #fillB{opacity:0;transition:opacity .5s;}
 .w-box.winner-mode #glowOverlay{opacity:0;}
 
 /* ══ Contenido ══ */
@@ -215,7 +223,7 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 
 <script>
 const LS='poll_state';
-let prevLeader=null,prevDiff=0;
+let prevLeader=null,prevDiff=0,lastPA=-1;
 let remTimeout=null,winnerShown=false,lastTimerEnd=0;
 let confettiRAF=null,confettiParticles=[];
 
@@ -287,20 +295,20 @@ function render(s){
   document.getElementById('wVotesB').textContent=vB;
   document.getElementById('wTotal').textContent=total+(total===1?' voto total':' votos totales');
 
-  // Split gradient — 55% opacity, colores vibrantes con glow
-  const gradA = 'rgba(255,200,0,0.55)';
-  const gradB = 'rgba(200,15,0,0.55)';
-  document.getElementById('fillA').style.background =
-    `linear-gradient(90deg, ${gradA} ${pA}%, ${gradB} ${pA}%)`;
+  // Solo actualizar si cambió — evita resetear la transición CSS
+  if(pA !== lastPA){
+    lastPA = pA;
+    document.getElementById('fillA').style.width = pA + '%';
+  }
 
-  // Glow del lado ganador
+  // Glow intenso del lado ganador
   const glow = document.getElementById('glowOverlay');
-  if(pA>pB){
-    glow.style.boxShadow='inset 80px 0 100px rgba(255,200,0,.22), inset -20px 0 40px rgba(200,0,0,.1)';
-  } else if(pB>pA){
-    glow.style.boxShadow='inset -80px 0 100px rgba(200,15,0,.22), inset 20px 0 40px rgba(255,184,0,.1)';
+  if(pA > pB){
+    glow.style.boxShadow = 'inset 100px 0 120px rgba(255,200,0,.2), inset -30px 0 60px rgba(180,0,0,.08)';
+  } else if(pB > pA){
+    glow.style.boxShadow = 'inset -100px 0 120px rgba(200,10,0,.2), inset 30px 0 60px rgba(255,184,0,.08)';
   } else {
-    glow.style.boxShadow='none';
+    glow.style.boxShadow = 'none';
   }
 
   const pctA=document.getElementById('wPctA');
