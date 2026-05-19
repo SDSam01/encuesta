@@ -168,7 +168,8 @@ let windowSecs = 10;
 let soloSubs   = false;
 let connected  = false;
 let ytChatId   = null, ytNextToken = '';
-let recentUsers = {}; // userId → { username, src, lastSeen }
+let recentUsers = {};
+window._lastRepMsgTs = 0; // userId → { username, src, lastSeen }
 let currentRep  = null;
 
 // ══ Solo suscriptores ══
