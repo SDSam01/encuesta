@@ -486,7 +486,7 @@ function modoDemo() {
   ];
   const now = Date.now();
   fakeUsers.forEach(u => {
-    recentUsers[u.id] = { username: u.name, src: u.src, lastSeen: now, text: '' };
+    recentUsers[u.id] = { username: u.name, src: u.src, lastSeen: now, text: '', isMember: !!u.isMember };
   });
   connected = true;
   document.getElementById('btnBuscar').disabled = false;
