@@ -56,6 +56,9 @@ input:focus{border-color:rgba(255,185,0,.4);}
 .btn-nuevo:hover{background:rgba(100,200,255,.18);}
 .btn-silenciar{background:rgba(255,100,100,.08);border-color:rgba(255,100,100,.2);color:#FF8888;}
 .btn-silenciar:hover{background:rgba(255,100,100,.18);}
+.btn-siren{width:100%;padding:12px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(255,50,50,.5);background:rgba(255,30,30,.15);color:#FF5555;transition:.15s;font-family:'Inter',sans-serif;margin-bottom:6px;letter-spacing:.5px;}
+.btn-siren:hover{background:rgba(255,30,30,.28);}
+.btn-siren:disabled{opacity:.35;cursor:not-allowed;}
 .btn-limpiar{width:100%;padding:9px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.35);transition:.15s;font-family:'Inter',sans-serif;}
 .btn-limpiar:hover{color:#fff;background:rgba(255,255,255,.1);}
 .btn-demo{width:100%;padding:9px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(100,200,100,.2);background:rgba(100,200,100,.07);color:rgba(100,200,100,.6);transition:.15s;font-family:'Inter',sans-serif;margin-top:8px;}
@@ -139,6 +142,7 @@ input:focus{border-color:rgba(255,185,0,.4);}
   <button class="btn-sm btn-nuevo" onclick="buscarRep()">🔄 Nuevo rep</button>
   <button class="btn-sm btn-silenciar" onclick="silenciarTTS()">🔇 Silenciar TTS</button>
 </div>
+<button class="btn-siren" id="btnSiren" onclick="activarModVip()">🚨 ACTIVAR MODO VIP — Representante Suscriptor</button>
 <button class="btn-limpiar" onclick="limpiarRep()">✕ Quitar representante</button>
 <button class="btn-demo" onclick="modoDemo()">🧪 Modo prueba (sin stream)</button>
 <div class="tts-test-row">
@@ -353,10 +357,11 @@ function buscarRep() {
     chosen:      user.username,
     repUserId:   userId,
     repUsername: user.username,
+    repIsMember: !!(user.isMember),
     clear: 0,
   }));
 
-  setStatus(`🎤 ${user.username} es el nuevo representante`, 'ok');
+  setStatus(`${user.isMember ? '⭐ JACKPOT — ' : ''}${user.username} es el nuevo representante`, user.isMember ? 'ok' : 'ok');
 }
 
 function silenciarTTS() {
@@ -382,6 +387,74 @@ function setStatus(msg, type) {
 }
 
 function openKickApi() { window.open('https://kick.com/api/v1/channels/sdsam', '_blank'); }
+
+function activarModVip() {
+  if (!connected) { setStatus('⚠️ Conecta los chats primero', 'err'); return; }
+
+  // Verificar que hay suscriptores activos
+  const now = Date.now();
+  const activeSubs = Object.entries(recentUsers)
+    .filter(([_, u]) => now - u.lastSeen <= windowSecs * 1000 && u.isMember);
+
+  if (activeSubs.length === 0) {
+    setStatus('⚠️ No hay suscriptores activos en la ventana', 'err');
+    return;
+  }
+
+  const btn = document.getElementById('btnSiren');
+  btn.disabled = true;
+  btn.textContent = '🚨 Activando...';
+
+  // Enviar señal de sirena al overlay
+  localStorage.setItem('rep_siren', JSON.stringify({ ts: Date.now() }));
+
+  setStatus('🚨 Sirena activada — buscando suscriptor...', 'loading');
+
+  // Después de 4s (duración sirena) buscar rep suscriptor automáticamente
+  setTimeout(() => {
+    // Forzar solo suscriptores
+    const wasSubs = soloSubs;
+    soloSubs = true;
+    buscarRepSub();
+    soloSubs = wasSubs;
+
+    btn.disabled = false;
+    btn.textContent = '🚨 ACTIVAR MODO VIP — Representante Suscriptor';
+    setStatus('⭐ Representante VIP seleccionado', 'ok');
+    setTimeout(() => setStatus('', ''), 3000);
+  }, 4200);
+}
+
+function buscarRepSub() {
+  // Igual que buscarRep pero forzando solo suscriptores
+  const now = Date.now();
+  const active = Object.entries(recentUsers)
+    .filter(([_, u]) => now - u.lastSeen <= windowSecs * 1000 && u.isMember);
+
+  if (active.length === 0) { setStatus('⚠️ No hay suscriptores activos', 'err'); return; }
+
+  const [userId, user] = active[Math.floor(Math.random() * active.length)];
+  currentRep = { userId, username: user.username, src: user.src };
+
+  document.getElementById('repCard').classList.add('show');
+  document.getElementById('repName').textContent = '⭐ ' + user.username;
+  document.getElementById('repSrc').textContent  = user.src === 'yt' ? '▶ YOUTUBE' : '⚡ KICK';
+  document.getElementById('repLast').textContent = 'Esperando mensaje...';
+
+  const candidates = Object.entries(recentUsers)
+    .filter(([_,u]) => now - u.lastSeen <= windowSecs * 1000)
+    .map(([_,u]) => u.username).slice(0, 20);
+
+  localStorage.setItem(LS_REP, JSON.stringify({
+    trigger:     Date.now(),
+    candidates,
+    chosen:      user.username,
+    repUserId:   userId,
+    repUsername: user.username,
+    repIsMember: true,
+    clear: 0,
+  }));
+}
 
 function testTTS() {
   if (!currentRep) { setStatus("⚠️ Primero elige un representante", "err"); return; }
