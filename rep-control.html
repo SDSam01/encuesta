@@ -472,16 +472,17 @@ function testTTS() {
 
 function modoDemo() {
   const fakeUsers = [
-    { id:'yt_demo1', name:'Pizzaboy_99', src:'yt' },
-    { id:'yt_demo2', name:'ElGamerVisitante', src:'yt' },
-    { id:'kick_d1',  name:'sigma_proaidem', src:'kick' },
-    { id:'kick_d2',  name:'javvo77', src:'kick' },
-    { id:'yt_demo3', name:'MauricioMejia', src:'yt' },
-    { id:'kick_d3',  name:'EmmaxMarurr', src:'kick' },
-    { id:'yt_demo4', name:'lukas_pro', src:'yt' },
-    { id:'kick_d4',  name:'Zarai_Ramos', src:'kick' },
-    { id:'yt_demo5', name:'Sashiro', src:'yt' },
-    { id:'kick_d5',  name:'yoselin_g', src:'kick' },
+    { id:'yt_demo1', name:'Pizzaboy_99',      src:'yt',   isMember:false },
+    { id:'yt_demo2', name:'ElGamerVisitante',  src:'yt',   isMember:false },
+    { id:'kick_d1',  name:'sigma_proaidem',    src:'kick', isMember:false },
+    { id:'kick_d2',  name:'javvo77',           src:'kick', isMember:false },
+    { id:'yt_demo3', name:'MauricioMejia',     src:'yt',   isMember:false },
+    { id:'kick_d3',  name:'EmmaxMarurr',       src:'kick', isMember:false },
+    // ⭐ Suscriptores de prueba
+    { id:'yt_sub1',  name:'Lorena_Ramirez',    src:'yt',   isMember:true  },
+    { id:'kick_s1',  name:'Team_Canguro',      src:'kick', isMember:true  },
+    { id:'yt_sub2',  name:'Alex_God',          src:'yt',   isMember:true  },
+    { id:'kick_s2',  name:'MR_ARBOLERO',       src:'kick', isMember:true  },
   ];
   const now = Date.now();
   fakeUsers.forEach(u => {
