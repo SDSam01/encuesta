@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Chat Reader</title>
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0a0f;font-family:'Inter',sans-serif;color:#fff;padding:16px;max-width:480px;margin:0 auto;}
+h1{font-size:14px;font-weight:700;margin-bottom:3px;}
+.sub{font-size:11px;color:rgba(255,255,255,.3);margin-bottom:14px;}
+.section{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px;margin-bottom:10px;}
+.sec-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:8px;}
+label{display:block;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:3px;margin-top:7px;}
+label:first-of-type{margin-top:0;}
+input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:7px 10px;color:#fff;font-size:12px;font-family:'Inter',sans-serif;outline:none;transition:.2s;margin-bottom:3px;}
+input:focus{border-color:rgba(255,185,0,.4);}
+.saved{font-size:10px;color:rgba(255,185,0,.5);display:none;}
+.btn-connect{width:100%;padding:10px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(255,185,0,.35);background:rgba(255,185,0,.12);color:#FFD000;transition:.15s;font-family:'Inter',sans-serif;margin-top:4px;}
+.btn-connect:hover{background:rgba(255,185,0,.22);}
+.btn-connect:disabled{opacity:.35;cursor:not-allowed;}
+.status{font-size:11px;text-align:center;margin-top:8px;min-height:16px;color:rgba(255,255,255,.3);}
+.status.ok{color:#4ade80;}.status.err{color:#f87171;}.status.loading{color:rgba(255,185,0,.7);}
+.conn-row{display:flex;gap:6px;margin-top:8px;}
+.cbadge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.5px;opacity:.25;transition:.3s;}
+.cbadge.on{opacity:1;}
+.cb-yt{background:rgba(255,0,0,.12);color:#ff5555;border:1px solid rgba(255,85,85,.2);}
+.cb-kick{background:rgba(83,252,83,.07);color:#53fc53;border:1px solid rgba(83,252,83,.18);}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;}
+.stat{background:rgba(255,255,255,.04);border-radius:8px;padding:8px;text-align:center;}
+.stat-num{font-size:20px;font-weight:900;color:#FFD000;}
+.stat-lbl{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+.log{max-height:120px;overflow-y:auto;margin-top:8px;}
+.log-item{font-size:10px;color:rgba(255,255,255,.4);padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.log-item .src-yt{color:#ff5555;}.log-item .src-kick{color:#53fc53;}
+</style>
+</head>
+<body>
+
+<h1>📡 Chat Reader — Fuente única</h1>
+<div class="sub">Lee YouTube + Kick una sola vez. Todos los widgets leen de aquí.</div>
+
+<div class="section">
+  <div class="sec-title">YouTube</div>
+  <label>Channel ID</label>
+  <input type="password" id="channelId" placeholder="UCxxxxxxx...">
+  <div class="saved" id="savedCh">✓ Guardado</div>
+  <div class="conn-row">
+    <span class="cbadge cb-yt" id="dotYT">▶ YouTube</span>
+    <span class="cbadge cb-kick" id="dotKick">⚡ Kick</span>
+  </div>
+  <button class="btn-connect" id="btnConnect" onclick="connect()">▶ Conectar chats</button>
+</div>
+
+<div class="section">
+  <div class="sec-title">Actividad</div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num" id="statMessages">0</div>
+      <div class="stat-lbl">Mensajes</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="statUsers">0</div>
+      <div class="stat-lbl">Usuarios</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="statKey">1</div>
+      <div class="stat-lbl">API Key</div>
+    </div>
+  </div>
+  <div class="log" id="logEl"></div>
+</div>
+
+<div class="status" id="statusBar">Ingresa tu Channel ID y conecta</div>
+
+<script>
+// ══ API Keys ══
+const API_KEYS = [
+  'AIzaSyCeQDuKLiY8G5GO0Vezm0tfZwsezfLpdME',
+  'AIzaSyDqlaHU156M6ilgaFaabHmQort4gMLIzEs',
+  'AIzaSyBTaPw7pPv1X78X_Wif6_wMGJDmg8xpi1w',
+  'AIzaSyBQEc3IlQHgemp1-wX8TwRnmIU0s4Ti004',
+  'AIzaSyD51Nwd1mMiLo8RfrQBiPdXi1J0ejNkHOQ',
+  'AIzaSyAivMGIzQtJozYnrdRpfOMZaAtcAQP0BaE'
+];
+const KICK_ROOM_ID = '6043540';
+let keyIdx = 0;
+const getKey = () => API_KEYS[keyIdx];
+
+// ══ Stats ══
+let totalMessages = 0, ytChatId = null, ytNextToken = '';
+
+// ══ localStorage keys ══
+const LS_CHAT    = 'chat_messages';  // últimos mensajes para poll y rep
+const LS_USERS   = 'chat_users';     // usuarios activos recientes
+const LS_STATUS  = 'chat_status';    // estado de conexión
+
+function saveStatus(ytOn, kickOn) {
+  localStorage.setItem(LS_STATUS, JSON.stringify({
+    ytConnected: ytOn,
+    kickConnected: kickOn,
+    keyIdx,
+    ts: Date.now()
+  }));
+}
+
+// ══ Escribir mensaje al localStorage ══
+function pushMessage(userId, username, text, src, isMember) {
+  if (!text) return;
+  totalMessages++;
+  document.getElementById('statMessages').textContent = totalMessages;
+
+  // Guardar mensaje para que poll y rep lo lean
+  const msg = { userId, username, text, src, isMember: !!isMember, ts: Date.now() };
+  localStorage.setItem(LS_CHAT, JSON.stringify(msg));
+
+  // Actualizar usuarios activos
+  let users = {};
+  try { users = JSON.parse(localStorage.getItem(LS_USERS) || '{}'); } catch(e) {}
+  users[userId] = { username, src, lastSeen: Date.now(), text, isMember: !!isMember };
+  localStorage.setItem(LS_USERS, JSON.stringify(users));
+
+  // Stats
+  document.getElementById('statUsers').textContent = Object.keys(users).length;
+
+  // Log visual
+  addLog(username, text, src);
+}
+
+function addLog(username, text, src) {
+  const el = document.getElementById('logEl');
+  const item = document.createElement('div');
+  item.className = 'log-item';
+  item.innerHTML = `<span class="src-${src}">${src.toUpperCase()}</span> <strong>${username}:</strong> ${text.substring(0,40)}`;
+  el.insertBefore(item, el.firstChild);
+  if (el.children.length > 30) el.removeChild(el.lastChild);
+}
+
+// ══ Conectar ══
+async function connect() {
+  const channelId = document.getElementById('channelId').value.trim();
+  if (!channelId) { setStatus('⚠️ Necesitas el Channel ID', 'err'); return; }
+
+  document.getElementById('btnConnect').disabled = true;
+  setStatus('🔍 Conectando YouTube...', 'loading');
+
+  try {
+    const sRes  = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${getKey()}`);
+    const sData = await sRes.json();
+    if (sData.error) throw new Error(sData.error.message);
+    if (!sData.items?.length) throw new Error('No hay stream en vivo activo.');
+
+    const videoId = sData.items[0].id.videoId;
+    const vRes    = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${getKey()}`);
+    const vData   = await vRes.json();
+    ytChatId = vData?.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
+    if (!ytChatId) throw new Error('No se pudo obtener el chat.');
+
+    localStorage.setItem('yt_channel_id', channelId);
+    document.getElementById('dotYT').classList.add('on');
+    document.getElementById('savedCh').style.display = 'block';
+    saveStatus(true, false);
+    setStatus('🟢 YouTube conectado', 'ok');
+
+    pollYouTube();
+    connectKick();
+
+  } catch(e) {
+    setStatus('❌ ' + e.message, 'err');
+    document.getElementById('btnConnect').disabled = false;
+  }
+}
+
+// ══ YouTube polling — SOLO aquí, nadie más llama a la API ══
+async function pollYouTube() {
+  if (!ytChatId) return;
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${ytChatId}&part=snippet,authorDetails&maxResults=200&key=${getKey()}${ytNextToken ? '&pageToken='+ytNextToken : ''}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.error) {
+      const reason = data.error.errors?.[0]?.reason || '';
+      if (reason === 'quotaExceeded' || data.error.code === 403 || data.error.code === 429) {
+        keyIdx = (keyIdx + 1) % API_KEYS.length;
+        document.getElementById('statKey').textContent = keyIdx + 1;
+        setStatus(`⚠️ Key agotada, rotando a key ${keyIdx+1}`, 'loading');
+        if (keyIdx === 0) { setStatus('❌ Todas las keys agotadas', 'err'); return; }
+      }
+      setTimeout(pollYouTube, 5000);
+      return;
+    }
+
+    document.getElementById('statKey').textContent = keyIdx + 1;
+    setStatus(`🟢 YouTube activo — key ${keyIdx+1}/6`, 'ok');
+    ytNextToken = data.nextPageToken || ytNextToken;
+
+    for (const item of (data.items || [])) {
+      const uid      = item.authorDetails?.channelId;
+      const name     = item.authorDetails?.displayName || 'Usuario';
+      const text     = item.snippet?.displayMessage || '';
+      const isMember = !!(item.authorDetails?.isChatSponsor || item.authorDetails?.isChatModerator || item.authorDetails?.isChatOwner);
+      if (!uid) continue;
+      pushMessage(uid, name, text, 'yt', isMember);
+    }
+
+    const interval = Math.max(3000, data.pollingIntervalMillis || 5000);
+    setTimeout(pollYouTube, interval);
+
+  } catch(e) {
+    setTimeout(pollYouTube, 5000);
+  }
+}
+
+// ══ Kick — SOLO aquí ══
+function connectKick() {
+  try {
+    Pusher.logToConsole = false;
+    const pusher  = new Pusher('32cbd69e4b950bf97679', { cluster:'us2', forceTLS:true, disableStats:true });
+    const channel = pusher.subscribe(`chatrooms.${KICK_ROOM_ID}.v2`);
+    channel.bind('pusher:subscription_succeeded', () => {
+      document.getElementById('dotKick').classList.add('on');
+      saveStatus(true, true);
+      setStatus('🟢 YouTube + Kick activos', 'ok');
+    });
+    channel.bind('App\\Events\\ChatMessageEvent', (data) => {
+      const uid    = 'kick_' + (data?.sender?.id || '');
+      const name   = data?.sender?.username || 'Usuario';
+      const text   = data?.content || '';
+      const isSub  = !!(data?.sender?.subscribed_for > 0 || data?.sender?.is_subscribed);
+      pushMessage(uid, name, text, 'kick', isSub);
+    });
+  } catch(e) {
+    setStatus('⚠️ Kick: ' + e.message, 'err');
+  }
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('statusBar');
+  el.textContent = msg;
+  el.className = 'status ' + (type||'');
+}
+
+// Cargar guardados
+(function(){
+  const c = localStorage.getItem('yt_channel_id') || '';
+  if (c) { document.getElementById('channelId').value = c; document.getElementById('savedCh').style.display = 'block'; }
+})();
+</script>
+</body>
+</html>
