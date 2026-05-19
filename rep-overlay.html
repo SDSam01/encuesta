@@ -170,10 +170,12 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 
 /* ══ JACKPOT reveal ══ */
 #jpReveal{
-  text-align:center;opacity:0;transform:scale(.5);
-  transition:opacity .6s,transform .8s cubic-bezier(.34,1.56,.64,1);
+  position:fixed;inset:0;z-index:35;
+  display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;
+  opacity:0;transform:scale(.85);
 }
-#jpReveal.show{opacity:1;transform:scale(1);}
 
 .jp-jackpot-text{
   font-size:140px;letter-spacing:10px;
@@ -416,7 +418,7 @@ function revealChosen(name){
 function startJackpot(candidates,chosen){
   const pool=candidates.length>0?candidates:['???'];
   document.getElementById('bg').className='jackpot show';
-  document.getElementById('jpReveal').classList.remove('show');
+  const revealEl=document.getElementById('jpReveal'); revealEl.style.display='none'; revealEl.style.opacity='0';
   document.getElementById('jpSubBadge').classList.remove('show');
   document.getElementById('jackpotStage').classList.add('show');
   startParticles(true);
@@ -457,7 +459,7 @@ function spinReel(reelIdx, winner, pool, onStop){
   const totalH=items.length*itemH;
 
   // Velocidad inicial alta, desacelera gradualmente
-  const spinDuration=2000+reelIdx*700;
+  const spinDuration=1200+reelIdx*350;
   const start=performance.now();
   let currentPos=0;
   let velocity=30; // píxeles por frame inicial
@@ -502,33 +504,42 @@ function spinReel(reelIdx, winner, pool, onStop){
 }
 
 function revealJackpot(name){
-  // Flash dorado
+  // Flash dorado doble
   const flash=document.getElementById('jpFlash');
   flash.classList.add('show');
-  setTimeout(()=>{flash.classList.remove('show');
-    setTimeout(()=>{flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),100);},120);
-  },100);
+  setTimeout(()=>{
+    flash.classList.remove('show');
+    setTimeout(()=>{flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),120);},140);
+    setTimeout(()=>{flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),120);},320);
+  },120);
 
+  // Ocultar reeles PERO mantener el fondo
   document.getElementById('jackpotStage').classList.remove('show');
+  document.getElementById('bg').className='jackpot show';
 
-  // Mostrar reveal
+  // Mostrar reveal (está en el body directamente, no dentro de jackpotStage)
   const reveal=document.getElementById('jpReveal');
   document.getElementById('jpWinnerName').textContent=name.toUpperCase();
-  reveal.classList.add('show');
-  document.getElementById('bg').className='jackpot show';
+  reveal.style.opacity='0';
+  reveal.style.display='flex';
+  void reveal.offsetWidth;
+  reveal.style.transition='opacity .5s, transform .7s cubic-bezier(.34,1.56,.64,1)';
+  reveal.style.opacity='1';
+  reveal.style.transform='scale(1)';
 
   playJackpotWin();
 
-  setTimeout(()=>document.getElementById('jpSubBadge').classList.add('show'),600);
-  startParticles(true); // monedas doradas
+  setTimeout(()=>document.getElementById('jpSubBadge').classList.add('show'),700);
+  startParticles(true);
 
+  // Nombre visible 10 segundos
   setTimeout(()=>{
-    reveal.classList.remove('show');
-    document.getElementById('bg').className = '';
-    document.getElementById('jackpotStage').classList.remove('show');
+    reveal.style.opacity='0';
+    setTimeout(()=>{ reveal.style.display='none'; },500);
+    document.getElementById('bg').className='';
     stopParticles();
     activateRep(true);
-  },5000);
+  },10000);
 }
 
 function activateRep(isSub){
@@ -556,7 +567,7 @@ function clearRep(){
   document.getElementById('bg').className = '';
   document.getElementById('stage').classList.remove('show');
   document.getElementById('jackpotStage').classList.remove('show');
-  document.getElementById('jpReveal').classList.remove('show');
+  const revealEl=document.getElementById('jpReveal'); revealEl.style.display='none'; revealEl.style.opacity='0';
   stopParticles();
 }
 
