@@ -94,46 +94,78 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 
 /* Título jackpot */
 .jp-eyebrow{
-  font-size:24px;letter-spacing:10px;color:rgba(255,215,0,.6);
-  margin-bottom:20px;text-transform:uppercase;
+  font-size:30px;letter-spacing:12px;color:rgba(255,215,0,.7);
+  margin-bottom:24px;text-transform:uppercase;
+  text-shadow:0 0 20px rgba(255,215,0,.4);
+  animation:eyebrowPulse 1s infinite alternate;
 }
+@keyframes eyebrowPulse{from{opacity:.7;}to{opacity:1;}}
 
-/* ══ Slot machine ══ */
+/* ══ Slot machine — EPIC SIZE ══ */
 .jp-slots{
-  display:flex;gap:16px;margin-bottom:36px;
+  display:flex;gap:24px;margin-bottom:40px;
 }
 .jp-reel{
-  width:220px;height:90px;
-  background:rgba(0,0,0,.7);
-  border:2px solid rgba(255,215,0,.4);
-  border-radius:12px;overflow:hidden;position:relative;
-  box-shadow:0 0 20px rgba(255,215,0,.2), inset 0 0 20px rgba(0,0,0,.5);
+  width:380px;height:160px;
+  background:linear-gradient(180deg,rgba(0,0,0,.9),rgba(20,10,0,.95));
+  border:3px solid rgba(255,215,0,.5);
+  border-radius:20px;overflow:hidden;position:relative;
+  box-shadow:
+    0 0 40px rgba(255,215,0,.35),
+    0 0 80px rgba(255,150,0,.15),
+    inset 0 0 40px rgba(0,0,0,.6);
+  animation:reelGlow 2s ease-in-out infinite alternate;
 }
-/* Gradiente arriba/abajo para efecto de profundidad */
+@keyframes reelGlow{
+  from{box-shadow:0 0 30px rgba(255,215,0,.25),0 0 60px rgba(255,150,0,.1),inset 0 0 30px rgba(0,0,0,.6);}
+  to{box-shadow:0 0 50px rgba(255,215,0,.5),0 0 100px rgba(255,150,0,.25),inset 0 0 40px rgba(0,0,0,.6);}
+}
 .jp-reel::before,.jp-reel::after{
-  content:'';position:absolute;left:0;right:0;height:28px;z-index:2;pointer-events:none;
+  content:'';position:absolute;left:0;right:0;height:50px;z-index:2;pointer-events:none;
 }
-.jp-reel::before{top:0;background:linear-gradient(rgba(0,0,0,.8),transparent);}
-.jp-reel::after{bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.8));}
+.jp-reel::before{top:0;background:linear-gradient(rgba(0,0,0,.95),transparent);}
+.jp-reel::after{bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.95));}
 .jp-reel-inner{
   position:absolute;width:100%;
   transition:transform 0s;
   display:flex;flex-direction:column;align-items:center;
 }
 .jp-reel-item{
-  height:90px;display:flex;align-items:center;justify-content:center;
-  font-size:28px;letter-spacing:2px;color:#fff;text-align:center;
-  padding:0 10px;white-space:nowrap;overflow:hidden;
-  width:100%;
+  height:160px;display:flex;align-items:center;justify-content:center;
+  font-size:42px;letter-spacing:3px;color:rgba(255,255,255,.7);
+  text-align:center;padding:0 16px;
+  white-space:nowrap;overflow:hidden;width:100%;
+  text-shadow:0 2px 8px rgba(0,0,0,.8);
 }
-.jp-reel-item.winner{color:#FFD000;text-shadow:0 0 20px rgba(255,208,0,.9);}
+.jp-reel-item.winner{
+  color:#FFD000;
+  text-shadow:0 0 30px rgba(255,208,0,1),0 0 60px rgba(255,150,0,.6),0 0 4px rgba(0,0,0,1);
+  font-size:48px;
+}
 
-/* Línea central del slot */
+/* Líneas central del slot — doble */
 .jp-reel-line{
-  position:absolute;top:50%;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,rgba(255,215,0,.6),transparent);
+  position:absolute;top:50%;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,215,0,.8) 30%,rgba(255,255,200,1) 50%,rgba(255,215,0,.8) 70%,transparent 100%);
   transform:translateY(-50%);z-index:3;
-  box-shadow:0 0 8px rgba(255,215,0,.4);
+  box-shadow:0 0 12px rgba(255,215,0,.6),0 0 24px rgba(255,215,0,.3);
+}
+.jp-reel-line::before,.jp-reel-line::after{
+  content:'';position:absolute;left:0;right:0;height:1px;background:rgba(255,215,0,.3);
+}
+.jp-reel-line::before{top:-8px;}
+.jp-reel-line::after{bottom:-8px;}
+
+/* Spotlight */
+#jpSpotlight{
+  position:fixed;top:0;left:50%;transform:translateX(-50%);
+  width:800px;height:600px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,215,0,.12) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+  animation:spotPulse 1.5s infinite alternate;
+}
+@keyframes spotPulse{
+  from{opacity:.6;}to{opacity:1;}
 }
 
 /* ══ JACKPOT reveal ══ */
@@ -144,7 +176,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 #jpReveal.show{opacity:1;transform:scale(1);}
 
 .jp-jackpot-text{
-  font-size:120px;letter-spacing:8px;
+  font-size:140px;letter-spacing:10px;
   background:linear-gradient(180deg,#FFD700 0%,#FFA500 50%,#FF8C00 100%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
   background-clip:text;
@@ -154,17 +186,23 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
   line-height:1;
 }
 @keyframes jpTextPulse{
-  from{filter:drop-shadow(0 0 20px rgba(255,215,0,.6)) drop-shadow(0 0 40px rgba(255,150,0,.3));}
-  to{filter:drop-shadow(0 0 40px rgba(255,215,0,1)) drop-shadow(0 0 80px rgba(255,150,0,.7));}
+  0%{filter:drop-shadow(0 0 20px rgba(255,215,0,.6)) drop-shadow(0 0 40px rgba(255,150,0,.3));transform:scale(1);}
+  50%{filter:drop-shadow(0 0 50px rgba(255,215,0,1)) drop-shadow(0 0 100px rgba(255,150,0,.8));transform:scale(1.05);}
+  100%{filter:drop-shadow(0 0 20px rgba(255,215,0,.6)) drop-shadow(0 0 40px rgba(255,150,0,.3));transform:scale(1);}
 }
 
 .jp-winner-name{
-  font-size:90px;letter-spacing:6px;color:#fff;line-height:1;margin-top:8px;
-  text-shadow:0 0 40px rgba(255,255,255,.6),0 0 80px rgba(255,215,0,.4);
-  animation:jpNameIn .8s cubic-bezier(.34,1.56,.64,1) forwards;
+  font-size:110px;letter-spacing:8px;color:#fff;line-height:1;margin-top:8px;
+  text-shadow:0 0 40px rgba(255,255,255,.8),0 0 80px rgba(255,215,0,.6),0 0 120px rgba(255,215,0,.3);
+  animation:jpNameIn 1s cubic-bezier(.34,1.56,.64,1) .3s forwards;
   opacity:0;
 }
-@keyframes jpNameIn{from{opacity:0;transform:scale(.6);}to{opacity:1;transform:scale(1);}}
+@keyframes jpNameIn{
+  0%{opacity:0;transform:scale(.3) translateY(30px);}
+  60%{opacity:1;transform:scale(1.08) translateY(-5px);}
+  80%{transform:scale(.97);}
+  100%{opacity:1;transform:scale(1) translateY(0);}
+}
 
 .jp-sub-badge{
   font-size:22px;letter-spacing:6px;color:rgba(255,215,0,.8);
@@ -247,6 +285,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 <!-- JACKPOT MODE -->
 <div id="jackpotStage">
   <div class="jp-eyebrow">⭐ Buscando suscriptor ⭐</div>
+  <div id="jpSpotlight"></div>
   <div class="jp-slots">
     <div class="jp-reel" id="reel0"><div class="jp-reel-inner" id="reel0inner"></div><div class="jp-reel-line"></div></div>
     <div class="jp-reel" id="reel1"><div class="jp-reel-inner" id="reel1inner"></div><div class="jp-reel-line"></div></div>
@@ -366,7 +405,7 @@ function revealChosen(name){
   void el.offsetWidth;el.classList.add('show');
   setTimeout(()=>document.getElementById('sBadge').classList.add('show'),400);
   setTimeout(()=>{
-    document.getElementById('bg').classList.remove('show');
+    document.getElementById('bg').className = '';
     document.getElementById('stage').classList.remove('show');
     stopParticles();
     activateRep(false);
@@ -414,33 +453,49 @@ function startJackpot(candidates,chosen){
 function spinReel(reelIdx, winner, pool, onStop){
   const inner=document.getElementById(`reel${reelIdx}inner`);
   const items=inner.querySelectorAll('.jp-reel-item');
-  const totalHeight=items.length*90;
+  const itemH=160;
+  const totalH=items.length*itemH;
 
-  // Animar scrolling rápido
-  let pos=0;
-  const duration=1800+reelIdx*600; // cada reel tarda más
+  // Velocidad inicial alta, desacelera gradualmente
+  const spinDuration=2000+reelIdx*700;
   const start=performance.now();
+  let currentPos=0;
+  let velocity=30; // píxeles por frame inicial
 
   function animate(now){
     const elapsed=now-start;
-    const progress=Math.min(elapsed/duration,1);
-    // Ease out
-    const ease=1-Math.pow(1-progress,3);
-    pos=(totalHeight*3*ease)%totalHeight;
+    const progress=Math.min(elapsed/spinDuration,1);
+
+    // Easing: velocidad alta al inicio, baja exponencialmente
+    const easedVel=velocity*Math.pow(1-progress,2);
+    currentPos=(currentPos+Math.max(easedVel,0.5))%totalH;
+
     inner.style.transition='none';
-    inner.style.transform=`translateY(-${pos}px)`;
-    if(progress<1){ requestAnimationFrame(animate); }
-    else {
-      // Detener en el winner
-      const winnerEl=Array.from(items).find(el=>el.textContent===winner.substring(0,14).toUpperCase());
-      if(winnerEl){
-        winnerEl.classList.add('winner');
-        const idx=Array.from(items).indexOf(winnerEl);
-        inner.style.transition='transform .4s cubic-bezier(.25,.46,.45,.94)';
-        inner.style.transform=`translateY(-${idx*90}px)`;
-      }
-      playReelStop(reelIdx);
-      setTimeout(onStop,500);
+    inner.style.transform=`translateY(-${currentPos}px)`;
+
+    if(progress<1){
+      requestAnimationFrame(animate);
+    } else {
+      // Encontrar el winner y hacer snap con bounce
+      let winnerIdx=-1;
+      Array.from(items).forEach((el,i)=>{
+        if(el.textContent===winner.substring(0,14).toUpperCase()) winnerIdx=i;
+      });
+      if(winnerIdx===-1) winnerIdx=0;
+
+      const targetPos=winnerIdx*itemH;
+
+      // Pasar un poco del target (overshoot) luego bounce back
+      inner.style.transition='transform .25s ease-in';
+      inner.style.transform=`translateY(-${targetPos+15}px)`;
+
+      setTimeout(()=>{
+        inner.style.transition='transform .35s cubic-bezier(.34,1.56,.64,1)';
+        inner.style.transform=`translateY(-${targetPos}px)`;
+        items[winnerIdx].classList.add('winner');
+        playReelStop(reelIdx);
+        setTimeout(onStop,400);
+      },260);
     }
   }
   requestAnimationFrame(animate);
@@ -469,7 +524,7 @@ function revealJackpot(name){
 
   setTimeout(()=>{
     reveal.classList.remove('show');
-    document.getElementById('bg').classList.remove('show');
+    document.getElementById('bg').className = '';
     document.getElementById('jackpotStage').classList.remove('show');
     stopParticles();
     activateRep(true);
@@ -498,7 +553,7 @@ function clearRep(){
   window.speechSynthesis.cancel();
   document.getElementById('repHud').classList.remove('show');
   document.getElementById('ttsMsg').classList.remove('show');
-  document.getElementById('bg').classList.remove('show');
+  document.getElementById('bg').className = '';
   document.getElementById('stage').classList.remove('show');
   document.getElementById('jackpotStage').classList.remove('show');
   document.getElementById('jpReveal').classList.remove('show');
@@ -552,62 +607,257 @@ function stopParticles(){
   c.getContext('2d').clearRect(0,0,c.width,c.height);
 }
 
-// ══ Sonidos ══
-const AC=new (window.AudioContext||window.webkitAudioContext)();
+// ══ Audio Engine ══
+const AC = new (window.AudioContext || window.webkitAudioContext)();
 
-function playReelStop(idx){
-  AC.resume();
-  const freqs=[523,659,784];
-  const o=AC.createOscillator(),g=AC.createGain();
-  o.connect(g);g.connect(AC.destination);
-  o.type='sine';o.frequency.value=freqs[idx];
-  g.gain.setValueAtTime(.3,AC.currentTime);
-  g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+.15);
-  o.start();o.stop(AC.currentTime+.15);
+// Utilidades
+function makeNoise(duration) {
+  const buf = AC.createBuffer(1, AC.sampleRate * duration, AC.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const src = AC.createBufferSource();
+  src.buffer = buf;
+  return src;
 }
 
-function playJackpotSpin(){
-  AC.resume();
-  // Sonido de suspense — tono subiendo
-  [200,250,300,350,400].forEach((freq,i)=>{
-    const o=AC.createOscillator(),g=AC.createGain();
-    o.connect(g);g.connect(AC.destination);
-    o.type='sine';o.frequency.value=freq;
-    const t=AC.currentTime+i*.18;
-    g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);
-    o.start(t);o.stop(t+.2);
-  });
+function makeOsc(type, freq) {
+  const o = AC.createOscillator();
+  o.type = type; o.frequency.value = freq;
+  return o;
 }
 
-function playJackpotWin(){
+function conn(...nodes) {
+  for (let i = 0; i < nodes.length - 1; i++) nodes[i].connect(nodes[i+1]);
+  nodes[nodes.length-1].connect(AC.destination);
+}
+
+// ══ Sonido del reel girando (loop durante el spin) ══
+let reelSpinSource = null;
+function startReelSpinSound() {
   AC.resume();
-  const t=AC.currentTime;
-  // Fanfarria épica — acorde dorado
-  [[523,1],[659,.8],[784,.9],[1047,.7],[1319,.6]].forEach(([freq,vol],i)=>{
-    const o=AC.createOscillator(),g=AC.createGain();
-    o.connect(g);g.connect(AC.destination);
-    o.type='sine';o.frequency.value=freq;
-    const st=t+i*.08;
-    g.gain.setValueAtTime(vol*.35,st);
-    g.gain.setValueAtTime(vol*.35,st+.3);
-    g.gain.exponentialRampToValueAtTime(.001,st+.8);
-    o.start(st);o.stop(st+.8);
+  stopReelSpinSound();
+  // Ruido mecánico de rodillos girando
+  const bufLen = AC.sampleRate * 0.5;
+  const buf = AC.createBuffer(1, bufLen, AC.sampleRate);
+  const d = buf.getChannelData(0);
+  // Patrón de clicks mecánicos
+  for (let i = 0; i < bufLen; i++) {
+    const pos = i / bufLen;
+    // Base de ruido
+    d[i] = (Math.random() * 2 - 1) * 0.15;
+    // Clicks periódicos (simula dientes de engranaje)
+    const clickFreq = 12;
+    if (Math.sin(pos * Math.PI * 2 * clickFreq) > 0.92) {
+      d[i] += (Math.random() * 2 - 1) * 0.6 * Math.pow(Math.abs(Math.sin(pos * Math.PI * 2 * clickFreq)), 8);
+    }
+  }
+  reelSpinSource = AC.createBufferSource();
+  reelSpinSource.buffer = buf;
+  reelSpinSource.loop = true;
+
+  const filter = AC.createBiquadFilter();
+  filter.type = 'bandpass'; filter.frequency.value = 800; filter.Q.value = 1.5;
+
+  const gain = AC.createGain();
+  gain.gain.setValueAtTime(0, AC.currentTime);
+  gain.gain.linearRampToValueAtTime(0.35, AC.currentTime + 0.3);
+
+  conn(reelSpinSource, filter, gain);
+  reelSpinSource.start();
+}
+
+function stopReelSpinSound() {
+  if (reelSpinSource) {
+    try {
+      reelSpinSource.stop();
+    } catch(e) {}
+    reelSpinSource = null;
+  }
+}
+
+// ══ Click al detenerse cada reel ══
+function playReelStop(idx) {
+  AC.resume();
+  const t = AC.currentTime;
+
+  // 1. Impacto mecánico pesado
+  const impactBuf = AC.createBuffer(1, AC.sampleRate * 0.08, AC.sampleRate);
+  const id = impactBuf.getChannelData(0);
+  for (let i = 0; i < id.length; i++) {
+    id[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / id.length, 1.5);
+  }
+  const impact = AC.createBufferSource();
+  impact.buffer = impactBuf;
+  const impF = AC.createBiquadFilter();
+  impF.type = 'lowpass'; impF.frequency.value = 500;
+  const impG = AC.createGain();
+  impG.gain.setValueAtTime(0.7, t);
+  impG.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+  conn(impact, impF, impG);
+  impact.start(t);
+
+  // 2. Tono metálico de confirmación (diferente por reel)
+  const tones = [[392, 523], [523, 659], [659, 784]];
+  const [f1, f2] = tones[idx];
+  const metal = makeOsc('triangle', f1);
+  const metalG = AC.createGain();
+  const metalF = AC.createBiquadFilter();
+  metalF.type = 'peaking'; metalF.frequency.value = 2000; metalF.gain.value = 6;
+  metal.frequency.setValueAtTime(f1, t);
+  metal.frequency.exponentialRampToValueAtTime(f2, t + 0.08);
+  metalG.gain.setValueAtTime(0.5, t);
+  metalG.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+  conn(metal, metalF, metalG);
+  metal.start(t); metal.stop(t + 0.25);
+
+  // 3. Tail de campana
+  const bell = makeOsc('sine', f2 * 2);
+  const bellG = AC.createGain();
+  bellG.gain.setValueAtTime(0.15, t + 0.05);
+  bellG.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+  conn(bell, bellG);
+  bell.start(t + 0.05); bell.stop(t + 0.6);
+
+  // Detener sonido de spin en el último reel
+  if (idx === 2) setTimeout(stopReelSpinSound, 200);
+}
+
+// ══ Suspense durante el spin ══
+function playJackpotSpin() {
+  AC.resume();
+  const t = AC.currentTime;
+
+  // Intro dramática: acorde de suspenso menor
+  [[146, 0], [174, 0.1], [220, 0.2], [261, 0.3]].forEach(([freq, delay]) => {
+    const o = makeOsc('sine', freq);
+    const g = AC.createGain();
+    g.gain.setValueAtTime(0.0, t + delay);
+    g.gain.linearRampToValueAtTime(0.2, t + delay + 0.15);
+    g.gain.setValueAtTime(0.2, t + delay + 0.8);
+    g.gain.exponentialRampToValueAtTime(0.001, t + delay + 1.5);
+    conn(o, g);
+    o.start(t + delay); o.stop(t + delay + 1.5);
   });
-  // Sub-bass punch
-  const sub=AC.createOscillator(),subG=AC.createGain();
-  sub.connect(subG);subG.connect(AC.destination);
-  sub.type='sine';sub.frequency.setValueAtTime(80,t);
-  sub.frequency.exponentialRampToValueAtTime(40,t+.3);
-  subG.gain.setValueAtTime(.6,t);subG.gain.exponentialRampToValueAtTime(.001,t+.4);
-  sub.start(t);sub.stop(t+.4);
-  // Shimmer (campanas)
-  [1047,1319,1568,2093].forEach((freq,i)=>{
-    const o=AC.createOscillator(),g=AC.createGain();
-    o.connect(g);g.connect(AC.destination);
-    o.type='sine';o.frequency.value=freq;
-    const st=t+.5+i*.12;
-    g.gain.setValueAtTime(.2,st);g.gain.exponentialRampToValueAtTime(.001,st+.4);
-    o.start(st);o.stop(st+.4);
+
+  // Drum roll con ruido — redoble de tambor
+  const rollDuration = 2.5;
+  for (let i = 0; i < 40; i++) {
+    const st = t + 0.3 + (i / 40) * rollDuration;
+    const intensity = Math.pow(i / 40, 2); // acelera hacia el final
+    const nBuf = AC.createBuffer(1, AC.sampleRate * 0.03, AC.sampleRate);
+    const nd = nBuf.getChannelData(0);
+    for (let j = 0; j < nd.length; j++) nd[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / nd.length, 2);
+    const ns = AC.createBufferSource(); ns.buffer = nBuf;
+    const nf = AC.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 200 + intensity * 400;
+    const ng = AC.createGain();
+    ng.gain.setValueAtTime(0.1 + intensity * 0.4, st);
+    ng.gain.exponentialRampToValueAtTime(0.001, st + 0.04);
+    conn(ns, nf, ng);
+    ns.start(st);
+  }
+
+  // Iniciar loop de rieles
+  setTimeout(startReelSpinSound, 400);
+}
+
+// ══ JACKPOT WIN — Fanfarria épica ══
+function playJackpotWin() {
+  AC.resume();
+  stopReelSpinSound();
+  const t = AC.currentTime;
+
+  // 1. BOOM de impacto (sub-bass + explosion noise)
+  const sub = makeOsc('sine', 80);
+  const subG = AC.createGain();
+  sub.frequency.setValueAtTime(80, t);
+  sub.frequency.exponentialRampToValueAtTime(30, t + 0.6);
+  subG.gain.setValueAtTime(1.0, t);
+  subG.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+  conn(sub, subG);
+  sub.start(t); sub.stop(t + 0.7);
+
+  // Explosion noise
+  const expBuf = AC.createBuffer(1, AC.sampleRate * 0.3, AC.sampleRate);
+  const expD = expBuf.getChannelData(0);
+  for (let i = 0; i < expD.length; i++) expD[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / expD.length, 0.8);
+  const exp = AC.createBufferSource(); exp.buffer = expBuf;
+  const expF = AC.createBiquadFilter(); expF.type = 'lowpass'; expF.frequency.value = 300;
+  const expG = AC.createGain();
+  expG.gain.setValueAtTime(0.8, t);
+  expG.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+  conn(exp, expF, expG);
+  exp.start(t);
+
+  // 2. Fanfarria dorada — trompetas sintéticas con harmónicos
+  const trumpetNotes = [523, 659, 784, 1047, 1319, 1047, 784, 1047, 1319, 1568];
+  const trumpetTimes = [0.1, 0.17, 0.24, 0.31, 0.38, 0.52, 0.59, 0.66, 0.73, 0.80];
+  trumpetNotes.forEach((freq, i) => {
+    // Fundamental
+    const o1 = makeOsc('sawtooth', freq);
+    const o2 = makeOsc('square', freq * 2);
+    const mix = AC.createGain(); mix.gain.value = 0.5;
+    const mix2 = AC.createGain(); mix2.gain.value = 0.15;
+    const filter = AC.createBiquadFilter();
+    filter.type = 'lowpass'; filter.frequency.value = freq * 3;
+    const env = AC.createGain();
+    const st = t + trumpetTimes[i];
+    env.gain.setValueAtTime(0, st);
+    env.gain.linearRampToValueAtTime(0.35, st + 0.04);
+    env.gain.setValueAtTime(0.3, st + 0.08);
+    env.gain.exponentialRampToValueAtTime(0.001, st + 0.18);
+    o1.connect(mix); o2.connect(mix2);
+    mix.connect(filter); mix2.connect(filter);
+    filter.connect(env); env.connect(AC.destination);
+    o1.start(st); o1.stop(st + 0.2);
+    o2.start(st); o2.stop(st + 0.2);
+  });
+
+  // 3. Acorde de victoria sostenido — cuerdas
+  [[523, 0.95], [659, 0.85], [784, 0.9], [1047, 0.75], [1319, 0.6]].forEach(([freq, vol], i) => {
+    const o = makeOsc('sine', freq);
+    const g = AC.createGain();
+    const st = t + 0.9 + i * 0.02;
+    g.gain.setValueAtTime(0, st);
+    g.gain.linearRampToValueAtTime(vol * 0.18, st + 0.1);
+    g.gain.setValueAtTime(vol * 0.18, st + 1.2);
+    g.gain.exponentialRampToValueAtTime(0.001, st + 2.5);
+    conn(o, g);
+    o.start(st); o.stop(st + 2.5);
+  });
+
+  // 4. Cascada de monedas — clicks rápidos ascendentes
+  for (let i = 0; i < 25; i++) {
+    const st = t + 0.5 + i * 0.06 + Math.random() * 0.03;
+    const coinFreq = 1200 + i * 80 + Math.random() * 200;
+    const coin = makeOsc('sine', coinFreq);
+    const coinG = AC.createGain();
+    coinG.gain.setValueAtTime(0.12, st);
+    coinG.gain.exponentialRampToValueAtTime(0.001, st + 0.08);
+    conn(coin, coinG);
+    coin.start(st); coin.stop(st + 0.1);
+  }
+
+  // 5. Reverb simulado — eco de sala grande
+  [[0.15, 0.6], [0.3, 0.4], [0.5, 0.25], [0.8, 0.15]].forEach(([delay, vol]) => {
+    [523, 784, 1047].forEach(freq => {
+      const o = makeOsc('sine', freq);
+      const g = AC.createGain();
+      g.gain.setValueAtTime(vol * 0.08, t + delay);
+      g.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.4);
+      conn(o, g);
+      o.start(t + delay); o.stop(t + delay + 0.4);
+    });
+  });
+
+  // 6. Shimmer final de campanas
+  [2093, 2637, 3136, 3951, 4186].forEach((freq, i) => {
+    const o = makeOsc('sine', freq);
+    const g = AC.createGain();
+    const st = t + 1.0 + i * 0.12;
+    g.gain.setValueAtTime(0.12, st);
+    g.gain.exponentialRampToValueAtTime(0.001, st + 0.8);
+    conn(o, g);
+    o.start(st); o.stop(st + 0.8);
   });
 }
 
