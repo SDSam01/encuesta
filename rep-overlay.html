@@ -4,140 +4,234 @@
 <meta charset="UTF-8">
 <title>Representante</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@700;900&display=swap" rel="stylesheet">
-<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-family:'Bebas Neue',sans-serif;}
 
-/* ══ Overlay fondo ══ */
-#bg{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,0);
-  transition:background .5s;
-  pointer-events:none;z-index:10;
+/* ══ Sirena ══ */
+#sirenOverlay{
+  position:fixed;inset:0;z-index:60;pointer-events:none;
+  opacity:0;transition:opacity .3s;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
 }
-#bg.show{background:rgba(0,0,0,0.82);}
+#sirenOverlay.show{opacity:1;}
+.siren-flash{
+  position:fixed;inset:0;
+  background:rgba(255,20,20,0);
+  animation:sirenFlash 0.5s infinite;
+}
+@keyframes sirenFlash{
+  0%,100%{background:rgba(255,20,20,0);}
+  50%{background:rgba(255,20,20,0.35);}
+}
+.siren-text{
+  font-size:80px;letter-spacing:10px;
+  color:#FF3333;
+  text-shadow:0 0 40px rgba(255,0,0,1),0 0 80px rgba(255,0,0,.6);
+  animation:sirenText .5s infinite alternate;
+  position:relative;z-index:1;
+}
+@keyframes sirenText{
+  from{opacity:.6;transform:scale(.98);}
+  to{opacity:1;transform:scale(1.02);}
+}
+.siren-sub{
+  font-size:26px;letter-spacing:6px;
+  color:rgba(255,100,100,.8);margin-top:10px;
+  position:relative;z-index:1;
+  animation:sirenText .5s infinite alternate;
+}
 
-/* ══ Contenido central ══ */
+/* ══ Fondo ══ */
+#bg{
+  position:fixed;inset:0;background:rgba(0,0,0,0);
+  transition:background .5s;pointer-events:none;z-index:10;
+}
+#bg.show{background:rgba(0,0,0,0.85);}
+#bg.jackpot{background:rgba(0,0,0,0.92);}
+
+/* ══ Canvas partículas ══ */
+#particles{position:fixed;inset:0;z-index:15;pointer-events:none;}
+
+/* ══════════════════════════════
+   ANIMACIÓN NORMAL (viewer)
+══════════════════════════════ */
 #stage{
   position:fixed;inset:0;z-index:20;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  pointer-events:none;
-  opacity:0;transition:opacity .4s;
+  pointer-events:none;opacity:0;transition:opacity .4s;
 }
 #stage.show{opacity:1;}
-
-.s-eyebrow{
-  font-size:28px;letter-spacing:8px;color:rgba(255,255,255,.45);
-  margin-bottom:16px;text-transform:uppercase;
-}
-
+.s-eyebrow{font-size:26px;letter-spacing:8px;color:rgba(255,255,255,.4);margin-bottom:14px;}
 .s-title{
-  font-size:90px;letter-spacing:6px;color:#FFD000;
-  text-shadow:0 0 40px rgba(255,208,0,.8), 0 0 80px rgba(255,208,0,.4), 0 4px 20px rgba(0,0,0,1);
-  line-height:1;margin-bottom:40px;text-align:center;
+  font-size:80px;letter-spacing:6px;color:#FFD000;
+  text-shadow:0 0 40px rgba(255,208,0,.8),0 0 80px rgba(255,208,0,.4);
+  line-height:1;margin-bottom:36px;text-align:center;
 }
-
-/* Zona de shuffle */
-#shuffleZone{
-  display:flex;flex-direction:column;align-items:center;gap:10px;
-  min-height:200px;justify-content:center;
-}
-
-.shuffle-name{
-  font-size:52px;letter-spacing:3px;color:rgba(255,255,255,.25);
-  transition:all .08s;text-align:center;
-}
-.shuffle-name.active{
-  color:#fff;font-size:68px;
-  text-shadow:0 0 25px rgba(255,255,255,.8), 0 0 50px rgba(255,255,255,.3);
-}
-
-/* Nombre elegido final */
+#shuffleZone{display:flex;flex-direction:column;align-items:center;gap:10px;min-height:180px;justify-content:center;}
+.shuffle-name{font-size:50px;letter-spacing:3px;color:rgba(255,255,255,.22);transition:all .08s;text-align:center;}
+.shuffle-name.active{color:#fff;font-size:66px;text-shadow:0 0 25px rgba(255,255,255,.8),0 0 50px rgba(255,255,255,.3);}
 #chosenName{
-  font-size:110px;letter-spacing:6px;color:#FFD000;
-  text-shadow:0 0 50px rgba(255,208,0,1), 0 0 100px rgba(255,208,0,.6), 0 6px 30px rgba(0,0,0,1);
+  font-size:108px;letter-spacing:6px;color:#FFD000;
+  text-shadow:0 0 50px rgba(255,208,0,1),0 0 100px rgba(255,208,0,.6),0 6px 30px rgba(0,0,0,1);
   text-align:center;line-height:1;
   opacity:0;transform:scale(.7);
-  transition:opacity .5s, transform .6s cubic-bezier(.34,1.56,.64,1);
-  display:none;
+  transition:opacity .5s,transform .6s cubic-bezier(.34,1.56,.64,1);display:none;
 }
 #chosenName.show{opacity:1;transform:scale(1);display:block;}
-
-.s-badge{
-  font-size:22px;letter-spacing:4px;
-  color:rgba(255,208,0,.6);margin-top:16px;
-  opacity:0;transition:opacity .5s;
-}
+.s-badge{font-size:20px;letter-spacing:4px;color:rgba(255,208,0,.6);margin-top:14px;opacity:0;transition:opacity .5s;}
 .s-badge.show{opacity:1;}
 
-/* ══ Contenedor alineado — HUD + TTS ══ */
-#infoContainer{
-  position:fixed;top:45px;left:940px;
-  display:flex;flex-direction:column;gap:0;
-  z-index:30;pointer-events:none;
-  width:480px;
+/* ══════════════════════════════
+   JACKPOT MODE (suscriptores)
+══════════════════════════════ */
+#jackpotStage{
+  position:fixed;inset:0;z-index:22;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;opacity:0;transition:opacity .4s;
 }
+#jackpotStage.show{opacity:1;}
+
+/* Título jackpot */
+.jp-eyebrow{
+  font-size:24px;letter-spacing:10px;color:rgba(255,215,0,.6);
+  margin-bottom:20px;text-transform:uppercase;
+}
+
+/* ══ Slot machine ══ */
+.jp-slots{
+  display:flex;gap:16px;margin-bottom:36px;
+}
+.jp-reel{
+  width:220px;height:90px;
+  background:rgba(0,0,0,.7);
+  border:2px solid rgba(255,215,0,.4);
+  border-radius:12px;overflow:hidden;position:relative;
+  box-shadow:0 0 20px rgba(255,215,0,.2), inset 0 0 20px rgba(0,0,0,.5);
+}
+/* Gradiente arriba/abajo para efecto de profundidad */
+.jp-reel::before,.jp-reel::after{
+  content:'';position:absolute;left:0;right:0;height:28px;z-index:2;pointer-events:none;
+}
+.jp-reel::before{top:0;background:linear-gradient(rgba(0,0,0,.8),transparent);}
+.jp-reel::after{bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.8));}
+.jp-reel-inner{
+  position:absolute;width:100%;
+  transition:transform 0s;
+  display:flex;flex-direction:column;align-items:center;
+}
+.jp-reel-item{
+  height:90px;display:flex;align-items:center;justify-content:center;
+  font-size:28px;letter-spacing:2px;color:#fff;text-align:center;
+  padding:0 10px;white-space:nowrap;overflow:hidden;
+  width:100%;
+}
+.jp-reel-item.winner{color:#FFD000;text-shadow:0 0 20px rgba(255,208,0,.9);}
+
+/* Línea central del slot */
+.jp-reel-line{
+  position:absolute;top:50%;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(255,215,0,.6),transparent);
+  transform:translateY(-50%);z-index:3;
+  box-shadow:0 0 8px rgba(255,215,0,.4);
+}
+
+/* ══ JACKPOT reveal ══ */
+#jpReveal{
+  text-align:center;opacity:0;transform:scale(.5);
+  transition:opacity .6s,transform .8s cubic-bezier(.34,1.56,.64,1);
+}
+#jpReveal.show{opacity:1;transform:scale(1);}
+
+.jp-jackpot-text{
+  font-size:120px;letter-spacing:8px;
+  background:linear-gradient(180deg,#FFD700 0%,#FFA500 50%,#FF8C00 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  text-shadow:none;
+  filter:drop-shadow(0 0 30px rgba(255,215,0,.8)) drop-shadow(0 0 60px rgba(255,150,0,.5));
+  animation:jpTextPulse 1s infinite alternate;
+  line-height:1;
+}
+@keyframes jpTextPulse{
+  from{filter:drop-shadow(0 0 20px rgba(255,215,0,.6)) drop-shadow(0 0 40px rgba(255,150,0,.3));}
+  to{filter:drop-shadow(0 0 40px rgba(255,215,0,1)) drop-shadow(0 0 80px rgba(255,150,0,.7));}
+}
+
+.jp-winner-name{
+  font-size:90px;letter-spacing:6px;color:#fff;line-height:1;margin-top:8px;
+  text-shadow:0 0 40px rgba(255,255,255,.6),0 0 80px rgba(255,215,0,.4);
+  animation:jpNameIn .8s cubic-bezier(.34,1.56,.64,1) forwards;
+  opacity:0;
+}
+@keyframes jpNameIn{from{opacity:0;transform:scale(.6);}to{opacity:1;transform:scale(1);}}
+
+.jp-sub-badge{
+  font-size:22px;letter-spacing:6px;color:rgba(255,215,0,.8);
+  margin-top:12px;opacity:0;transition:opacity .5s;
+  text-shadow:0 0 10px rgba(255,215,0,.5);
+}
+.jp-sub-badge.show{opacity:1;}
+
+/* Flash dorado para jackpot */
+#jpFlash{
+  position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0;
+  background:radial-gradient(ellipse at center,rgba(255,215,0,.6) 0%,rgba(255,150,0,0) 70%);
+  transition:opacity .08s;
+}
+#jpFlash.show{opacity:1;}
 
 /* ══ HUD rep activo ══ */
 #repHud{
   position:fixed;top:55px;left:1120px;
-  display:flex;align-items:center;gap:12px;
-  background:rgba(0,0,0,0.7);border:1px solid rgba(255,208,0,.3);
-  border-radius:50px;padding:8px 20px 8px 12px;
+  display:flex;align-items:center;gap:10px;
+  background:rgba(0,0,0,0.75);
+  border-radius:50px;padding:8px 18px 8px 12px;
   z-index:30;opacity:0;transition:opacity .5s;pointer-events:none;
+}
+#repHud.normal{border:1px solid rgba(255,208,0,.3);}
+#repHud.sub{
+  border:1px solid rgba(255,215,0,.7);
+  box-shadow:0 0 15px rgba(255,215,0,.3),0 0 30px rgba(255,150,0,.15);
+  background:rgba(20,12,0,.85);
 }
 #repHud.show{opacity:1;}
 .hud-dot{width:10px;height:10px;border-radius:50%;background:#FFD000;animation:hdot 1.2s infinite;}
 @keyframes hdot{0%,100%{opacity:1;}50%{opacity:.2;}}
-.hud-label{font-size:13px;letter-spacing:2px;color:rgba(255,208,0,.6);}
-.hud-name{font-size:18px;letter-spacing:2px;color:#FFD000;
-  text-shadow:0 0 10px rgba(255,208,0,.6);}
+.hud-crown{font-size:16px;animation:crownBounce 2s infinite;}
+@keyframes crownBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
+.hud-label{font-size:12px;letter-spacing:2px;color:rgba(255,208,0,.6);}
+.hud-name{font-size:17px;letter-spacing:2px;color:#FFD000;text-shadow:0 0 10px rgba(255,208,0,.6);}
+.hud-name.sub{color:#FFD700;text-shadow:0 0 15px rgba(255,215,0,.8),0 0 30px rgba(255,150,0,.4);}
 
-/* ══ Mensaje TTS ══ */
+/* ══ TTS mensaje ══ */
 #ttsMsg{
   position:fixed;top:840px;left:940px;
-  background:rgba(0,0,0,0.75);border:1px solid rgba(255,208,0,.25);
-  border-radius:12px;padding:12px 20px;
-  width:480px;
+  background:rgba(0,0,0,0.78);border:1px solid rgba(255,208,0,.25);
+  border-radius:12px;padding:12px 20px;width:480px;
   z-index:30;opacity:0;transition:opacity .3s;pointer-events:none;
 }
+#ttsMsg.sub-rep{
+  border-color:rgba(255,215,0,.5);
+  box-shadow:0 0 12px rgba(255,215,0,.2);
+}
 #ttsMsg.show{opacity:1;}
-.tts-user{font-size:16px;letter-spacing:2px;color:rgba(255,208,0,.7);margin-bottom:4px;}
-.tts-text{font-family:'Inter',sans-serif;font-size:20px;font-weight:700;color:#fff;letter-spacing:.5px;}
-
-/* ══ Spotlight viewer final ══ */
-#viewerSpotlight{
-  position:fixed;inset:0;z-index:25;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  opacity:0;transition:opacity .5s;pointer-events:none;
-}
-#viewerSpotlight.show{opacity:1;}
-.vs-label{
-  font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:5px;
-  color:rgba(255,208,0,.6);margin-bottom:8px;
-}
-.vs-name{
-  font-family:'Bebas Neue',sans-serif;font-size:130px;letter-spacing:8px;
-  color:#FFD000;line-height:1;
-  text-shadow:0 0 60px rgba(255,208,0,1), 0 0 120px rgba(255,208,0,.6), 0 6px 30px rgba(0,0,0,1);
-  animation:vsIn .6s cubic-bezier(.34,1.56,.64,1) forwards;
-  text-align:center;
-}
-@keyframes vsIn{
-  from{transform:scale(.5);opacity:0;}
-  to{transform:scale(1);opacity:1;}
-}
-
-/* Partículas */
-#particles{position:fixed;inset:0;z-index:15;pointer-events:none;}
+.tts-user{font-size:15px;letter-spacing:2px;color:rgba(255,208,0,.7);margin-bottom:3px;}
+.tts-text{font-family:'Inter',sans-serif;font-size:19px;font-weight:700;color:#fff;letter-spacing:.5px;}
 </style>
 </head>
 <body>
 
+<div id="sirenOverlay">
+  <div class="siren-flash"></div>
+  <div class="siren-text">🚨 MODO VIP 🚨</div>
+  <div class="siren-sub">BUSCANDO REPRESENTANTE</div>
+</div>
 <div id="bg"></div>
 <canvas id="particles"></canvas>
+<div id="jpFlash"></div>
 
+<!-- ANIMACIÓN NORMAL -->
 <div id="stage">
   <div class="s-eyebrow">Seleccionando...</div>
   <div class="s-title">REPRESENTANTE<br>DEL STREAM</div>
@@ -150,237 +244,375 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
   <div class="s-badge" id="sBadge">🎤 REPRESENTANTE OFICIAL</div>
 </div>
 
-<div id="repHud">
+<!-- JACKPOT MODE -->
+<div id="jackpotStage">
+  <div class="jp-eyebrow">⭐ Buscando suscriptor ⭐</div>
+  <div class="jp-slots">
+    <div class="jp-reel" id="reel0"><div class="jp-reel-inner" id="reel0inner"></div><div class="jp-reel-line"></div></div>
+    <div class="jp-reel" id="reel1"><div class="jp-reel-inner" id="reel1inner"></div><div class="jp-reel-line"></div></div>
+    <div class="jp-reel" id="reel2"><div class="jp-reel-inner" id="reel2inner"></div><div class="jp-reel-line"></div></div>
+  </div>
+  <div id="jpReveal">
+    <div class="jp-jackpot-text">🎰 JACKPOT 🎰</div>
+    <div class="jp-winner-name" id="jpWinnerName">USUARIO</div>
+    <div class="jp-sub-badge" id="jpSubBadge">⭐ SUSCRIPTOR DEL STREAM ⭐</div>
+  </div>
+</div>
+
+<!-- HUD activo -->
+<div id="repHud" class="normal">
   <span class="hud-dot"></span>
+  <span id="hudCrown" style="display:none" class="hud-crown">👑</span>
   <span class="hud-label">REP:</span>
   <span class="hud-name" id="hudName">-</span>
 </div>
 
+<!-- TTS mensaje -->
 <div id="ttsMsg">
   <div class="tts-user" id="ttsMsgUser"></div>
   <div class="tts-text" id="ttsMsgText"></div>
 </div>
 
-<div id="viewerSpotlight">
-  <div class="vs-label">REPRESENTANTE DEL STREAM</div>
-  <div class="vs-name" id="vsName"></div>
-</div>
-
 <script>
 const LS = 'rep_state';
-let repUserId = null, repUsername = null;
-let ttsTimeout = null, msgTimeout = null;
-let particles = [], pRAF = null;
+let repUserId=null, repUsername=null, repIsSubscriber=false;
+let ttsTimeout=null, msgTimeout=null;
+let particles=[], pRAF=null;
+let lastTrigger=0, lastClear=0, pendingRep=null;
 
-// ══ Leer estado del localStorage ══
-let lastTrigger = 0, lastClear = 0;
-let pendingRep = null; // guardamos el rep pero no mostramos hasta que termine la animación
-
-setInterval(() => {
-  try {
-    const raw = localStorage.getItem(LS);
-    if (!raw) return;
-    const s = JSON.parse(raw);
-
-    // Nuevo representante — solo lanzar animación, NO mostrar HUD todavía
-    if (s.trigger && s.trigger !== lastTrigger) {
-      lastTrigger = s.trigger;
-      pendingRep  = { userId: s.repUserId, username: s.repUsername };
-      startAnimation(s.candidates || [], s.chosen);
+// ══ Polling localStorage ══
+setInterval(()=>{
+  try{
+    const raw=localStorage.getItem(LS);
+    if(!raw)return;
+    const s=JSON.parse(raw);
+    if(s.trigger&&s.trigger!==lastTrigger){
+      lastTrigger=s.trigger;
+      pendingRep={userId:s.repUserId,username:s.repUsername,isMember:!!s.repIsMember};
+      if(s.repIsMember) startJackpot(s.candidates||[],s.chosen);
+      else startAnimation(s.candidates||[],s.chosen);
     }
+    if(s.clear&&s.clear!==lastClear){lastClear=s.clear;clearRep();}
+  }catch(e){}
+},300);
 
-    // Limpiar rep
-    if (s.clear && s.clear !== lastClear) {
-      lastClear = s.clear;
-      clearRep();
-    }
+// ══ Escuchar mensajes TTS ══
+setInterval(()=>{
+  try{
+    const raw=localStorage.getItem('rep_message');
+    if(!raw)return;
+    const m=JSON.parse(raw);
+    if(!m.ts||m.ts===window._lastMsgTs)return;
+    window._lastMsgTs=m.ts;
+    if(repUserId&&m.userId===repUserId) speakMessage(repUsername,m.text,repIsSubscriber);
+  }catch(e){}
+},250);
+window._lastMsgTs=0;
 
-  } catch(e) {}
-}, 300);
-
-// ══ Escuchar mensajes del chat desde el control (via localStorage) ══
-setInterval(() => {
-  try {
-    const raw = localStorage.getItem('rep_message');
-    if (!raw) return;
-    const m = JSON.parse(raw);
-    if (!m.ts || m.ts === window._lastMsgTs) return;
-    window._lastMsgTs = m.ts;
-    if (repUserId && m.userId === repUserId) {
-      speakMessage(repUsername, m.text);
-    }
-  } catch(e) {}
-}, 250);
-window._lastMsgTs = 0;
-
-// ══ Voz única por username (hash simple) ══
-function voiceFingerprint(username) {
-  // Genera un número consistente del username
-  let hash = 0;
-  for (let i = 0; i < username.length; i++) {
-    hash = ((hash << 5) - hash) + username.charCodeAt(i);
-    hash |= 0;
-  }
-  const n = Math.abs(hash);
-  // pitch: 0.75 a 1.25 (claro y entendible, no robótico)
-  const pitch = 0.75 + (n % 50) / 100;
-  // rate: 0.9 a 1.15 (natural)
-  const rate  = 0.9  + (n % 25) / 100;
-  return { pitch, rate };
+// ══ Voz única ══
+function voiceFingerprint(username,isSub){
+  let hash=0;
+  for(let i=0;i<username.length;i++){hash=((hash<<5)-hash)+username.charCodeAt(i);hash|=0;}
+  const n=Math.abs(hash);
+  const pitch=isSub?1.15+(n%20)/100:0.75+(n%50)/100;
+  const rate=isSub?1.0+(n%15)/100:0.9+(n%25)/100;
+  return{pitch,rate};
 }
 
-// ══ TTS ══
-function speakMessage(username, text) {
-  if (!text || text.length > 200) return;
+function speakMessage(username,text,isSub){
+  if(!text||text.length>200)return;
   window.speechSynthesis.cancel();
-
-  // Mostrar mensaje
-  document.getElementById('ttsMsgUser').textContent = username;
-  document.getElementById('ttsMsgText').textContent = text;
-  document.getElementById('ttsMsg').classList.add('show');
-  if (msgTimeout) clearTimeout(msgTimeout);
-  msgTimeout = setTimeout(() => document.getElementById('ttsMsg').classList.remove('show'), 5000);
-
-  // Voz con fingerprint del usuario
-  const { pitch, rate } = voiceFingerprint(username);
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang  = 'es-MX';
-  utt.pitch = pitch;
-  utt.rate  = rate;
-
-  // Voz española
-  const voices  = window.speechSynthesis.getVoices();
-  const esVoice = voices.find(v => v.lang.startsWith('es')) || voices[0];
-  if (esVoice) utt.voice = esVoice;
-
+  document.getElementById('ttsMsgUser').textContent=(isSub?'⭐ ':'')+username;
+  document.getElementById('ttsMsgText').textContent=text;
+  const ttsEl=document.getElementById('ttsMsg');
+  ttsEl.classList.toggle('sub-rep',!!isSub);
+  ttsEl.classList.add('show');
+  if(msgTimeout)clearTimeout(msgTimeout);
+  msgTimeout=setTimeout(()=>ttsEl.classList.remove('show'),5000);
+  const{pitch,rate}=voiceFingerprint(username,isSub);
+  const utt=new SpeechSynthesisUtterance(text);
+  utt.lang='es-MX';utt.pitch=pitch;utt.rate=rate;
+  const voices=window.speechSynthesis.getVoices();
+  const esVoice=voices.find(v=>v.lang.startsWith('es'))||voices[0];
+  if(esVoice)utt.voice=esVoice;
   window.speechSynthesis.speak(utt);
 }
 
-// ══ Animación de selección ══
-function startAnimation(candidates, chosen) {
-  const bg    = document.getElementById('bg');
-  const stage = document.getElementById('stage');
-  const chosen_el = document.getElementById('chosenName');
-  const badge = document.getElementById('sBadge');
-
-  chosen_el.classList.remove('show');
-  chosen_el.style.display = 'none';
-  badge.classList.remove('show');
-  document.getElementById('shuffleZone').style.display = 'flex';
-
-  bg.classList.add('show');
+// ══ ANIMACIÓN NORMAL ══
+function startAnimation(candidates,chosen){
+  const pool=candidates.length>0?candidates:['???'];
+  document.getElementById('bg').className='show';
+  const stage=document.getElementById('stage');
+  document.getElementById('chosenName').classList.remove('show');
+  document.getElementById('chosenName').style.display='none';
+  document.getElementById('sBadge').classList.remove('show');
+  document.getElementById('shuffleZone').style.display='flex';
   stage.classList.add('show');
-  startParticles();
-
-  // Shuffle rápido
-  let count = 0;
-  const total = 40;
-  const pool = candidates.length > 0 ? candidates : ['???'];
-
-  const shuffleInterval = setInterval(() => {
+  startParticles(false);
+  let count=0;
+  const si=setInterval(()=>{
     count++;
-    const speed = count < 25 ? 80 : count < 35 ? 150 : 250;
-
-    const names = [
-      pool[Math.floor(Math.random() * pool.length)],
-      pool[Math.floor(Math.random() * pool.length)],
-      pool[Math.floor(Math.random() * pool.length)],
-    ];
-    document.getElementById('sh0').textContent = names[0];
-    document.getElementById('sh1').textContent = names[1];
-    document.getElementById('sh2').textContent = names[2];
-
-    if (count >= total) {
-      clearInterval(shuffleInterval);
-      revealChosen(chosen || pool[Math.floor(Math.random() * pool.length)]);
-    }
-  }, 80);
+    ['sh0','sh1','sh2'].forEach(id=>{
+      document.getElementById(id).textContent=pool[Math.floor(Math.random()*pool.length)];
+    });
+    if(count>=40){clearInterval(si);revealChosen(chosen||pool[0]);}
+  },80);
 }
 
-function revealChosen(name) {
-  document.getElementById('shuffleZone').style.display = 'none';
-
-  const el = document.getElementById('chosenName');
-  el.textContent = name.toUpperCase();
-  el.style.display = 'block';
-  void el.offsetWidth;
-  el.classList.add('show');
-
-  setTimeout(() => {
-    document.getElementById('sBadge').classList.add('show');
-  }, 400);
-
-  // Ocultar stage después de 4s — DESPUÉS mostrar HUD
-  setTimeout(() => {
+function revealChosen(name){
+  document.getElementById('shuffleZone').style.display='none';
+  const el=document.getElementById('chosenName');
+  el.textContent=name.toUpperCase();el.style.display='block';
+  void el.offsetWidth;el.classList.add('show');
+  setTimeout(()=>document.getElementById('sBadge').classList.add('show'),400);
+  setTimeout(()=>{
     document.getElementById('bg').classList.remove('show');
     document.getElementById('stage').classList.remove('show');
     stopParticles();
-
-    // Ahora sí activar el rep y mostrar HUD
-    if (pendingRep) {
-      repUserId   = pendingRep.userId;
-      repUsername = pendingRep.username;
-      document.getElementById('hudName').textContent = repUsername;
-      document.getElementById('repHud').classList.add('show');
-      pendingRep = null;
-    }
-  }, 4000);
+    activateRep(false);
+  },4000);
 }
 
-function clearRep() {
-  repUserId = null; repUsername = null;
+// ══ JACKPOT MODE ══
+function startJackpot(candidates,chosen){
+  const pool=candidates.length>0?candidates:['???'];
+  document.getElementById('bg').className='jackpot show';
+  document.getElementById('jpReveal').classList.remove('show');
+  document.getElementById('jpSubBadge').classList.remove('show');
+  document.getElementById('jackpotStage').classList.add('show');
+  startParticles(true);
+  playJackpotSpin();
+
+  // Construir reels con nombres del pool
+  [0,1,2].forEach(i=>{
+    const inner=document.getElementById(`reel${i}inner`);
+    inner.innerHTML='';
+    // Rellenar con nombres aleatorios para scroll
+    const items=[...pool,...pool,...pool,...pool,chosen].sort(()=>Math.random()-.5);
+    items.forEach(name=>{
+      const div=document.createElement('div');
+      div.className='jp-reel-item';
+      div.textContent=name.substring(0,14).toUpperCase();
+      inner.appendChild(div);
+    });
+    // Posición inicial aleatoria
+    inner.style.transition='none';
+    inner.style.transform=`translateY(-${Math.floor(Math.random()*items.length)*90}px)`;
+  });
+
+  // Hacer girar cada reel y detenerlos uno por uno
+  spinReel(0, chosen, pool, ()=>{
+    setTimeout(()=>spinReel(1, chosen, pool, ()=>{
+      setTimeout(()=>spinReel(2, chosen, pool, ()=>{
+        // Los 3 detuvieron — reveal jackpot
+        setTimeout(()=>revealJackpot(chosen),500);
+      }),400);
+    }),400);
+  });
+}
+
+function spinReel(reelIdx, winner, pool, onStop){
+  const inner=document.getElementById(`reel${reelIdx}inner`);
+  const items=inner.querySelectorAll('.jp-reel-item');
+  const totalHeight=items.length*90;
+
+  // Animar scrolling rápido
+  let pos=0;
+  const duration=1800+reelIdx*600; // cada reel tarda más
+  const start=performance.now();
+
+  function animate(now){
+    const elapsed=now-start;
+    const progress=Math.min(elapsed/duration,1);
+    // Ease out
+    const ease=1-Math.pow(1-progress,3);
+    pos=(totalHeight*3*ease)%totalHeight;
+    inner.style.transition='none';
+    inner.style.transform=`translateY(-${pos}px)`;
+    if(progress<1){ requestAnimationFrame(animate); }
+    else {
+      // Detener en el winner
+      const winnerEl=Array.from(items).find(el=>el.textContent===winner.substring(0,14).toUpperCase());
+      if(winnerEl){
+        winnerEl.classList.add('winner');
+        const idx=Array.from(items).indexOf(winnerEl);
+        inner.style.transition='transform .4s cubic-bezier(.25,.46,.45,.94)';
+        inner.style.transform=`translateY(-${idx*90}px)`;
+      }
+      playReelStop(reelIdx);
+      setTimeout(onStop,500);
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+function revealJackpot(name){
+  // Flash dorado
+  const flash=document.getElementById('jpFlash');
+  flash.classList.add('show');
+  setTimeout(()=>{flash.classList.remove('show');
+    setTimeout(()=>{flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),100);},120);
+  },100);
+
+  document.getElementById('jackpotStage').classList.remove('show');
+
+  // Mostrar reveal
+  const reveal=document.getElementById('jpReveal');
+  document.getElementById('jpWinnerName').textContent=name.toUpperCase();
+  reveal.classList.add('show');
+  document.getElementById('bg').className='jackpot show';
+
+  playJackpotWin();
+
+  setTimeout(()=>document.getElementById('jpSubBadge').classList.add('show'),600);
+  startParticles(true); // monedas doradas
+
+  setTimeout(()=>{
+    reveal.classList.remove('show');
+    document.getElementById('bg').classList.remove('show');
+    document.getElementById('jackpotStage').classList.remove('show');
+    stopParticles();
+    activateRep(true);
+  },5000);
+}
+
+function activateRep(isSub){
+  if(!pendingRep)return;
+  repUserId=pendingRep.userId;
+  repUsername=pendingRep.username;
+  repIsSubscriber=isSub;
+  pendingRep=null;
+
+  const hud=document.getElementById('repHud');
+  const crown=document.getElementById('hudCrown');
+  const name=document.getElementById('hudName');
+
+  hud.className=isSub?'sub show':'normal show';
+  crown.style.display=isSub?'inline':'none';
+  name.className='hud-name'+(isSub?' sub':'');
+  name.textContent=repUsername;
+}
+
+function clearRep(){
+  repUserId=null;repUsername=null;repIsSubscriber=false;
   window.speechSynthesis.cancel();
   document.getElementById('repHud').classList.remove('show');
   document.getElementById('ttsMsg').classList.remove('show');
   document.getElementById('bg').classList.remove('show');
   document.getElementById('stage').classList.remove('show');
+  document.getElementById('jackpotStage').classList.remove('show');
+  document.getElementById('jpReveal').classList.remove('show');
   stopParticles();
 }
 
-// ══ Partículas neón ══
-function startParticles() {
-  const canvas = document.getElementById('particles');
-  canvas.width  = 1920; canvas.height = 1080;
-  const ctx = canvas.getContext('2d');
-  const colors = ['#FFD000','#FF8800','#FFEC00','#ffffff','#FFA500'];
+// ══ Partículas ══
+function startParticles(jackpot){
+  const canvas=document.getElementById('particles');
+  canvas.width=1920;canvas.height=1080;
+  const ctx=canvas.getContext('2d');
+  const colors=jackpot
+    ?['#FFD700','#FFC200','#FFEC00','#FF8C00','#ffffff','#FFD000','#FFA500']
+    :['#FFD000','#FF8800','#FFEC00','#ffffff','#FFA500'];
 
-  particles = Array.from({length:60}, () => ({
-    x: Math.random()*1920, y: Math.random()*1080,
-    vx:(Math.random()-.5)*1.5, vy:(Math.random()-.5)*1.5,
-    r: Math.random()*3+1,
-    color: colors[Math.floor(Math.random()*colors.length)],
-    opacity: Math.random()*.6+.3,
+  particles=Array.from({length:jackpot?120:60},()=>({
+    x:Math.random()*1920,
+    y:jackpot?-20:Math.random()*1080,
+    vx:(Math.random()-.5)*(jackpot?3:1.5),
+    vy:jackpot?Math.random()*4+2:(Math.random()-.5)*1.5,
+    r:jackpot?Math.random()*5+2:Math.random()*3+1,
+    color:colors[Math.floor(Math.random()*colors.length)],
+    opacity:Math.random()*.7+.3,
+    rot:Math.random()*Math.PI*2,
+    rotV:(Math.random()-.5)*.2,
+    w:jackpot?Math.random()*12+4:0,
   }));
 
-  function loop() {
+  function loop(){
     ctx.clearRect(0,0,1920,1080);
-    particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy;
-      if (p.x<0||p.x>1920) p.vx*=-1;
-      if (p.y<0||p.y>1080) p.vy*=-1;
-      ctx.beginPath();
-      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.opacity;
-      ctx.shadowColor = p.color;
-      ctx.shadowBlur = 10;
-      ctx.fill();
+    particles.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;p.rot+=p.rotV;
+      if(jackpot&&p.y>1100){p.y=-20;p.x=Math.random()*1920;}
+      else if(!jackpot){if(p.x<0||p.x>1920)p.vx*=-1;if(p.y<0||p.y>1080)p.vy*=-1;}
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+      ctx.globalAlpha=p.opacity;ctx.shadowColor=p.color;ctx.shadowBlur=jackpot?12:8;
+      ctx.fillStyle=p.color;
+      if(jackpot&&p.w>0){ctx.fillRect(-p.w/2,-p.r/2,p.w,p.r);}
+      else{ctx.beginPath();ctx.arc(0,0,p.r,0,Math.PI*2);ctx.fill();}
+      ctx.restore();
     });
-    pRAF = requestAnimationFrame(loop);
+    pRAF=requestAnimationFrame(loop);
   }
-  if (pRAF) cancelAnimationFrame(pRAF);
+  if(pRAF)cancelAnimationFrame(pRAF);
   loop();
 }
 
-function stopParticles() {
-  if (pRAF) { cancelAnimationFrame(pRAF); pRAF = null; }
-  const canvas = document.getElementById('particles');
-  canvas.getContext('2d').clearRect(0,0,1920,1080);
+function stopParticles(){
+  if(pRAF){cancelAnimationFrame(pRAF);pRAF=null;}
+  const c=document.getElementById('particles');
+  c.getContext('2d').clearRect(0,0,c.width,c.height);
 }
 
-// Cargar voces al iniciar
+// ══ Sonidos ══
+const AC=new (window.AudioContext||window.webkitAudioContext)();
+
+function playReelStop(idx){
+  AC.resume();
+  const freqs=[523,659,784];
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.connect(g);g.connect(AC.destination);
+  o.type='sine';o.frequency.value=freqs[idx];
+  g.gain.setValueAtTime(.3,AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+.15);
+  o.start();o.stop(AC.currentTime+.15);
+}
+
+function playJackpotSpin(){
+  AC.resume();
+  // Sonido de suspense — tono subiendo
+  [200,250,300,350,400].forEach((freq,i)=>{
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.connect(g);g.connect(AC.destination);
+    o.type='sine';o.frequency.value=freq;
+    const t=AC.currentTime+i*.18;
+    g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);
+    o.start(t);o.stop(t+.2);
+  });
+}
+
+function playJackpotWin(){
+  AC.resume();
+  const t=AC.currentTime;
+  // Fanfarria épica — acorde dorado
+  [[523,1],[659,.8],[784,.9],[1047,.7],[1319,.6]].forEach(([freq,vol],i)=>{
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.connect(g);g.connect(AC.destination);
+    o.type='sine';o.frequency.value=freq;
+    const st=t+i*.08;
+    g.gain.setValueAtTime(vol*.35,st);
+    g.gain.setValueAtTime(vol*.35,st+.3);
+    g.gain.exponentialRampToValueAtTime(.001,st+.8);
+    o.start(st);o.stop(st+.8);
+  });
+  // Sub-bass punch
+  const sub=AC.createOscillator(),subG=AC.createGain();
+  sub.connect(subG);subG.connect(AC.destination);
+  sub.type='sine';sub.frequency.setValueAtTime(80,t);
+  sub.frequency.exponentialRampToValueAtTime(40,t+.3);
+  subG.gain.setValueAtTime(.6,t);subG.gain.exponentialRampToValueAtTime(.001,t+.4);
+  sub.start(t);sub.stop(t+.4);
+  // Shimmer (campanas)
+  [1047,1319,1568,2093].forEach((freq,i)=>{
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.connect(g);g.connect(AC.destination);
+    o.type='sine';o.frequency.value=freq;
+    const st=t+.5+i*.12;
+    g.gain.setValueAtTime(.2,st);g.gain.exponentialRampToValueAtTime(.001,st+.4);
+    o.start(st);o.stop(st+.4);
+  });
+}
+
 window.speechSynthesis.getVoices();
-window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
 </script>
 </body>
 </html>
