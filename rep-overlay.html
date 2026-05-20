@@ -174,50 +174,69 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
   display:none;
   flex-direction:column;align-items:center;justify-content:center;
   text-align:center;
-  background:rgba(0,0,0,0.88);
+  background:rgba(0,0,0,0.92);
   opacity:0;
-  transition:opacity .5s ease;
+  transition:opacity .6s ease;
 }
 #jpReveal.show{
   display:flex;
   opacity:1;
+  animation:revealBgIn .6s ease forwards;
+}
+@keyframes revealBgIn{
+  from{background:rgba(0,0,0,0);}
+  to{background:rgba(0,0,0,0.92);}
 }
 
 .jp-jackpot-text{
-  font-size:140px;letter-spacing:10px;
-  background:linear-gradient(180deg,#FFD700 0%,#FFA500 50%,#FF8C00 100%);
+  font-size:130px;letter-spacing:12px;
+  background:linear-gradient(180deg,#FFEE00 0%,#FFD700 30%,#FFA500 70%,#FF6B00 100%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
   background-clip:text;
   text-shadow:none;
-  filter:drop-shadow(0 0 30px rgba(255,215,0,.8)) drop-shadow(0 0 60px rgba(255,150,0,.5));
-  animation:jpTextPulse 1s infinite alternate;
-  line-height:1;
+  filter:drop-shadow(0 0 40px rgba(255,215,0,.9)) drop-shadow(0 0 80px rgba(255,150,0,.6));
+  animation:jpTextIn .7s cubic-bezier(.34,1.56,.64,1) forwards, jpTextPulse 1.5s 0.7s infinite alternate;
+  opacity:0;line-height:1;
+}
+@keyframes jpTextIn{
+  0%{opacity:0;transform:scale(.5) translateY(-40px);letter-spacing:2px;}
+  70%{opacity:1;transform:scale(1.06) translateY(4px);}
+  100%{opacity:1;transform:scale(1) translateY(0);letter-spacing:12px;}
 }
 @keyframes jpTextPulse{
-  0%{filter:drop-shadow(0 0 20px rgba(255,215,0,.6)) drop-shadow(0 0 40px rgba(255,150,0,.3));transform:scale(1);}
-  50%{filter:drop-shadow(0 0 50px rgba(255,215,0,1)) drop-shadow(0 0 100px rgba(255,150,0,.8));transform:scale(1.05);}
-  100%{filter:drop-shadow(0 0 20px rgba(255,215,0,.6)) drop-shadow(0 0 40px rgba(255,150,0,.3));transform:scale(1);}
+  from{filter:drop-shadow(0 0 30px rgba(255,215,0,.7)) drop-shadow(0 0 60px rgba(255,150,0,.4));transform:scale(1);}
+  to{filter:drop-shadow(0 0 60px rgba(255,215,0,1)) drop-shadow(0 0 120px rgba(255,150,0,.7));transform:scale(1.04);}
 }
 
 .jp-winner-name{
-  font-size:110px;letter-spacing:8px;color:#fff;line-height:1;margin-top:8px;
-  text-shadow:0 0 40px rgba(255,255,255,.8),0 0 80px rgba(255,215,0,.6),0 0 120px rgba(255,215,0,.3);
-  animation:jpNameIn 1s cubic-bezier(.34,1.56,.64,1) .3s forwards;
+  font-size:110px;letter-spacing:8px;color:#fff;line-height:1;margin-top:16px;
+  text-shadow:
+    0 0 30px rgba(255,255,255,.9),
+    0 0 60px rgba(255,215,0,.7),
+    0 0 100px rgba(255,215,0,.4),
+    0 4px 20px rgba(0,0,0,.8);
+  animation:jpNameIn .9s cubic-bezier(.34,1.56,.64,1) .5s forwards, jpNamePulse 2s 1.4s infinite alternate;
   opacity:0;
 }
 @keyframes jpNameIn{
-  0%{opacity:0;transform:scale(.3) translateY(30px);}
-  60%{opacity:1;transform:scale(1.08) translateY(-5px);}
-  80%{transform:scale(.97);}
-  100%{opacity:1;transform:scale(1) translateY(0);}
+  0%{opacity:0;transform:scale(.2) translateY(60px);letter-spacing:0px;}
+  50%{opacity:1;transform:scale(1.12) translateY(-8px);}
+  75%{transform:scale(.95) translateY(2px);}
+  100%{opacity:1;transform:scale(1) translateY(0);letter-spacing:8px;}
+}
+@keyframes jpNamePulse{
+  from{text-shadow:0 0 30px rgba(255,255,255,.7),0 0 60px rgba(255,215,0,.5);}
+  to{text-shadow:0 0 50px rgba(255,255,255,1),0 0 100px rgba(255,215,0,.8),0 0 150px rgba(255,150,0,.4);}
 }
 
 .jp-sub-badge{
-  font-size:22px;letter-spacing:6px;color:rgba(255,215,0,.8);
-  margin-top:12px;opacity:0;transition:opacity .5s;
-  text-shadow:0 0 10px rgba(255,215,0,.5);
+  font-size:22px;letter-spacing:8px;color:rgba(255,215,0,.9);
+  margin-top:18px;opacity:0;
+  transition:opacity .6s ease, transform .6s cubic-bezier(.34,1.56,.64,1);
+  transform:translateY(20px);
+  text-shadow:0 0 16px rgba(255,215,0,.7),0 0 32px rgba(255,150,0,.4);
 }
-.jp-sub-badge.show{opacity:1;}
+.jp-sub-badge.show{opacity:1;transform:translateY(0);}
 
 /* Flash dorado para jackpot */
 #jpFlash{
@@ -419,7 +438,7 @@ function revealChosen(name){
     document.getElementById('stage').classList.remove('show');
     stopParticles();
     activateRep(false);
-  },4000);
+  },6000);
 }
 
 // ══ JACKPOT MODE ══
@@ -538,7 +557,7 @@ function revealJackpot(name){
   setTimeout(()=>document.getElementById('jpSubBadge').classList.add('show'),700);
   startParticles(true);
 
-  // Nombre visible 4 segundos
+  // Nombre visible 6 segundos
   setTimeout(()=>{
     reveal.classList.remove('show');
     document.getElementById('bg').className='';
