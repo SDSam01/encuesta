@@ -174,7 +174,13 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
   display:none;
   flex-direction:column;align-items:center;justify-content:center;
   text-align:center;
-  opacity:0;transform:scale(.85);
+  background:rgba(0,0,0,0.88);
+  opacity:0;
+  transition:opacity .5s ease;
+}
+#jpReveal.show{
+  display:flex;
+  opacity:1;
 }
 
 .jp-jackpot-text{
@@ -293,11 +299,13 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
     <div class="jp-reel" id="reel1"><div class="jp-reel-inner" id="reel1inner"></div><div class="jp-reel-line"></div></div>
     <div class="jp-reel" id="reel2"><div class="jp-reel-inner" id="reel2inner"></div><div class="jp-reel-line"></div></div>
   </div>
-  <div id="jpReveal">
-    <div class="jp-jackpot-text">🎰 JACKPOT 🎰</div>
-    <div class="jp-winner-name" id="jpWinnerName">USUARIO</div>
-    <div class="jp-sub-badge" id="jpSubBadge">⭐ SUSCRIPTOR DEL STREAM ⭐</div>
-  </div>
+</div>
+
+<!-- JACKPOT REVEAL — body level, position fixed -->
+<div id="jpReveal">
+  <div class="jp-jackpot-text">👑 MIEMBRO VIP 👑</div>
+  <div class="jp-winner-name" id="jpWinnerName">USUARIO</div>
+  <div class="jp-sub-badge" id="jpSubBadge">⭐ REPRESENTANTE OFICIAL ⭐</div>
 </div>
 
 <!-- HUD activo -->
@@ -418,7 +426,7 @@ function revealChosen(name){
 function startJackpot(candidates,chosen){
   const pool=candidates.length>0?candidates:['???'];
   document.getElementById('bg').className='jackpot show';
-  const revealEl=document.getElementById('jpReveal'); revealEl.style.display='none'; revealEl.style.opacity='0';
+  document.getElementById('jpReveal').classList.remove('show');
   document.getElementById('jpSubBadge').classList.remove('show');
   document.getElementById('jackpotStage').classList.add('show');
   startParticles(true);
@@ -517,29 +525,26 @@ function revealJackpot(name){
   document.getElementById('jackpotStage').classList.remove('show');
   document.getElementById('bg').className='jackpot show';
 
-  // Mostrar reveal (está en el body directamente, no dentro de jackpotStage)
+  // Mostrar reveal — position:fixed independiente del jackpotStage
   const reveal=document.getElementById('jpReveal');
   document.getElementById('jpWinnerName').textContent=name.toUpperCase();
-  reveal.style.opacity='0';
-  reveal.style.display='flex';
+  document.getElementById('jpSubBadge').classList.remove('show');
+  reveal.classList.remove('show');
   void reveal.offsetWidth;
-  reveal.style.transition='opacity .5s, transform .7s cubic-bezier(.34,1.56,.64,1)';
-  reveal.style.opacity='1';
-  reveal.style.transform='scale(1)';
+  reveal.classList.add('show');
 
   playJackpotWin();
 
   setTimeout(()=>document.getElementById('jpSubBadge').classList.add('show'),700);
   startParticles(true);
 
-  // Nombre visible 10 segundos
+  // Nombre visible 4 segundos
   setTimeout(()=>{
-    reveal.style.opacity='0';
-    setTimeout(()=>{ reveal.style.display='none'; },500);
+    reveal.classList.remove('show');
     document.getElementById('bg').className='';
     stopParticles();
-    activateRep(true);
-  },10000);
+    setTimeout(()=>activateRep(true), 500);
+  },4000);
 }
 
 function activateRep(isSub){
@@ -567,7 +572,7 @@ function clearRep(){
   document.getElementById('bg').className = '';
   document.getElementById('stage').classList.remove('show');
   document.getElementById('jackpotStage').classList.remove('show');
-  const revealEl=document.getElementById('jpReveal'); revealEl.style.display='none'; revealEl.style.opacity='0';
+  document.getElementById('jpReveal').classList.remove('show');
   stopParticles();
 }
 
