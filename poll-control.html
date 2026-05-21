@@ -236,34 +236,37 @@ function startPoll(){
 
 function startReadingMessages(){
   if(state.msgInterval)clearInterval(state.msgInterval);
-  let lastMsgTs=0;
+  let lastProcessedTs=0;
 
   state.msgInterval=setInterval(()=>{
-    // Si la encuesta se detuvo
     if(!state.active){clearInterval(state.msgInterval);return;}
-    // Si el timer expiró
     if(state.timerEnd>0&&Date.now()>state.timerEnd)return;
 
-    // Leer último mensaje del chat-reader
     try{
-      const raw=localStorage.getItem('chat_messages');
+      // Leer TODA la cola de mensajes
+      const raw=localStorage.getItem('chat_queue');
       if(!raw)return;
-      const msg=JSON.parse(raw);
-      if(!msg.ts||msg.ts===lastMsgTs)return;
-      lastMsgTs=msg.ts;
+      const queue=JSON.parse(raw);
+      if(!queue.length)return;
 
-      const txt=(msg.text||'').trim().toLowerCase();
-      const uid=msg.userId;
-      if(!uid||state.voters[uid])return;
-      if(txt==='a'||txt==='!a'){state.voters[uid]='A';state.votes.A++;}
-      else if(txt==='b'||txt==='!b'){state.voters[uid]='B';state.votes.B++;}
-      else return;
+      let updated=false;
+      for(const msg of queue){
+        if(msg.ts<=lastProcessedTs) continue;
+        lastProcessedTs=Math.max(lastProcessedTs,msg.ts);
+        const txt=(msg.text||'').trim().toLowerCase();
+        const uid=msg.userId;
+        if(!uid||state.voters[uid]) continue;
+        if(txt==='a'||txt==='!a'){state.voters[uid]='A';state.votes.A++;updated=true;}
+        else if(txt==='b'||txt==='!b'){state.voters[uid]='B';state.votes.B++;updated=true;}
+      }
 
-      $('vcA').textContent=state.votes.A;
-      $('vcB').textContent=state.votes.B;
-      save();
+      if(updated){
+        $('vcA').textContent=state.votes.A;
+        $('vcB').textContent=state.votes.B;
+        save();
+      }
     }catch(e){}
-  },150);
+  },200);
 }
 
 function startDemo(){
