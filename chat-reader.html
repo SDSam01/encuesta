@@ -115,9 +115,15 @@ function pushMessage(userId, username, text, src, isMember) {
   totalMessages++;
   document.getElementById('statMessages').textContent = totalMessages;
 
-  // Guardar mensaje para que poll y rep lo lean
+  // Guardar en cola de mensajes para que poll los lea todos
   const msg = { userId, username, text, src, isMember: !!isMember, ts: Date.now() };
   localStorage.setItem(LS_CHAT, JSON.stringify(msg));
+  // Cola para votos — guarda últimos 50 mensajes
+  let queue = [];
+  try{ queue = JSON.parse(localStorage.getItem('chat_queue')||'[]'); }catch(e){}
+  queue.push(msg);
+  if(queue.length > 50) queue = queue.slice(-50);
+  localStorage.setItem('chat_queue', JSON.stringify(queue));
 
   // Actualizar usuarios activos
   let users = {};
