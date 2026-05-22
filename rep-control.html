@@ -46,6 +46,8 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 .btn-nuevo:hover{background:rgba(100,200,255,.18);}
 .btn-silenciar{background:rgba(255,100,100,.08);border-color:rgba(255,100,100,.2);color:#FF8888;}
 .btn-silenciar:hover{background:rgba(255,100,100,.18);}
+.btn-reset-all{width:100%;padding:9px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,100,100,.25);background:rgba(255,100,100,.07);color:rgba(255,100,100,.6);transition:.15s;font-family:'Inter',sans-serif;margin-bottom:6px;}
+.btn-reset-all:hover{color:#ff8888;background:rgba(255,100,100,.15);}
 .btn-limpiar{width:100%;padding:9px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.35);transition:.15s;font-family:'Inter',sans-serif;}
 .btn-limpiar:hover{color:#fff;background:rgba(255,255,255,.1);}
 .btn-siren{width:100%;padding:12px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(255,50,50,.5);background:rgba(255,30,30,.15);color:#FF5555;transition:.15s;font-family:'Inter',sans-serif;margin-bottom:6px;letter-spacing:.5px;}
@@ -113,6 +115,7 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
   <button class="btn-sm btn-nuevo" onclick="buscarRep()">🔄 Nuevo rep</button>
   <button class="btn-sm btn-silenciar" onclick="silenciarTTS()">🔇 Silenciar TTS</button>
 </div>
+<button class="btn-reset-all" onclick="resetTodo()">🔄 Reset completo — limpiar todo</button>
 <button class="btn-limpiar" onclick="limpiarRep()">✕ Quitar representante</button>
 <button class="btn-demo" onclick="modoDemo()">🧪 Modo prueba (sin stream)</button>
 <div class="tts-test-row">
@@ -155,18 +158,23 @@ setInterval(()=>{
     const raw = localStorage.getItem('chat_users');
     if(!raw) return;
     recentUsers = JSON.parse(raw);
+  }catch(e){}
+}, 500);
 
-    // Escuchar mensajes del rep activo
+// ══ Escuchar mensajes del rep — 100ms para tiempo real ══
+setInterval(()=>{
+  try{
+    if(!currentRep) return; // Solo cuando hay rep activo
     const rawMsg = localStorage.getItem('chat_messages');
     if(!rawMsg) return;
     const msg = JSON.parse(rawMsg);
     if(!msg.ts||msg.ts===window._lastRepMsgTs) return;
     window._lastRepMsgTs = msg.ts;
-    if(currentRep && msg.userId === currentRep.userId){
+    if(msg.userId === currentRep.userId){
       relayMessage(msg.userId, msg.username, msg.text);
     }
   }catch(e){}
-}, 200);
+}, 100);
 
 // ══ Actualizar candidatos ══
 setInterval(()=>{
