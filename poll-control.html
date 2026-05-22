@@ -236,23 +236,28 @@ function startPoll(){
 
 function startReadingMessages(){
   if(state.msgInterval)clearInterval(state.msgInterval);
-  let lastProcessedTs=0;
+  let lastTs = Date.now(); // solo procesar mensajes DESPUÉS de iniciar
 
   state.msgInterval=setInterval(()=>{
     if(!state.active){clearInterval(state.msgInterval);return;}
     if(state.timerEnd>0&&Date.now()>state.timerEnd)return;
 
     try{
-      // Leer TODA la cola de mensajes
+      // Leer cola
       const raw=localStorage.getItem('chat_queue');
       if(!raw)return;
       const queue=JSON.parse(raw);
       if(!queue.length)return;
 
+      // Procesar solo mensajes nuevos
+      const newMsgs = queue.filter(m=>m.ts>lastTs);
+      if(!newMsgs.length)return;
+
+      // Actualizar timestamp al más reciente
+      lastTs = Math.max(...newMsgs.map(m=>m.ts));
+
       let updated=false;
-      for(const msg of queue){
-        if(msg.ts<=lastProcessedTs) continue;
-        lastProcessedTs=Math.max(lastProcessedTs,msg.ts);
+      for(const msg of newMsgs){
         const txt=(msg.text||'').trim().toLowerCase();
         const uid=msg.userId;
         if(!uid||state.voters[uid]) continue;
@@ -264,9 +269,10 @@ function startReadingMessages(){
         $('vcA').textContent=state.votes.A;
         $('vcB').textContent=state.votes.B;
         save();
+        setStatus('🗳️ '+( state.votes.A+state.votes.B)+' votos','ok');
       }
     }catch(e){}
-  },200);
+  },100); // 100ms — más rápido
 }
 
 function startDemo(){
