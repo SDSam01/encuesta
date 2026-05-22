@@ -54,6 +54,11 @@ input:focus{border-color:rgba(255,185,0,.4);}
   </div>
   <button class="btn-connect" id="btnConnect" onclick="connect()">▶ Conectar chats</button>
 <button class="btn-reconnect" id="btnReconnect" onclick="reconnect()">↺ Reconectar (sin afectar widgets)</button>
+<div style="display:flex;gap:6px;margin-top:6px;">
+  <button onclick="setDemand(1)" style="flex:1;padding:7px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(74,222,128,.3);background:rgba(74,222,128,.08);color:#4ade80;font-family:'Inter',sans-serif;">▶ Forzar activo</button>
+  <button onclick="setDemand(0)" style="flex:1;padding:7px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.4);font-family:'Inter',sans-serif;">⏸ Pausar</button>
+</div>
+<button class="btn-reconnect" id="btnReconnect" onclick="reconnect()">↺ Reconectar (sin afectar widgets)</button>
 </div>
 
 <div class="section">
@@ -94,6 +99,21 @@ const getKey = () => API_KEYS[keyIdx];
 
 // ══ Stats ══
 let totalMessages = 0, ytChatId = null, ytNextToken = '';
+let polling = false; // paused by default until needed
+let pollTimeout = null;
+
+// ══ Monitorear demanda de los widgets ══
+setInterval(()=>{
+  const demand = parseInt(localStorage.getItem('chat_demand') || '0');
+  const wasPolling = polling;
+  polling = demand > 0 && !!ytChatId;
+  if(polling && !wasPolling){
+    setStatus('⚡ Polling activo — máxima velocidad', 'ok');
+    pollYouTube();
+  } else if(!polling && wasPolling){
+    setStatus('⏸️ En pausa — esperando actividad', 'loading');
+  }
+}, 500);
 
 // ══ localStorage keys ══
 const LS_CHAT    = 'chat_messages';  // últimos mensajes para poll y rep
@@ -186,6 +206,7 @@ async function connect() {
 // ══ YouTube polling — SOLO aquí, nadie más llama a la API ══
 async function pollYouTube() {
   if (!ytChatId) return;
+  if (!polling) return; // pausado
   try {
     const url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${ytChatId}&part=snippet,authorDetails&maxResults=200&key=${getKey()}${ytNextToken ? '&pageToken='+ytNextToken : ''}`;
     const res  = await fetch(url);
@@ -223,7 +244,7 @@ async function pollYouTube() {
       pushMessage(uid, name, text, 'yt', isMember);
     }
 
-    const interval = Math.max(3000, data.pollingIntervalMillis || 5000);
+    const interval = polling ? 3000 : 10000; // 3s activo, 10s pausado
     window._pollTimeout = setTimeout(pollYouTube, interval);
 
   } catch(e) {
@@ -252,6 +273,11 @@ function connectKick() {
   } catch(e) {
     setStatus('⚠️ Kick: ' + e.message, 'err');
   }
+}
+
+function setDemand(val){
+  localStorage.setItem('chat_demand', val);
+  setStatus(val ? '⚡ Activado manualmente' : '⏸️ Pausado manualmente', val ? 'ok' : '');
 }
 
 function reconnect() {
