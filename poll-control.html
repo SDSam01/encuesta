@@ -238,6 +238,9 @@ function startReadingMessages(){
   if(state.msgInterval)clearInterval(state.msgInterval);
   let lastTs = Date.now(); // solo procesar mensajes DESPUÉS de iniciar
 
+  // Pequeño delay para que el overlay aparezca primero
+  setTimeout(()=>{ lastTs = Date.now(); }, 800);
+
   state.msgInterval=setInterval(()=>{
     if(!state.active){clearInterval(state.msgInterval);return;}
     if(state.timerEnd>0&&Date.now()>state.timerEnd)return;
