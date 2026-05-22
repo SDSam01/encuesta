@@ -228,6 +228,7 @@ function startPoll(){
   setLive(true);
   startTimer();
   save();
+  localStorage.setItem('chat_demand', '1'); // activar polling
   setStatus('🟢 Encuesta activa — leyendo del Chat Reader','ok');
 
   // Leer mensajes del chat-reader via localStorage
@@ -300,6 +301,7 @@ function stopPoll(){
   if(state.msgInterval)clearInterval(state.msgInterval);
   state.active=false;state.timerEnd=0;
   localStorage.setItem(LS,JSON.stringify({active:false}));
+  localStorage.setItem('chat_demand', '0'); // pausar polling
   setLive(false);$('startBtn').disabled=false;
   setStatus('Encuesta detenida','');
 }
