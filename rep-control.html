@@ -143,7 +143,7 @@ setInterval(()=>{
   const el = document.getElementById('readerStatus');
   if(cs.ytConnected){
     el.className='reader-status reader-ok';
-    el.textContent='🟢 Chat Reader conectado — key '+(cs.keyIdx+1||1)+'/6';
+    el.textContent='🟢 Chat Reader activo — key '+(cs.keyIdx+1||1)+'/6';
     document.getElementById('dotYT').classList.add('on');
     if(cs.kickConnected) document.getElementById('dotKick').classList.add('on');
   } else {
