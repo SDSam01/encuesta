@@ -199,6 +199,7 @@ async function pollYouTube() {
         localStorage.setItem('chat_keyIdx', keyIdx);
         document.getElementById('statKey').textContent = keyIdx + 1;
         setStatus(`⚠️ Key ${prevIdx+1} agotada → rotando a key ${keyIdx+1}/6`, 'loading');
+        saveStatus(true, true); // actualizar para que los panels lean key correcta
         // Reintentar inmediatamente con nueva key
         window._pollTimeout = setTimeout(pollYouTube, 500);
       } else {
@@ -210,6 +211,7 @@ async function pollYouTube() {
     localStorage.setItem('chat_keyIdx', keyIdx);
     document.getElementById('statKey').textContent = keyIdx + 1;
     setStatus(`🟢 YouTube activo — key ${keyIdx+1}/6`, 'ok');
+    saveStatus(true, !!document.getElementById('dotKick').classList.contains('on'));
     ytNextToken = data.nextPageToken || ytNextToken;
 
     for (const item of (data.items || [])) {
