@@ -93,8 +93,9 @@ const API_KEYS = [
   'AIzaSyAivMGIzQtJozYnrdRpfOMZaAtcAQP0BaE'
 ];
 const KICK_ROOM_ID = '6043540';
-// Cargar keyIdx guardado para sobrevivir recargas
-let keyIdx = parseInt(localStorage.getItem('chat_keyIdx') || '0') % API_KEYS.length;
+// Siempre empezar desde key 0 al cargar
+localStorage.removeItem('chat_keyIdx');
+let keyIdx = 0;
 const getKey = () => API_KEYS[keyIdx];
 
 // ══ Stats ══
