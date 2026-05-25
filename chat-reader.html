@@ -57,7 +57,6 @@ input:focus{border-color:rgba(255,185,0,.4);}
 .btn-pause:hover{background:rgba(255,255,255,.08);}
 .btn-force{border:1px solid rgba(74,222,128,.3);background:rgba(74,222,128,.08);color:#4ade80;}
 .btn-force:hover{background:rgba(74,222,128,.15);}
-/* Big status indicator */
 #bigStatus{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;
   padding:8px 12px;border-radius:8px;text-align:center;margin-bottom:8px;
   display:none;}
@@ -116,18 +115,21 @@ const API_KEYS = [
 ];
 const KICK_ROOM_ID = '6043540';
 
+// ══ localStorage keys ══
+const LS_CHAT   = 'chat_messages';
+const LS_USERS  = 'chat_users';
+const LS_STATUS = 'chat_status';
+const LS_QUEUE  = 'chat_queue';
+const LS_CHATID = 'yt_chat_id'; // ← NUEVO: cache del liveChatId
+
 let keyIdx = 0;
-let ytChatId = null, ytNextToken = '';
+let ytChatId = null;
+let ytNextToken = '';
 let totalMsg = 0;
 let connected = false;
 let pollTimer = null;
 let reconnectTimer = null;
 let lastPollSuccess = 0;
-
-const LS_CHAT   = 'chat_messages';
-const LS_USERS  = 'chat_users';
-const LS_STATUS = 'chat_status';
-const LS_QUEUE  = 'chat_queue';
 
 // ══ Guardar mensaje ══
 function pushMessage(userId, username, text, src, isMember) {
@@ -174,36 +176,72 @@ function saveStatus(ytOn) {
   }));
 }
 
-// ══ Conectar ══
+// ══════════════════════════════════════════════════════
+//  findChatId — ÚNICA función que llama a search (100u)
+//  Solo se ejecuta cuando no hay chatId cacheado,
+//  o cuando el polling falla con liveChatNotFound.
+//  Auto-rota keys si encuentra 403, sin requerir click manual.
+// ══════════════════════════════════════════════════════
+async function findChatId(channelId) {
+  let attempts = 0;
+  while(attempts < API_KEYS.length) {
+    setStatus(`🔍 Buscando stream... (key ${keyIdx+1}/${API_KEYS.length})`, 'loading');
+    try {
+      const sRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${API_KEYS[keyIdx]}`
+      );
+      const sData = await sRes.json();
+
+      if(sData.error) {
+        if(sData.error.code === 403 || sData.error.code === 429) {
+          // Key agotada — rotar y reintentar automáticamente
+          rotateKey();
+          attempts++;
+          continue;
+        }
+        throw new Error(sData.error.message);
+      }
+
+      if(!sData.items?.length) throw new Error('No hay stream en vivo activo');
+
+      const videoId = sData.items[0].id.videoId;
+      const vRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${API_KEYS[keyIdx]}`
+      );
+      const vData = await vRes.json();
+      const chatId = vData?.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
+      if(!chatId) throw new Error('No se pudo obtener el chat ID');
+
+      // Guardar en caché para no repetir la búsqueda
+      localStorage.setItem(LS_CHATID, chatId);
+      return chatId;
+
+    } catch(e) {
+      if(attempts >= API_KEYS.length - 1) throw e;
+      attempts++;
+    }
+  }
+  throw new Error('Todas las keys agotadas al buscar stream');
+}
+
+// ══ connect — usa caché si existe, solo llama findChatId si es necesario ══
 async function connect() {
   const channelId = document.getElementById('channelId').value.trim();
   if(!channelId) { setStatus('⚠️ Necesitas el Channel ID', 'err'); return; }
 
   document.getElementById('btnConnect').disabled = true;
-  setStatus('🔍 Buscando stream en vivo...', 'loading');
   setBigStatus('', '');
 
   try {
-    const sRes = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${API_KEYS[keyIdx]}`);
-    const sData = await sRes.json();
-
-    if(sData.error) {
-      if(sData.error.code === 403) {
-        rotateKey();
-        document.getElementById('btnConnect').disabled = false;
-        setStatus('⚠️ Key agotada, intenta de nuevo', 'err');
-        return;
-      }
-      throw new Error(sData.error.message);
+    // ── Intentar usar el chatId cacheado primero ──
+    const cachedId = localStorage.getItem(LS_CHATID);
+    if(cachedId) {
+      ytChatId = cachedId;
+      setStatus(`⚡ Usando chat ID en caché — key ${keyIdx+1}/${API_KEYS.length}`, 'loading');
+    } else {
+      // Primera vez o caché borrado: buscar stream (cuesta 100u)
+      ytChatId = await findChatId(channelId);
     }
-
-    if(!sData.items?.length) throw new Error('No hay stream en vivo activo');
-
-    const videoId = sData.items[0].id.videoId;
-    const vRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${API_KEYS[keyIdx]}`);
-    const vData = await vRes.json();
-    ytChatId = vData?.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
-    if(!ytChatId) throw new Error('No se pudo obtener el chat');
 
     localStorage.setItem('yt_channel_id', channelId);
     document.getElementById('savedCh').style.display = 'block';
@@ -211,16 +249,11 @@ async function connect() {
     connected = true;
     lastPollSuccess = Date.now();
     setBigStatus('🟢 CONECTADO — EN VIVO', 'ok');
-    document.getElementById('powerBtn').className = 'power-btn on';
-    document.getElementById('powerText').textContent = 'CONECTADO — Toca para desconectar';
-    setStatus(`🟢 Conectado — key ${keyIdx+1}/${API_KEYS.length}`, 'ok');
+    setConnectedUI();
     saveStatus(true);
 
-    // Iniciar polling y Kick
     startPolling();
     connectKick();
-
-    // Auto-reconexión watchdog
     startWatchdog();
 
   } catch(e) {
@@ -230,7 +263,7 @@ async function connect() {
   }
 }
 
-// ══ YouTube polling — siempre activo, 3s ══
+// ══ Polling — solo liveChat/messages (5u por llamada) ══
 function startPolling() {
   if(pollTimer) clearTimeout(pollTimer);
   pollYouTube();
@@ -240,38 +273,58 @@ async function pollYouTube() {
   if(!ytChatId) return;
   try {
     const url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${ytChatId}&part=snippet,authorDetails&maxResults=200&key=${API_KEYS[keyIdx]}${ytNextToken ? '&pageToken='+ytNextToken : ''}`;
-    const res = await fetch(url);
+    const res  = await fetch(url);
     const data = await res.json();
 
     if(data.error) {
       const reason = data.error.errors?.[0]?.reason || '';
+
       if(reason === 'quotaExceeded' || data.error.code === 403 || data.error.code === 429) {
+        // Key agotada durante polling — rotar y reintentar en 2s
         rotateKey();
+        pollTimer = setTimeout(pollYouTube, 2000);
+        return;
       }
+
+      if(reason === 'liveChatNotFound' || reason === 'liveChatEnded') {
+        // El stream terminó o el chat ID ya no existe — limpiar caché y detener
+        localStorage.removeItem(LS_CHATID);
+        ytChatId = null;
+        connected = false;
+        setConnectedUI(false);
+        setBigStatus('⏹ Stream terminado', 'err');
+        setStatus('⏹ Stream terminado — chat ID inválido', 'err');
+        return; // No reintentar
+      }
+
+      // Otro error transitorio — reintentar en 5s
       pollTimer = setTimeout(pollYouTube, 5000);
       return;
     }
 
-    // Éxito
+    // ── Éxito ──
     lastPollSuccess = Date.now();
     ytNextToken = data.nextPageToken || ytNextToken;
     document.getElementById('statKey').textContent = keyIdx + 1;
     setStatus(`🟢 YouTube activo — key ${keyIdx+1}/${API_KEYS.length}`, 'ok');
     setBigStatus('🟢 CONECTADO — EN VIVO', 'ok');
-    document.getElementById('powerBtn').className = 'power-btn on';
-    document.getElementById('powerText').textContent = 'CONECTADO — Toca para desconectar';
+    setConnectedUI(true);
     saveStatus(true);
 
     for(const item of (data.items || [])) {
-      const uid  = item.authorDetails?.channelId;
-      const name = item.authorDetails?.displayName || 'Usuario';
-      const text = item.snippet?.displayMessage || '';
-      const isMember = !!(item.authorDetails?.isChatSponsor || item.authorDetails?.isChatModerator || item.authorDetails?.isChatOwner);
+      const uid      = item.authorDetails?.channelId;
+      const name     = item.authorDetails?.displayName || 'Usuario';
+      const text     = item.snippet?.displayMessage || '';
+      const isMember = !!(
+        item.authorDetails?.isChatSponsor ||
+        item.authorDetails?.isChatModerator ||
+        item.authorDetails?.isChatOwner
+      );
       if(!uid) continue;
       pushMessage(uid, name, text, 'yt', isMember);
     }
 
-    // Siguiente poll en 3s — tiempo real
+    // Respetar el intervalo que pide YouTube (mínimo 3s)
     const interval = Math.max(3000, data.pollingIntervalMillis || 3000);
     pollTimer = setTimeout(pollYouTube, interval);
 
@@ -283,51 +336,80 @@ async function pollYouTube() {
 function rotateKey() {
   const prev = keyIdx;
   keyIdx = (keyIdx + 1) % API_KEYS.length;
-  localStorage.setItem('chat_keyIdx', keyIdx);
   document.getElementById('statKey').textContent = keyIdx + 1;
-  setStatus(`⚠️ Key ${prev+1} agotada → key ${keyIdx+1}`, 'loading');
+  setStatus(`⚠️ Key ${prev+1} agotada → rotando a key ${keyIdx+1}`, 'loading');
   saveStatus(connected);
 }
 
-// ══ Watchdog — reconecta si no hay actividad en 60s ══
+// ══ Watchdog — reconexión LIGERA (sin llamar search) ══
 function startWatchdog() {
   if(reconnectTimer) clearInterval(reconnectTimer);
-  reconnectTimer = setInterval(()=>{
+  reconnectTimer = setInterval(() => {
     if(!connected) return;
     const elapsed = Date.now() - lastPollSuccess;
     if(elapsed > 60000) {
       setBigStatus('⚠️ Sin actividad — reconectando...', 'err');
       setStatus('⚠️ Reconectando automáticamente...', 'loading');
-      forceReconnect();
+      // Reconexión ligera: no llama a search, solo reinicia el polling
+      lightReconnect();
     }
   }, 15000);
 }
 
-function togglePower(){
-  if(connected){
-    // Desconectar
+// lightReconnect — solo reinicia el poll con el chatId existente (0 unidades extra)
+function lightReconnect() {
+  if(pollTimer) clearTimeout(pollTimer);
+  ytNextToken = '';
+  lastPollSuccess = Date.now(); // resetear para evitar loop de watchdog
+  if(ytChatId) {
+    setStatus('🔄 Reiniciando polling...', 'loading');
+    pollYouTube();
+  } else {
+    // No hay chatId, necesitamos búsqueda completa
+    forceReconnect();
+  }
+}
+
+// forceReconnect — botón manual ↺, borra caché y busca stream de nuevo
+function forceReconnect() {
+  if(pollTimer) clearTimeout(pollTimer);
+  ytNextToken = '';
+  ytChatId = null;
+  localStorage.removeItem(LS_CHATID); // forzar nueva búsqueda
+  document.getElementById('btnConnect').disabled = false;
+  connect();
+}
+
+function togglePower() {
+  if(connected) {
     connected = false;
     ytChatId = null;
     if(pollTimer) clearTimeout(pollTimer);
     if(reconnectTimer) clearInterval(reconnectTimer);
     document.getElementById('dotYT').classList.remove('on');
     document.getElementById('dotKick').classList.remove('on');
-    document.getElementById('powerBtn').className = 'power-btn off';
-    document.getElementById('powerText').textContent = 'DESCONECTADO — Toca para conectar';
+    setConnectedUI(false);
     setBigStatus('', '');
     setStatus('Desconectado', '');
-    localStorage.setItem(LS_STATUS, JSON.stringify({ytConnected:false,kickConnected:false,keyIdx,ts:Date.now()}));
+    localStorage.setItem(LS_STATUS, JSON.stringify({
+      ytConnected: false, kickConnected: false, keyIdx, ts: Date.now()
+    }));
+    // NO borramos LS_CHATID al desconectar — lo reutilizamos al reconectar
   } else {
-    // Conectar
     connect();
   }
 }
 
-function forceReconnect() {
-  if(pollTimer) clearTimeout(pollTimer);
-  ytNextToken = '';
-  document.getElementById('btnConnect').disabled = false;
-  connect();
+function setConnectedUI(on = true) {
+  const btn  = document.getElementById('powerBtn');
+  const text = document.getElementById('powerText');
+  if(on) {
+    btn.className  = 'power-btn on';
+    text.textContent = 'CONECTADO — Toca para desconectar';
+  } else {
+    btn.className  = 'power-btn off';
+    text.textContent = 'DESCONECTADO — Toca para conectar';
+  }
 }
 
 // ══ Kick ══
@@ -353,23 +435,27 @@ function connectKick() {
 function setBigStatus(msg, type) {
   const el = document.getElementById('bigStatus');
   el.textContent = msg;
-  el.className = type || '';
+  el.className   = type || '';
 }
 
 function setStatus(msg, type) {
   const el = document.getElementById('statusBar');
   el.textContent = msg;
-  el.className = 'status-bar ' + (type || '');
+  el.className   = 'status-bar ' + (type || '');
 }
 
 // ══ Init ══
-(function(){
+(function() {
+  keyIdx = 0; // siempre empezar desde key 1
   const c = localStorage.getItem('yt_channel_id') || '';
   if(c) {
     document.getElementById('channelId').value = c;
     document.getElementById('savedCh').style.display = 'block';
   }
-  keyIdx = 0; // siempre empezar desde key 1
+  const cached = localStorage.getItem(LS_CHATID);
+  if(cached) {
+    setStatus('⚡ Chat ID en caché listo — toca para conectar', 'loading');
+  }
 })();
 </script>
 </body>
