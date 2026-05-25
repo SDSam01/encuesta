@@ -7,24 +7,19 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:#0a0a0f;font-family:'Inter',sans-serif;color:#fff;padding:16px;max-width:480px;margin:0 auto;}
-h1{font-size:14px;font-weight:700;margin-bottom:3px;}
-.sub{font-size:11px;color:rgba(255,255,255,.3);margin-bottom:14px;}
-.section{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px;margin-bottom:10px;}
+body{background:#0a0a0f;font-family:'Inter',sans-serif;color:#fff;padding:14px;max-width:460px;margin:0 auto;}
+h1{font-size:13px;font-weight:700;margin-bottom:2px;}
+.sub{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:12px;}
+.section{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px;margin-bottom:8px;}
 .sec-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:8px;}
-label{display:block;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:3px;margin-top:7px;}
-label:first-of-type{margin-top:0;}
+label{display:block;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:3px;}
 input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:7px 10px;color:#fff;font-size:12px;font-family:'Inter',sans-serif;outline:none;transition:.2s;margin-bottom:3px;}
 input:focus{border-color:rgba(255,185,0,.4);}
 .saved{font-size:10px;color:rgba(255,185,0,.5);display:none;}
 .btn-connect{width:100%;padding:10px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(255,185,0,.35);background:rgba(255,185,0,.12);color:#FFD000;transition:.15s;font-family:'Inter',sans-serif;margin-top:4px;}
 .btn-connect:hover{background:rgba(255,185,0,.22);}
 .btn-connect:disabled{opacity:.35;cursor:not-allowed;}
-.btn-reconnect{width:100%;padding:8px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(100,200,255,.3);background:rgba(100,200,255,.08);color:#66CCFF;transition:.15s;font-family:'Inter',sans-serif;margin-top:6px;display:none;}
-.btn-reconnect:hover{background:rgba(100,200,255,.18);}
-.status{font-size:11px;text-align:center;margin-top:8px;min-height:16px;color:rgba(255,255,255,.3);}
-.status.ok{color:#4ade80;}.status.err{color:#f87171;}.status.loading{color:rgba(255,185,0,.7);}
-.conn-row{display:flex;gap:6px;margin-top:8px;}
+.conn-row{display:flex;gap:6px;margin-top:6px;}
 .cbadge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.5px;opacity:.25;transition:.3s;}
 .cbadge.on{opacity:1;}
 .cb-yt{background:rgba(255,0,0,.12);color:#ff5555;border:1px solid rgba(255,85,85,.2);}
@@ -33,15 +28,50 @@ input:focus{border-color:rgba(255,185,0,.4);}
 .stat{background:rgba(255,255,255,.04);border-radius:8px;padding:8px;text-align:center;}
 .stat-num{font-size:20px;font-weight:900;color:#FFD000;}
 .stat-lbl{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
-.log{max-height:120px;overflow-y:auto;margin-top:8px;}
+.log{max-height:100px;overflow-y:auto;margin-top:8px;}
 .log-item{font-size:10px;color:rgba(255,255,255,.4);padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);}
-.log-item .src-yt{color:#ff5555;}.log-item .src-kick{color:#53fc53;}
+.src-yt{color:#ff5555;}.src-kick{color:#53fc53;}
+.status-bar{font-size:11px;text-align:center;margin-top:8px;min-height:16px;padding:6px;border-radius:8px;}
+.status-bar.ok{color:#4ade80;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);}
+.status-bar.err{color:#f87171;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);}
+.status-bar.loading{color:rgba(255,185,0,.8);background:rgba(255,185,0,.06);border:1px solid rgba(255,185,0,.2);}
+.btn-row{display:flex;gap:6px;margin-top:6px;}
+.power-btn{
+  width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;
+  cursor:pointer;font-family:'Inter',sans-serif;transition:.2s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  margin-bottom:8px;
+}
+.power-btn.on{
+  background:rgba(74,222,128,.15);border:2px solid rgba(74,222,128,.5);color:#4ade80;
+  box-shadow:0 0 20px rgba(74,222,128,.2);
+}
+.power-btn.off{
+  background:rgba(248,113,113,.12);border:2px solid rgba(248,113,113,.4);color:#f87171;
+  box-shadow:0 0 20px rgba(248,113,113,.15);
+  animation:powerPulse 1.5s infinite;
+}
+@keyframes powerPulse{0%,100%{box-shadow:0 0 20px rgba(248,113,113,.15);}50%{box-shadow:0 0 30px rgba(248,113,113,.4);}}
+.btn-sm{flex:1;padding:7px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.15s;}
+.btn-pause{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.4);}
+.btn-pause:hover{background:rgba(255,255,255,.08);}
+.btn-force{border:1px solid rgba(74,222,128,.3);background:rgba(74,222,128,.08);color:#4ade80;}
+.btn-force:hover{background:rgba(74,222,128,.15);}
+/* Big status indicator */
+#bigStatus{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;
+  padding:8px 12px;border-radius:8px;text-align:center;margin-bottom:8px;
+  display:none;}
+#bigStatus.ok{background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);color:#4ade80;display:block;}
+#bigStatus.err{background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.4);color:#f87171;display:block;animation:flash .8s infinite;}
+@keyframes flash{0%,100%{opacity:1;}50%{opacity:.4;}}
 </style>
 </head>
 <body>
 
 <h1>📡 Chat Reader — Fuente única</h1>
-<div class="sub">Lee YouTube + Kick una sola vez. Todos los widgets leen de aquí.</div>
+<div class="sub">Lee YouTube + Kick. Todos los widgets leen de aquí.</div>
+
+<div id="bigStatus"></div>
 
 <div class="section">
   <div class="sec-title">YouTube</div>
@@ -52,38 +82,29 @@ input:focus{border-color:rgba(255,185,0,.4);}
     <span class="cbadge cb-yt" id="dotYT">▶ YouTube</span>
     <span class="cbadge cb-kick" id="dotKick">⚡ Kick</span>
   </div>
-  <button class="btn-connect" id="btnConnect" onclick="connect()">▶ Conectar chats</button>
-<button class="btn-reconnect" id="btnReconnect" onclick="reconnect()">↺ Reconectar (sin afectar widgets)</button>
-<div style="display:flex;gap:6px;margin-top:6px;">
-  <button onclick="setDemand(1)" style="flex:1;padding:7px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(74,222,128,.3);background:rgba(74,222,128,.08);color:#4ade80;font-family:'Inter',sans-serif;">▶ Forzar activo</button>
-  <button onclick="setDemand(0)" style="flex:1;padding:7px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.4);font-family:'Inter',sans-serif;">⏸ Pausar</button>
-</div>
-<button class="btn-reconnect" id="btnReconnect" onclick="reconnect()">↺ Reconectar (sin afectar widgets)</button>
+  <button class="power-btn off" id="powerBtn" onclick="togglePower()">
+    <span id="powerIcon">⏻</span>
+    <span id="powerText">DESCONECTADO — Toca para conectar</span>
+  </button>
+  <button class="btn-connect" id="btnConnect" onclick="connect()" style="display:none;">▶ Conectar chats</button>
+  <div class="btn-row">
+    <button class="btn-sm btn-force" onclick="forceReconnect()">↺ Reconectar</button>
+  </div>
 </div>
 
 <div class="section">
   <div class="sec-title">Actividad</div>
   <div class="stats">
-    <div class="stat">
-      <div class="stat-num" id="statMessages">0</div>
-      <div class="stat-lbl">Mensajes</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num" id="statUsers">0</div>
-      <div class="stat-lbl">Usuarios</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num" id="statKey">1</div>
-      <div class="stat-lbl">API Key</div>
-    </div>
+    <div class="stat"><div class="stat-num" id="statMsg">0</div><div class="stat-lbl">Mensajes</div></div>
+    <div class="stat"><div class="stat-num" id="statUsers">0</div><div class="stat-lbl">Usuarios</div></div>
+    <div class="stat"><div class="stat-num" id="statKey">1</div><div class="stat-lbl">API Key</div></div>
   </div>
   <div class="log" id="logEl"></div>
 </div>
 
-<div class="status" id="statusBar">Ingresa tu Channel ID y conecta</div>
+<div class="status-bar" id="statusBar">Ingresa tu Channel ID y conecta</div>
 
 <script>
-// ══ API Keys ══
 const API_KEYS = [
   'AIzaSyCeQDuKLiY8G5GO0Vezm0tfZwsezfLpdME',
   'AIzaSyDqlaHU156M6ilgaFaabHmQort4gMLIzEs',
@@ -91,169 +112,225 @@ const API_KEYS = [
   'AIzaSyBQEc3IlQHgemp1-wX8TwRnmIU0s4Ti004',
   'AIzaSyD51Nwd1mMiLo8RfrQBiPdXi1J0ejNkHOQ',
   'AIzaSyAivMGIzQtJozYnrdRpfOMZaAtcAQP0BaE'
+  // Nuevas keys se agregan aquí
 ];
 const KICK_ROOM_ID = '6043540';
-// Siempre empezar desde key 0 al cargar
-localStorage.removeItem('chat_keyIdx');
+
 let keyIdx = 0;
-const getKey = () => API_KEYS[keyIdx];
+let ytChatId = null, ytNextToken = '';
+let totalMsg = 0;
+let connected = false;
+let pollTimer = null;
+let reconnectTimer = null;
+let lastPollSuccess = 0;
 
-// ══ Stats ══
-let totalMessages = 0, ytChatId = null, ytNextToken = '';
-let polling = false; // paused by default until needed
-let pollTimeout = null;
+const LS_CHAT   = 'chat_messages';
+const LS_USERS  = 'chat_users';
+const LS_STATUS = 'chat_status';
+const LS_QUEUE  = 'chat_queue';
 
-// ══ Monitorear demanda de los widgets ══
-setInterval(()=>{
-  const demand = parseInt(localStorage.getItem('chat_demand') || '0');
-  const wasPolling = polling;
-  polling = demand > 0 && !!ytChatId;
-  if(polling && !wasPolling){
-    setStatus('⚡ Polling activo — máxima velocidad', 'ok');
-    pollYouTube();
-  } else if(!polling && wasPolling){
-    setStatus('⏸️ En pausa — esperando actividad', 'loading');
-  }
-}, 500);
-
-// ══ localStorage keys ══
-const LS_CHAT    = 'chat_messages';  // últimos mensajes para poll y rep
-const LS_USERS   = 'chat_users';     // usuarios activos recientes
-const LS_STATUS  = 'chat_status';    // estado de conexión
-
-function saveStatus(ytOn, kickOn) {
-  localStorage.setItem(LS_STATUS, JSON.stringify({
-    ytConnected: ytOn,
-    kickConnected: kickOn,
-    keyIdx,
-    ts: Date.now()
-  }));
-}
-
-// ══ Escribir mensaje al localStorage ══
+// ══ Guardar mensaje ══
 function pushMessage(userId, username, text, src, isMember) {
-  if (!text) return;
-  totalMessages++;
-  document.getElementById('statMessages').textContent = totalMessages;
+  if(!text) return;
+  totalMsg++;
+  document.getElementById('statMsg').textContent = totalMsg;
 
-  // Guardar en cola de mensajes para que poll los lea todos
   const msg = { userId, username, text, src, isMember: !!isMember, ts: Date.now() };
   localStorage.setItem(LS_CHAT, JSON.stringify(msg));
-  // Cola para votos — guarda últimos 50 mensajes
-  let queue = [];
-  try{ queue = JSON.parse(localStorage.getItem('chat_queue')||'[]'); }catch(e){}
-  queue.push(msg);
-  if(queue.length > 50) queue = queue.slice(-50);
-  localStorage.setItem('chat_queue', JSON.stringify(queue));
 
-  // Actualizar usuarios activos
+  // Cola para votos
+  let queue = [];
+  try { queue = JSON.parse(localStorage.getItem(LS_QUEUE) || '[]'); } catch(e) {}
+  queue.push(msg);
+  if(queue.length > 100) queue = queue.slice(-100);
+  localStorage.setItem(LS_QUEUE, JSON.stringify(queue));
+
+  // Usuarios activos
   let users = {};
   try { users = JSON.parse(localStorage.getItem(LS_USERS) || '{}'); } catch(e) {}
   users[userId] = { username, src, lastSeen: Date.now(), text, isMember: !!isMember };
   localStorage.setItem(LS_USERS, JSON.stringify(users));
-
-  // Stats
   document.getElementById('statUsers').textContent = Object.keys(users).length;
 
-  // Log visual
   addLog(username, text, src);
+  saveStatus(true);
 }
 
 function addLog(username, text, src) {
   const el = document.getElementById('logEl');
   const item = document.createElement('div');
   item.className = 'log-item';
-  item.innerHTML = `<span class="src-${src}">${src.toUpperCase()}</span> <strong>${username}:</strong> ${text.substring(0,40)}`;
+  item.innerHTML = `<span class="src-${src}">${src.toUpperCase()}</span> <b>${username}:</b> ${text.substring(0,40)}`;
   el.insertBefore(item, el.firstChild);
-  if (el.children.length > 30) el.removeChild(el.lastChild);
+  if(el.children.length > 20) el.removeChild(el.lastChild);
+}
+
+function saveStatus(ytOn) {
+  localStorage.setItem(LS_STATUS, JSON.stringify({
+    ytConnected: ytOn,
+    kickConnected: document.getElementById('dotKick').classList.contains('on'),
+    keyIdx,
+    ts: Date.now()
+  }));
 }
 
 // ══ Conectar ══
 async function connect() {
   const channelId = document.getElementById('channelId').value.trim();
-  if (!channelId) { setStatus('⚠️ Necesitas el Channel ID', 'err'); return; }
+  if(!channelId) { setStatus('⚠️ Necesitas el Channel ID', 'err'); return; }
 
   document.getElementById('btnConnect').disabled = true;
-  setStatus('🔍 Conectando YouTube...', 'loading');
+  setStatus('🔍 Buscando stream en vivo...', 'loading');
+  setBigStatus('', '');
 
   try {
-    const sRes  = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${getKey()}`);
+    const sRes = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${API_KEYS[keyIdx]}`);
     const sData = await sRes.json();
-    if (sData.error) throw new Error(sData.error.message);
-    if (!sData.items?.length) throw new Error('No hay stream en vivo activo.');
+
+    if(sData.error) {
+      if(sData.error.code === 403) {
+        rotateKey();
+        document.getElementById('btnConnect').disabled = false;
+        setStatus('⚠️ Key agotada, intenta de nuevo', 'err');
+        return;
+      }
+      throw new Error(sData.error.message);
+    }
+
+    if(!sData.items?.length) throw new Error('No hay stream en vivo activo');
 
     const videoId = sData.items[0].id.videoId;
-    const vRes    = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${getKey()}`);
-    const vData   = await vRes.json();
+    const vRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${API_KEYS[keyIdx]}`);
+    const vData = await vRes.json();
     ytChatId = vData?.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
-    if (!ytChatId) throw new Error('No se pudo obtener el chat.');
+    if(!ytChatId) throw new Error('No se pudo obtener el chat');
 
     localStorage.setItem('yt_channel_id', channelId);
-    document.getElementById('dotYT').classList.add('on');
     document.getElementById('savedCh').style.display = 'block';
-    saveStatus(true, false);
-    setStatus('🟢 YouTube conectado', 'ok');
+    document.getElementById('dotYT').classList.add('on');
+    connected = true;
+    lastPollSuccess = Date.now();
+    setBigStatus('🟢 CONECTADO — EN VIVO', 'ok');
+    document.getElementById('powerBtn').className = 'power-btn on';
+    document.getElementById('powerText').textContent = 'CONECTADO — Toca para desconectar';
+    setStatus(`🟢 Conectado — key ${keyIdx+1}/${API_KEYS.length}`, 'ok');
+    saveStatus(true);
 
-    document.getElementById('btnReconnect').style.display = 'block';
-    pollYouTube();
+    // Iniciar polling y Kick
+    startPolling();
     connectKick();
+
+    // Auto-reconexión watchdog
+    startWatchdog();
 
   } catch(e) {
     setStatus('❌ ' + e.message, 'err');
+    setBigStatus('❌ ' + e.message, 'err');
     document.getElementById('btnConnect').disabled = false;
   }
 }
 
-// ══ YouTube polling — SOLO aquí, nadie más llama a la API ══
+// ══ YouTube polling — siempre activo, 3s ══
+function startPolling() {
+  if(pollTimer) clearTimeout(pollTimer);
+  pollYouTube();
+}
+
 async function pollYouTube() {
-  if (!ytChatId) return;
-  if (!polling) return; // pausado
+  if(!ytChatId) return;
   try {
-    const url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${ytChatId}&part=snippet,authorDetails&maxResults=200&key=${getKey()}${ytNextToken ? '&pageToken='+ytNextToken : ''}`;
-    const res  = await fetch(url);
+    const url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${ytChatId}&part=snippet,authorDetails&maxResults=200&key=${API_KEYS[keyIdx]}${ytNextToken ? '&pageToken='+ytNextToken : ''}`;
+    const res = await fetch(url);
     const data = await res.json();
 
-    if (data.error) {
+    if(data.error) {
       const reason = data.error.errors?.[0]?.reason || '';
-      if (reason === 'quotaExceeded' || data.error.code === 403 || data.error.code === 429) {
-        const prevIdx = keyIdx;
-        keyIdx = (keyIdx + 1) % API_KEYS.length;
-        localStorage.setItem('chat_keyIdx', keyIdx);
-        document.getElementById('statKey').textContent = keyIdx + 1;
-        setStatus(`⚠️ Key ${prevIdx+1} agotada → rotando a key ${keyIdx+1}/6`, 'loading');
-        saveStatus(true, true); // actualizar para que los panels lean key correcta
-        // Reintentar inmediatamente con nueva key
-        window._pollTimeout = setTimeout(pollYouTube, 500);
-      } else {
-        window._pollTimeout = setTimeout(pollYouTube, 5000);
+      if(reason === 'quotaExceeded' || data.error.code === 403 || data.error.code === 429) {
+        rotateKey();
       }
+      pollTimer = setTimeout(pollYouTube, 5000);
       return;
     }
 
-    localStorage.setItem('chat_keyIdx', keyIdx);
-    document.getElementById('statKey').textContent = keyIdx + 1;
-    setStatus(`🟢 YouTube activo — key ${keyIdx+1}/6`, 'ok');
-    saveStatus(true, !!document.getElementById('dotKick').classList.contains('on'));
+    // Éxito
+    lastPollSuccess = Date.now();
     ytNextToken = data.nextPageToken || ytNextToken;
+    document.getElementById('statKey').textContent = keyIdx + 1;
+    setStatus(`🟢 YouTube activo — key ${keyIdx+1}/${API_KEYS.length}`, 'ok');
+    setBigStatus('🟢 CONECTADO — EN VIVO', 'ok');
+    document.getElementById('powerBtn').className = 'power-btn on';
+    document.getElementById('powerText').textContent = 'CONECTADO — Toca para desconectar';
+    saveStatus(true);
 
-    for (const item of (data.items || [])) {
-      const uid      = item.authorDetails?.channelId;
-      const name     = item.authorDetails?.displayName || 'Usuario';
-      const text     = item.snippet?.displayMessage || '';
+    for(const item of (data.items || [])) {
+      const uid  = item.authorDetails?.channelId;
+      const name = item.authorDetails?.displayName || 'Usuario';
+      const text = item.snippet?.displayMessage || '';
       const isMember = !!(item.authorDetails?.isChatSponsor || item.authorDetails?.isChatModerator || item.authorDetails?.isChatOwner);
-      if (!uid) continue;
+      if(!uid) continue;
       pushMessage(uid, name, text, 'yt', isMember);
     }
 
-    const interval = polling ? 3000 : 10000; // 3s activo, 10s pausado
-    window._pollTimeout = setTimeout(pollYouTube, interval);
+    // Siguiente poll en 3s — tiempo real
+    const interval = Math.max(3000, data.pollingIntervalMillis || 3000);
+    pollTimer = setTimeout(pollYouTube, interval);
 
   } catch(e) {
-    window._pollTimeout = setTimeout(pollYouTube, 5000);
+    pollTimer = setTimeout(pollYouTube, 5000);
   }
 }
 
-// ══ Kick — SOLO aquí ══
+function rotateKey() {
+  const prev = keyIdx;
+  keyIdx = (keyIdx + 1) % API_KEYS.length;
+  localStorage.setItem('chat_keyIdx', keyIdx);
+  document.getElementById('statKey').textContent = keyIdx + 1;
+  setStatus(`⚠️ Key ${prev+1} agotada → key ${keyIdx+1}`, 'loading');
+  saveStatus(connected);
+}
+
+// ══ Watchdog — reconecta si no hay actividad en 60s ══
+function startWatchdog() {
+  if(reconnectTimer) clearInterval(reconnectTimer);
+  reconnectTimer = setInterval(()=>{
+    if(!connected) return;
+    const elapsed = Date.now() - lastPollSuccess;
+    if(elapsed > 60000) {
+      setBigStatus('⚠️ Sin actividad — reconectando...', 'err');
+      setStatus('⚠️ Reconectando automáticamente...', 'loading');
+      forceReconnect();
+    }
+  }, 15000);
+}
+
+function togglePower(){
+  if(connected){
+    // Desconectar
+    connected = false;
+    ytChatId = null;
+    if(pollTimer) clearTimeout(pollTimer);
+    if(reconnectTimer) clearInterval(reconnectTimer);
+    document.getElementById('dotYT').classList.remove('on');
+    document.getElementById('dotKick').classList.remove('on');
+    document.getElementById('powerBtn').className = 'power-btn off';
+    document.getElementById('powerText').textContent = 'DESCONECTADO — Toca para conectar';
+    setBigStatus('', '');
+    setStatus('Desconectado', '');
+    localStorage.setItem(LS_STATUS, JSON.stringify({ytConnected:false,kickConnected:false,keyIdx,ts:Date.now()}));
+  } else {
+    // Conectar
+    connect();
+  }
+}
+
+function forceReconnect() {
+  if(pollTimer) clearTimeout(pollTimer);
+  ytNextToken = '';
+  document.getElementById('btnConnect').disabled = false;
+  connect();
+}
+
+// ══ Kick ══
 function connectKick() {
   try {
     Pusher.logToConsole = false;
@@ -261,46 +338,38 @@ function connectKick() {
     const channel = pusher.subscribe(`chatrooms.${KICK_ROOM_ID}.v2`);
     channel.bind('pusher:subscription_succeeded', () => {
       document.getElementById('dotKick').classList.add('on');
-      saveStatus(true, true);
-      setStatus('🟢 YouTube + Kick activos', 'ok');
+      saveStatus(connected);
     });
     channel.bind('App\\Events\\ChatMessageEvent', (data) => {
-      const uid    = 'kick_' + (data?.sender?.id || '');
-      const name   = data?.sender?.username || 'Usuario';
-      const text   = data?.content || '';
-      const isSub  = !!(data?.sender?.subscribed_for > 0 || data?.sender?.is_subscribed);
+      const uid   = 'kick_' + (data?.sender?.id || '');
+      const name  = data?.sender?.username || 'Usuario';
+      const text  = data?.content || '';
+      const isSub = !!(data?.sender?.subscribed_for > 0 || data?.sender?.is_subscribed);
       pushMessage(uid, name, text, 'kick', isSub);
     });
-  } catch(e) {
-    setStatus('⚠️ Kick: ' + e.message, 'err');
-  }
+  } catch(e) {}
 }
 
-function setDemand(val){
-  localStorage.setItem('chat_demand', val);
-  setStatus(val ? '⚡ Activado manualmente' : '⏸️ Pausado manualmente', val ? 'ok' : '');
-}
-
-function reconnect() {
-  // Solo reinicia el polling — NO toca localStorage de votos/vidas
-  setStatus('🔄 Reconectando...', 'loading');
-  // Detener polling actual
-  if (window._pollTimeout) clearTimeout(window._pollTimeout);
-  // Reiniciar polling con key actual
-  pollYouTube();
-  setStatus('🔄 Reconectando con key ' + (keyIdx+1) + '...', 'loading');
+function setBigStatus(msg, type) {
+  const el = document.getElementById('bigStatus');
+  el.textContent = msg;
+  el.className = type || '';
 }
 
 function setStatus(msg, type) {
   const el = document.getElementById('statusBar');
   el.textContent = msg;
-  el.className = 'status ' + (type||'');
+  el.className = 'status-bar ' + (type || '');
 }
 
-// Cargar guardados
+// ══ Init ══
 (function(){
   const c = localStorage.getItem('yt_channel_id') || '';
-  if (c) { document.getElementById('channelId').value = c; document.getElementById('savedCh').style.display = 'block'; }
+  if(c) {
+    document.getElementById('channelId').value = c;
+    document.getElementById('savedCh').style.display = 'block';
+  }
+  keyIdx = 0; // siempre empezar desde key 1
 })();
 </script>
 </body>
