@@ -120,7 +120,10 @@ const LS_CHAT   = 'chat_messages';
 const LS_USERS  = 'chat_users';
 const LS_STATUS = 'chat_status';
 const LS_QUEUE  = 'chat_queue';
-const LS_CHATID = 'yt_chat_id'; // ← NUEVO: cache del liveChatId
+const LS_CHATID = 'yt_chat_id'; // cache del liveChatId {id, ts}
+
+// FIX 1: caché expira a las 8 horas para evitar usar el ID del stream anterior
+const CACHE_TTL = 8 * 60 * 60 * 1000;
 
 let keyIdx = 0;
 let ytChatId = null;
@@ -130,6 +133,9 @@ let connected = false;
 let pollTimer = null;
 let reconnectTimer = null;
 let lastPollSuccess = 0;
+
+// FIX 2: timestamp ISO del último mensaje procesado — evita duplicados al reconectar
+let lastMsgPublishedAt = '';
 
 // ══ Guardar mensaje ══
 function pushMessage(userId, username, text, src, isMember) {
@@ -151,6 +157,9 @@ function pushMessage(userId, username, text, src, isMember) {
   let users = {};
   try { users = JSON.parse(localStorage.getItem(LS_USERS) || '{}'); } catch(e) {}
   users[userId] = { username, src, lastSeen: Date.now(), text, isMember: !!isMember };
+  // FIX 4: limpiar usuarios que no se han visto en más de 24h
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  for(const uid in users) { if(users[uid].lastSeen < cutoff) delete users[uid]; }
   localStorage.setItem(LS_USERS, JSON.stringify(users));
   document.getElementById('statUsers').textContent = Object.keys(users).length;
 
@@ -212,8 +221,8 @@ async function findChatId(channelId) {
       const chatId = vData?.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
       if(!chatId) throw new Error('No se pudo obtener el chat ID');
 
-      // Guardar en caché para no repetir la búsqueda
-      localStorage.setItem(LS_CHATID, chatId);
+      // FIX 1: guardar con timestamp para detectar caché viejo al día siguiente
+      localStorage.setItem(LS_CHATID, JSON.stringify({ id: chatId, ts: Date.now() }));
       return chatId;
 
     } catch(e) {
@@ -233,13 +242,30 @@ async function connect() {
   setBigStatus('', '');
 
   try {
-    // ── Intentar usar el chatId cacheado primero ──
-    const cachedId = localStorage.getItem(LS_CHATID);
+    // ── FIX 1: Caché con TTL de 8h — evita usar el chatId del stream anterior ──
+    let cachedId = null;
+    try {
+      const raw = localStorage.getItem(LS_CHATID);
+      if(raw) {
+        // Soporta formato viejo (string plano) y nuevo ({id, ts})
+        const parsed = JSON.parse(raw);
+        const id = parsed?.id || parsed;
+        const ts = parsed?.ts || 0;
+        const age = Date.now() - ts;
+        if(typeof id === 'string' && id && age < CACHE_TTL) {
+          cachedId = id;
+        } else if(age >= CACHE_TTL) {
+          localStorage.removeItem(LS_CHATID);
+          setStatus('⚠️ Caché expirado (>8h) — buscando stream nuevo...', 'loading');
+        }
+      }
+    } catch(e) { localStorage.removeItem(LS_CHATID); }
+
     if(cachedId) {
       ytChatId = cachedId;
-      setStatus(`⚡ Usando chat ID en caché — key ${keyIdx+1}/${API_KEYS.length}`, 'loading');
+      setStatus(`⚡ Chat ID en caché — key ${keyIdx+1}/${API_KEYS.length}`, 'loading');
     } else {
-      // Primera vez o caché borrado: buscar stream (cuesta 100u)
+      // Primera vez o caché expirado: buscar stream (cuesta 100u)
       ytChatId = await findChatId(channelId);
     }
 
@@ -287,14 +313,15 @@ async function pollYouTube() {
       }
 
       if(reason === 'liveChatNotFound' || reason === 'liveChatEnded') {
-        // El stream terminó o el chat ID ya no existe — limpiar caché y detener
+        // Stream terminó — limpiar caché y detener
         localStorage.removeItem(LS_CHATID);
+        lastMsgPublishedAt = ''; // FIX 2: resetear dedup al terminar stream
         ytChatId = null;
         connected = false;
         setConnectedUI(false);
         setBigStatus('⏹ Stream terminado', 'err');
         setStatus('⏹ Stream terminado — chat ID inválido', 'err');
-        return; // No reintentar
+        return;
       }
 
       // Otro error transitorio — reintentar en 5s
@@ -321,6 +348,12 @@ async function pollYouTube() {
         item.authorDetails?.isChatOwner
       );
       if(!uid) continue;
+
+      // FIX 2: saltar mensajes ya procesados (duplicados por reconexión)
+      const publishedAt = item.snippet?.publishedAt || '';
+      if(publishedAt && publishedAt <= lastMsgPublishedAt) continue;
+      if(publishedAt > lastMsgPublishedAt) lastMsgPublishedAt = publishedAt;
+
       pushMessage(uid, name, text, 'yt', isMember);
     }
 
@@ -375,6 +408,7 @@ function forceReconnect() {
   if(pollTimer) clearTimeout(pollTimer);
   ytNextToken = '';
   ytChatId = null;
+  lastMsgPublishedAt = ''; // FIX 2: nuevo stream = reset dedup
   localStorage.removeItem(LS_CHATID); // forzar nueva búsqueda
   document.getElementById('btnConnect').disabled = false;
   connect();
@@ -452,10 +486,21 @@ function setStatus(msg, type) {
     document.getElementById('channelId').value = c;
     document.getElementById('savedCh').style.display = 'block';
   }
-  const cached = localStorage.getItem(LS_CHATID);
-  if(cached) {
-    setStatus('⚡ Chat ID en caché listo — toca para conectar', 'loading');
-  }
+  // FIX 1: mostrar estado real del caché al cargar
+  try {
+    const raw = localStorage.getItem(LS_CHATID);
+    if(raw) {
+      const parsed = JSON.parse(raw);
+      const ts  = parsed?.ts || 0;
+      const age = Date.now() - ts;
+      if(age < CACHE_TTL) {
+        const mins = Math.round(age / 60000);
+        setStatus(`⚡ Chat ID en caché (hace ${mins}min) — toca para conectar`, 'loading');
+      } else {
+        setStatus('⚠️ Caché expirado — se buscará stream nuevo al conectar', 'loading');
+      }
+    }
+  } catch(e) { localStorage.removeItem(LS_CHATID); }
 })();
 </script>
 </body>
