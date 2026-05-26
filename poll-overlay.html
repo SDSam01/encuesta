@@ -18,7 +18,6 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 }
 #widget.visible{opacity:1;transform:translateX(-50%) translateY(0);}
 
-/* Header */
 .w-header{text-align:center;margin-bottom:8px;}
 .w-timer{
   font-family:'Bebas Neue',sans-serif;
@@ -34,17 +33,13 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
   letter-spacing:2px;margin-top:4px;
 }
 
-/* ══ Box ══ */
 .w-box{
   position:relative;height:120px;border-radius:14px;
   overflow:hidden;
   background:rgba(6,6,10,0.65);
-  box-shadow:
-    0 12px 48px rgba(0,0,0,.8),
-    0 0 0 1px rgba(255,255,255,.05);
+  box-shadow:0 12px 48px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.05);
 }
 
-/* ══ Fills fluidos — rojo base, dorado crece encima ══ */
 #fillB{
   position:absolute;inset:0;
   background:rgba(200,15,0,0.55);
@@ -60,19 +55,16 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
   z-index:2;
 }
 
-/* Glow overlay */
 #glowOverlay{
   position:absolute;inset:0;z-index:3;pointer-events:none;
   background:transparent;
   transition:box-shadow 1s ease;
 }
 
-/* Ocultar fills en modo ganador */
 .w-box.winner-mode #fillA,
 .w-box.winner-mode #fillB{opacity:0;transition:opacity .5s;}
 .w-box.winner-mode #glowOverlay{opacity:0;}
 
-/* ══ Contenido ══ */
 .w-content{
   position:absolute;inset:0;display:flex;z-index:2;
   transition:opacity .5s;
@@ -121,7 +113,6 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
   font-family:'Inter',sans-serif;
 }
 
-/* ══ Remontada ══ */
 .w-remontada{
   position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%) scale(.85);
@@ -139,7 +130,6 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 }
 .w-rem-sub{font-size:10px;color:rgba(255,255,255,.5);font-weight:700;letter-spacing:1px;text-transform:uppercase;}
 
-/* ══ WINNER ══ */
 .w-winner-overlay{
   position:absolute;inset:0;z-index:20;
   display:flex;align-items:center;justify-content:center;flex-direction:column;
@@ -223,49 +213,83 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
 
 <script>
 const LS='poll_state';
-let prevLeader=null,prevDiff=0,lastPA=-1;
-let remTimeout=null,winnerShown=false,lastTimerEnd=0;
-let confettiRAF=null,confettiParticles=[];
+let prevLeader=null, prevDiff=0, lastPA=-1;
+let remTimeout=null, winnerShown=false, lastTimerEnd=0;
+let confettiRAF=null, confettiParticles=[];
+let confettiStopTimer=null;
+let lastVoteCount=0, lastTimerSec=999;
+// FIX: primera render sin animación (evita flash de 0% → X% al recargar en OBS)
+let firstRender=true;
+// FIX: cooldown para remontada (evita spam del popup)
+let remCooldown=false;
+
+// ══ FIX: AudioContext lazy con unlock periódico ══
+// Problema: en el CEF de OBS, AudioContext arranca suspendido sin click del usuario
+// Solución: crearlo lazy y llamar resume() periódicamente hasta que esté running
+let _pac=null;
+function getAC(){
+  if(!_pac){
+    try{ _pac=new(window.AudioContext||window.webkitAudioContext)(); }
+    catch(e){ return null; }
+  }
+  if(_pac.state!=='running'){
+    _pac.resume().catch(()=>{});
+  }
+  return _pac;
+}
+// Intentar desbloquear cada 1s hasta que esté running
+const _audioUnlocker=setInterval(()=>{
+  const ac=getAC();
+  if(ac&&ac.state==='running') clearInterval(_audioUnlocker);
+}, 1000);
 
 function startConfetti(color){
   const canvas=document.getElementById('confettiCanvas');
   const ctx=canvas.getContext('2d');
-  canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;
+  canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight;
   const colors=color==='#FFB800'
     ?['#FFD000','#FFEC00','#FFA500','#fff700','#ffffff','#FF6B00']
     :['#FF2222','#FF6666','#FF0066','#FF44AA','#ffffff','#CC0044'];
   confettiParticles=Array.from({length:80},()=>({
-    x:Math.random()*canvas.width,y:Math.random()*canvas.height-canvas.height,
-    w:Math.random()*8+3,h:Math.random()*4+2,
+    x:Math.random()*canvas.width, y:Math.random()*canvas.height-canvas.height,
+    w:Math.random()*8+3, h:Math.random()*4+2,
     color:colors[Math.floor(Math.random()*colors.length)],
-    speed:Math.random()*2+1,angle:Math.random()*Math.PI*2,
-    spin:(Math.random()-.5)*.15,wobble:Math.random()*.05,opacity:Math.random()*.5+.5,
+    speed:Math.random()*2+1, angle:Math.random()*Math.PI*2,
+    spin:(Math.random()-.5)*.15, wobble:Math.random()*.05,
+    opacity:Math.random()*.5+.5,
   }));
   function loop(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     confettiParticles.forEach(p=>{
-      p.y+=p.speed;p.angle+=p.spin;p.x+=Math.sin(p.angle*3)*p.wobble*20;
-      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);
-      ctx.globalAlpha=p.opacity;ctx.shadowColor=p.color;ctx.shadowBlur=8;
-      ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();
-      if(p.y>canvas.height+10){p.y=-10;p.x=Math.random()*canvas.width;}
+      p.y+=p.speed; p.angle+=p.spin;
+      p.x+=Math.sin(p.angle*3)*p.wobble*20;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.angle);
+      ctx.globalAlpha=p.opacity; ctx.shadowColor=p.color; ctx.shadowBlur=8;
+      ctx.fillStyle=p.color; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      ctx.restore();
+      if(p.y>canvas.height+10){ p.y=-10; p.x=Math.random()*canvas.width; }
     });
     confettiRAF=requestAnimationFrame(loop);
   }
-  if(confettiRAF)cancelAnimationFrame(confettiRAF);
+  if(confettiRAF) cancelAnimationFrame(confettiRAF);
   loop();
+
+  // FIX: auto-detener confeti después de 30s para no quemar GPU indefinidamente
+  if(confettiStopTimer) clearTimeout(confettiStopTimer);
+  confettiStopTimer=setTimeout(stopConfetti, 30000);
 }
 
 function stopConfetti(){
-  if(confettiRAF){cancelAnimationFrame(confettiRAF);confettiRAF=null;}
+  if(confettiStopTimer){ clearTimeout(confettiStopTimer); confettiStopTimer=null; }
+  if(confettiRAF){ cancelAnimationFrame(confettiRAF); confettiRAF=null; }
   const c=document.getElementById('confettiCanvas');
   c.getContext('2d').clearRect(0,0,c.width,c.height);
 }
 
 function showWinner(s){
-  const vA=s.vA||0,vB=s.vB||0,total=vA+vB;
-  if(!total)return;
-  const pA=Math.round(vA/total*100),pB=100-pA,isA=pA>=pB;
+  const vA=s.vA||0, vB=s.vB||0, total=vA+vB;
+  if(!total) return;
+  const pA=Math.round(vA/total*100), pB=100-pA, isA=pA>=pB;
   const name=(isA?s.nameA:s.nameB||'B').toUpperCase();
   document.getElementById('wWinnerName').textContent=name;
   document.getElementById('wWinnerPct').textContent=(isA?pA:pB)+'%';
@@ -278,11 +302,12 @@ function showWinner(s){
 function hideWinner(){
   document.getElementById('wBox').classList.remove('winner-mode');
   document.getElementById('wWinner').classList.remove('show');
-  stopConfetti();winnerShown=false;
+  stopConfetti();
+  winnerShown=false;
 }
 
 function render(s){
-  const vA=s.vA||0,vB=s.vB||0,total=vA+vB;
+  const vA=s.vA||0, vB=s.vB||0, total=vA+vB;
   const pA=total===0?50:Math.round(vA/total*100);
   const pB=total===0?50:100-pA;
 
@@ -294,26 +319,36 @@ function render(s){
   document.getElementById('wVotesA').textContent=vA;
   document.getElementById('wVotesB').textContent=vB;
   document.getElementById('wTotal').textContent=total+(total===1?' voto total':' votos totales');
-  // Sonido por voto nuevo
-  if(total > lastVoteCount && total > 0){
-    lastVoteCount = total;
-    playVoteSound(pA, pB);
+
+  if(total>lastVoteCount&&total>0){
+    lastVoteCount=total;
+    playVoteSound(pA,pB);
   }
 
-  // Solo actualizar si cambió — evita resetear la transición CSS
-  if(pA !== lastPA){
-    lastPA = pA;
-    document.getElementById('fillA').style.width = pA + '%';
+  // FIX: primer render sin transición CSS para evitar flash de 0%→X% al recargar en OBS
+  if(pA!==lastPA){
+    lastPA=pA;
+    const fillA=document.getElementById('fillA');
+    if(firstRender){
+      firstRender=false;
+      fillA.style.transition='none';
+      fillA.style.width=pA+'%';
+      // Forzar reflow y restaurar transición en el siguiente frame
+      requestAnimationFrame(()=>{
+        fillA.style.transition='width 1.4s cubic-bezier(.25,.46,.45,.94)';
+      });
+    } else {
+      fillA.style.width=pA+'%';
+    }
   }
 
-  // Glow intenso del lado ganador
-  const glow = document.getElementById('glowOverlay');
-  if(pA > pB){
-    glow.style.boxShadow = 'inset 100px 0 120px rgba(255,200,0,.2), inset -30px 0 60px rgba(180,0,0,.08)';
-  } else if(pB > pA){
-    glow.style.boxShadow = 'inset -100px 0 120px rgba(200,10,0,.2), inset 30px 0 60px rgba(255,184,0,.08)';
+  const glow=document.getElementById('glowOverlay');
+  if(pA>pB){
+    glow.style.boxShadow='inset 100px 0 120px rgba(255,200,0,.2), inset -30px 0 60px rgba(180,0,0,.08)';
+  } else if(pB>pA){
+    glow.style.boxShadow='inset -100px 0 120px rgba(200,10,0,.2), inset 30px 0 60px rgba(255,184,0,.08)';
   } else {
-    glow.style.boxShadow = 'none';
+    glow.style.boxShadow='none';
   }
 
   const pctA=document.getElementById('wPctA');
@@ -322,30 +357,36 @@ function render(s){
   const nameB=document.getElementById('wNameB');
 
   if(total===0){
-    pctA.className='w-pct';pctB.className='w-pct';
-    nameA.className='w-name';nameB.className='w-name';
+    pctA.className='w-pct'; pctB.className='w-pct';
+    nameA.className='w-name'; nameB.className='w-name';
   } else if(pA>pB){
-    pctA.className='w-pct win';pctB.className='w-pct lose';
-    nameA.className='w-name win';nameB.className='w-name';
+    pctA.className='w-pct win'; pctB.className='w-pct lose';
+    nameA.className='w-name win'; nameB.className='w-name';
   } else if(pB>pA){
-    pctB.className='w-pct win';pctA.className='w-pct lose';
-    nameB.className='w-name win';nameA.className='w-name';
+    pctB.className='w-pct win'; pctA.className='w-pct lose';
+    nameB.className='w-name win'; nameA.className='w-name';
   } else {
-    pctA.className='w-pct';pctB.className='w-pct';
-    nameA.className='w-name';nameB.className='w-name';
+    pctA.className='w-pct'; pctB.className='w-pct';
+    nameA.className='w-name'; nameB.className='w-name';
   }
 
+  // FIX: cooldown en remontada — evita que el popup spamee si el porcentaje oscila
   const leader=pA>pB?'a':pA<pB?'b':null;
   const diff=Math.abs(pA-pB);
-  if(total>=10&&prevLeader&&leader&&leader!==prevLeader&&prevDiff>=15){
+  if(total>=10&&prevLeader&&leader&&leader!==prevLeader&&prevDiff>=15&&!remCooldown){
+    remCooldown=true;
     const nm=(leader==='a'?(s.nameA||'A'):(s.nameB||'B')).toUpperCase();
     document.getElementById('wRemSub').textContent=nm+' ESTÁ SUBIENDO';
     const rem=document.getElementById('wRemontada');
     rem.classList.add('show');
-    if(remTimeout)clearTimeout(remTimeout);
-    remTimeout=setTimeout(()=>rem.classList.remove('show'),3500);
+    if(remTimeout) clearTimeout(remTimeout);
+    remTimeout=setTimeout(()=>{
+      rem.classList.remove('show');
+      // FIX: resetear cooldown 10s después de que desaparezca el popup
+      setTimeout(()=>{ remCooldown=false; }, 10000);
+    }, 3500);
   }
-  prevLeader=leader;prevDiff=diff;
+  prevLeader=leader; prevDiff=diff;
 
   const timerEl=document.getElementById('wTimer');
   if(s.timerEnd&&s.timerEnd>0){
@@ -354,107 +395,101 @@ function render(s){
       timerEl.style.display='block';
       timerEl.textContent=rem>=60?Math.floor(rem/60)+':'+String(rem%60).padStart(2,'0'):rem+'s';
       timerEl.className='w-timer'+(rem<=10?' urgent':'');
-      // Sonidos de countdown
-      if(rem !== lastTimerSec){
-        lastTimerSec = rem;
+      if(rem!==lastTimerSec){
+        lastTimerSec=rem;
         if(rem<=10) playCountdown(rem);
       }
-      if(winnerShown&&s.timerEnd!==lastTimerEnd)hideWinner();
+      if(winnerShown&&s.timerEnd!==lastTimerEnd) hideWinner();
     } else {
       timerEl.style.display='none';
-      if(!winnerShown){winnerShown=true;lastTimerEnd=s.timerEnd;showWinner(s);const vA=s.vA||0,vB=s.vB||0,tot=vA+vB;if(tot>0)playWinner(Math.round(vA/tot*100)>=50);}
+      if(!winnerShown){
+        winnerShown=true;
+        lastTimerEnd=s.timerEnd;
+        showWinner(s);
+        const vA=s.vA||0, vB=s.vB||0, tot=vA+vB;
+        if(tot>0) playWinner(Math.round(vA/tot*100)>=50);
+      }
     }
   } else {
     timerEl.style.display='none';
-    if(winnerShown)hideWinner();
+    if(winnerShown) hideWinner();
   }
 }
 
-
-// ══ Audio Engine — Poll Sounds ══
-const PAC = new (window.AudioContext || window.webkitAudioContext)();
-let lastVoteCount = 0;
-let lastTimerSec = 999;
-
-function playVoteSound(pA, pB) {
-  PAC.resume();
-  const t = PAC.currentTime;
-  const isA = pA >= pB;
-  const freq = isA ? 880 : 660;
-  const o = PAC.createOscillator();
-  const g = PAC.createGain();
-  o.connect(g); g.connect(PAC.destination);
-  o.type = 'sine';
-  o.frequency.setValueAtTime(freq, t);
-  o.frequency.exponentialRampToValueAtTime(freq * 1.2, t + 0.04);
-  g.gain.setValueAtTime(0.12, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-  o.start(t); o.stop(t + 0.12);
+// ══ Audio Engine ══
+function playVoteSound(pA,pB){
+  const ac=getAC(); if(!ac) return;
+  const t=ac.currentTime;
+  const isA=pA>=pB;
+  const freq=isA?880:660;
+  const o=ac.createOscillator();
+  const g=ac.createGain();
+  o.connect(g); g.connect(ac.destination);
+  o.type='sine';
+  o.frequency.setValueAtTime(freq,t);
+  o.frequency.exponentialRampToValueAtTime(freq*1.2,t+0.04);
+  g.gain.setValueAtTime(0.12,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+  o.start(t); o.stop(t+0.12);
 }
 
-function playCountdown(sec) {
-  PAC.resume();
-  const t = PAC.currentTime;
-  if (sec <= 5) {
-    // Beep urgente
-    const o = PAC.createOscillator();
-    const g = PAC.createGain();
-    o.connect(g); g.connect(PAC.destination);
-    o.type = 'square';
-    o.frequency.value = sec === 1 ? 1200 : 800;
-    g.gain.setValueAtTime(0.2, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-    o.start(t); o.stop(t + 0.1);
-  } else if (sec === 10) {
-    // Alerta de 10 segundos
-    [600, 800].forEach((freq, i) => {
-      const o = PAC.createOscillator();
-      const g = PAC.createGain();
-      o.connect(g); g.connect(PAC.destination);
-      o.type = 'sine';
-      o.frequency.value = freq;
-      const st = t + i * 0.12;
-      g.gain.setValueAtTime(0.18, st);
-      g.gain.exponentialRampToValueAtTime(0.001, st + 0.15);
-      o.start(st); o.stop(st + 0.15);
+function playCountdown(sec){
+  const ac=getAC(); if(!ac) return;
+  const t=ac.currentTime;
+  if(sec<=5){
+    const o=ac.createOscillator();
+    const g=ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type='square';
+    o.frequency.value=sec===1?1200:800;
+    g.gain.setValueAtTime(0.2,t);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+    o.start(t); o.stop(t+0.1);
+  } else if(sec===10){
+    [600,800].forEach((freq,i)=>{
+      const o=ac.createOscillator();
+      const g=ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type='sine'; o.frequency.value=freq;
+      const st=t+i*0.12;
+      g.gain.setValueAtTime(0.18,st);
+      g.gain.exponentialRampToValueAtTime(0.001,st+0.15);
+      o.start(st); o.stop(st+0.15);
     });
   }
 }
 
-function playWinner(isA) {
-  PAC.resume();
-  const t = PAC.currentTime;
-  const baseFreq = isA ? 523 : 392;
-  // Fanfarria corta
-  [1, 1.25, 1.5, 2].forEach((mult, i) => {
-    const o = PAC.createOscillator();
-    const g = PAC.createGain();
-    o.connect(g); g.connect(PAC.destination);
-    o.type = 'triangle';
-    o.frequency.value = baseFreq * mult;
-    const st = t + i * 0.1;
-    g.gain.setValueAtTime(0.25, st);
-    g.gain.exponentialRampToValueAtTime(0.001, st + 0.3);
-    o.start(st); o.stop(st + 0.3);
+function playWinner(isA){
+  const ac=getAC(); if(!ac) return;
+  const t=ac.currentTime;
+  const baseFreq=isA?523:392;
+  [1,1.25,1.5,2].forEach((mult,i)=>{
+    const o=ac.createOscillator();
+    const g=ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type='triangle'; o.frequency.value=baseFreq*mult;
+    const st=t+i*0.1;
+    g.gain.setValueAtTime(0.25,st);
+    g.gain.exponentialRampToValueAtTime(0.001,st+0.3);
+    o.start(st); o.stop(st+0.3);
   });
-  // Sub punch
-  const sub = PAC.createOscillator();
-  const subG = PAC.createGain();
-  sub.connect(subG); subG.connect(PAC.destination);
-  sub.type = 'sine'; sub.frequency.value = 80;
-  subG.gain.setValueAtTime(0.4, t);
-  subG.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-  sub.start(t); sub.stop(t + 0.3);
+  const sub=ac.createOscillator();
+  const subG=ac.createGain();
+  sub.connect(subG); subG.connect(ac.destination);
+  sub.type='sine'; sub.frequency.value=80;
+  subG.gain.setValueAtTime(0.4,t);
+  subG.gain.exponentialRampToValueAtTime(0.001,t+0.3);
+  sub.start(t); sub.stop(t+0.3);
 }
 
 setInterval(()=>{
   try{
     const raw=localStorage.getItem(LS);
-    if(!raw)return;
+    if(!raw) return;
     const s=JSON.parse(raw);
     const w=document.getElementById('widget');
-    if(s.active){w.classList.add('visible');render(s);}
-    else{w.classList.remove('visible');hideWinner();}
+    if(s.active){ w.classList.add('visible'); render(s); }
+    else{ w.classList.remove('visible'); hideWinner(); }
   }catch(e){}
 },500);
 </script>
