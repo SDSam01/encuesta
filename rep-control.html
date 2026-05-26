@@ -260,6 +260,7 @@ function buscarRep(){
 
   const [userId,user]=active[Math.floor(Math.random()*active.length)];
   currentRep={userId, username:user.username, src:user.src};
+  lastRepQueueTs = Date.now(); // solo mensajes a partir de este momento
 
   document.getElementById('repCard').classList.add('show');
   document.getElementById('repName').textContent=user.username;
@@ -311,6 +312,7 @@ function activarModVip(){
       const pool = stillActiveSubs.length > 0 ? stillActiveSubs : activeSubs;
       const [userId,user]=pool[Math.floor(Math.random()*pool.length)];
       currentRep={userId, username:user.username, src:user.src};
+      lastRepQueueTs = Date.now(); // solo mensajes a partir de este momento
 
       document.getElementById('repCard').classList.add('show');
       document.getElementById('repName').textContent='⭐ '+user.username;
