@@ -16,9 +16,13 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 .rep-name{font-size:22px;font-weight:900;color:#FFD000;letter-spacing:1px;margin-bottom:2px;}
 .rep-src{font-size:11px;color:rgba(255,208,0,.5);letter-spacing:1px;}
 .rep-last{font-size:12px;color:rgba(255,255,255,.4);margin-top:6px;font-style:italic;max-height:36px;overflow:hidden;}
+/* FIX: countdown del rep activo */
+.rep-timer{font-size:10px;color:rgba(255,208,0,.4);margin-top:4px;letter-spacing:.5px;}
 .reader-status{font-size:11px;padding:8px 12px;border-radius:8px;margin-bottom:10px;text-align:center;font-weight:600;}
 .reader-ok{background:rgba(68,222,128,0.1);border:1px solid rgba(68,222,128,0.3);color:#4ade80;}
 .reader-err{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#f87171;}
+/* FIX: banner demo visible */
+.demo-warning{display:none;background:rgba(255,165,0,.12);border:1px solid rgba(255,165,0,.4);border-radius:8px;padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#FFA500;margin-bottom:10px;letter-spacing:.5px;}
 .conn-row{display:flex;gap:6px;margin-top:8px;}
 .cbadge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.5px;opacity:.25;transition:.3s;}
 .cbadge.on{opacity:1;}
@@ -69,17 +73,21 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 <h1>🎤 Representante del Stream</h1>
 <div class="sub">Selecciona un representante del chat y activa su TTS</div>
 
-<!-- Estado Chat Reader -->
+<!-- FIX: Banner demo visible para no confundirse en stream real -->
+<div class="demo-warning" id="demoWarning">
+  ⚠️ MODO PRUEBA ACTIVO — Los datos del chat son FALSOS
+</div>
+
 <div id="readerStatus" class="reader-status reader-err">⚠️ Chat Reader no conectado</div>
 
-<!-- REP ACTIVO -->
 <div class="rep-card" id="repCard">
   <div class="rep-name" id="repName">—</div>
   <div class="rep-src" id="repSrc">YOUTUBE</div>
   <div class="rep-last" id="repLast">Esperando mensaje...</div>
+  <!-- FIX: mostrar hace cuánto fue seleccionado + aviso de auto-clear -->
+  <div class="rep-timer" id="repTimer"></div>
 </div>
 
-<!-- CANDIDATOS -->
 <div class="section">
   <div class="section-title">Candidatos activos</div>
   <div class="window-row">
@@ -108,7 +116,6 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
   </div>
 </div>
 
-<!-- CONTROLES -->
 <button class="btn-siren" id="btnSiren" onclick="activarModVip()">🚨 ACTIVAR MODO VIP — Representante Suscriptor</button>
 <button class="btn-main btn-buscar" id="btnBuscar" onclick="buscarRep()">🎲 BUSCAR REPRESENTANTE</button>
 <div class="btn-row2">
@@ -128,14 +135,17 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 const LS_REP = 'rep_state';
 const LS_MSG = 'rep_message';
 
-// ══ SIN NINGUNA LLAMADA A YOUTUBE API ══
-// Todo se lee del localStorage que escribe chat-reader.html
-
-let windowSecs = 10;
-let soloSubs   = false;
-let currentRep = null;
+let windowSecs  = 10;
+let soloSubs    = false;
+let currentRep  = null;
 let recentUsers = {};
 window._lastRepMsgTs = 0;
+
+// FIX: timeout automático para rep (45 min) — evita que quede pegado indefinidamente
+const REP_AUTO_CLEAR_MS = 45 * 60 * 1000;
+let repAutoTimer   = null;
+let repStartTime   = 0;
+let repTimerTicker = null;
 
 // ══ Monitorear Chat Reader ══
 setInterval(()=>{
@@ -161,10 +171,10 @@ setInterval(()=>{
   }catch(e){}
 }, 500);
 
-// ══ Escuchar mensajes del rep — 100ms para tiempo real ══
+// ══ Escuchar mensajes del rep ══
 setInterval(()=>{
   try{
-    if(!currentRep) return; // Solo cuando hay rep activo
+    if(!currentRep) return;
     const rawMsg = localStorage.getItem('chat_messages');
     if(!rawMsg) return;
     const msg = JSON.parse(rawMsg);
@@ -192,6 +202,29 @@ setInterval(()=>{
   ).join('');
 }, 1000);
 
+// FIX: ticker que muestra hace cuánto está activo el rep y avisa del auto-clear
+function startRepTicker(){
+  if(repTimerTicker) clearInterval(repTimerTicker);
+  repStartTime = Date.now();
+  repTimerTicker = setInterval(()=>{
+    if(!currentRep){ clearInterval(repTimerTicker); return; }
+    const elapsed = Date.now() - repStartTime;
+    const mins = Math.floor(elapsed / 60000);
+    const secs = Math.floor((elapsed % 60000) / 1000);
+    const remaining = Math.max(0, REP_AUTO_CLEAR_MS - elapsed);
+    const remMins = Math.floor(remaining / 60000);
+    const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+    const el = document.getElementById('repTimer');
+    if(remMins <= 5) {
+      el.textContent = `⏰ Activo ${timeStr} — auto-clear en ${remMins}min`;
+      el.style.color = 'rgba(255,100,100,.6)';
+    } else {
+      el.textContent = `Activo ${timeStr}`;
+      el.style.color = 'rgba(255,208,0,.4)';
+    }
+  }, 1000);
+}
+
 function setWindow(s, btn){
   windowSecs=s;
   document.querySelectorAll('.wbtn').forEach(b=>b.classList.remove('on'));
@@ -201,7 +234,7 @@ function setWindow(s, btn){
 function setSubs(val, btn){
   soloSubs=val;
   document.querySelectorAll('#btnTodos, #btnSubs').forEach(b=>{
-    b.style.background='';b.style.borderColor='';b.style.color='';
+    b.style.background=''; b.style.borderColor=''; b.style.color='';
   });
   btn.style.background='rgba(255,185,0,.15)';
   btn.style.borderColor='rgba(255,185,0,.35)';
@@ -212,10 +245,13 @@ function buscarRep(){
   const now=Date.now();
   const active=Object.entries(recentUsers)
     .filter(([_,u])=>now-u.lastSeen<=windowSecs*1000&&(!soloSubs||u.isMember));
-  if(active.length===0){setStatus('⚠️ No hay usuarios activos','err');return;}
+  if(active.length===0){
+    setStatus(`⚠️ No hay usuarios activos en los últimos ${windowSecs}s`,'err');
+    return;
+  }
 
   const [userId,user]=active[Math.floor(Math.random()*active.length)];
-  currentRep={userId,username:user.username,src:user.src};
+  currentRep={userId, username:user.username, src:user.src};
 
   document.getElementById('repCard').classList.add('show');
   document.getElementById('repName').textContent=user.username;
@@ -230,9 +266,12 @@ function buscarRep(){
     trigger:Date.now(), candidates,
     chosen:user.username,
     repUserId:userId, repUsername:user.username,
-    repIsMember:false, // Normal = sin jackpot
+    repIsMember:false,
     clear:0,
   }));
+
+  // FIX: auto-clear después de 45 min
+  armRepAutoTimer();
   setStatus(`🎤 ${user.username} es el nuevo representante`,'ok');
 }
 
@@ -240,43 +279,76 @@ function activarModVip(){
   const now=Date.now();
   const activeSubs=Object.entries(recentUsers)
     .filter(([_,u])=>now-u.lastSeen<=windowSecs*1000&&u.isMember);
-  if(activeSubs.length===0){setStatus('⚠️ No hay suscriptores activos','err');return;}
+
+  // FIX: mensaje específico cuando no hay suscriptores en la ventana
+  if(activeSubs.length===0){
+    setStatus(`⚠️ Sin suscriptores activos en ${windowSecs}s — amplía la ventana de tiempo`,'err');
+    return;
+  }
 
   const btn=document.getElementById('btnSiren');
-  btn.disabled=true;btn.textContent='🚨 Activando...';
-
+  btn.disabled=true;
+  btn.textContent='🚨 Activando...';
   localStorage.setItem('rep_siren',JSON.stringify({ts:Date.now()}));
   setStatus('🚨 Sirena activada — buscando suscriptor...','loading');
 
   setTimeout(()=>{
-    const [userId,user]=activeSubs[Math.floor(Math.random()*activeSubs.length)];
-    currentRep={userId,username:user.username,src:user.src};
+    // FIX: try/catch + finally para garantizar que el botón se reactive siempre
+    try {
+      // Re-verificar que aún hay suscriptores en la ventana (pueden haber salido)
+      const nowInner = Date.now();
+      const stillActiveSubs = Object.entries(recentUsers)
+        .filter(([_,u])=>nowInner-u.lastSeen<=windowSecs*1000&&u.isMember);
 
-    document.getElementById('repCard').classList.add('show');
-    document.getElementById('repName').textContent='⭐ '+user.username;
-    document.getElementById('repSrc').textContent=user.src==='yt'?'▶ YOUTUBE':'⚡ KICK';
-    document.getElementById('repLast').textContent='Esperando mensaje...';
+      const pool = stillActiveSubs.length > 0 ? stillActiveSubs : activeSubs;
+      const [userId,user]=pool[Math.floor(Math.random()*pool.length)];
+      currentRep={userId, username:user.username, src:user.src};
 
-    const candidates=Object.entries(recentUsers)
-      .filter(([_,u])=>now-u.lastSeen<=windowSecs*1000)
-      .map(([_,u])=>u.username).slice(0,20);
+      document.getElementById('repCard').classList.add('show');
+      document.getElementById('repName').textContent='⭐ '+user.username;
+      document.getElementById('repSrc').textContent=user.src==='yt'?'▶ YOUTUBE':'⚡ KICK';
+      document.getElementById('repLast').textContent='Esperando mensaje...';
 
-    localStorage.setItem(LS_REP, JSON.stringify({
-      trigger:Date.now(), candidates,
-      chosen:user.username,
-      repUserId:userId, repUsername:user.username,
-      repIsMember:true, // Jackpot!
-      clear:0,
-    }));
+      const candidates=Object.entries(recentUsers)
+        .filter(([_,u])=>nowInner-u.lastSeen<=windowSecs*1000)
+        .map(([_,u])=>u.username).slice(0,20);
 
-    btn.disabled=false;
-    btn.textContent='🚨 ACTIVAR MODO VIP — Representante Suscriptor';
-    setStatus('⭐ '+user.username+' es el representante VIP','ok');
-  },4200);
+      localStorage.setItem(LS_REP, JSON.stringify({
+        trigger:Date.now(), candidates,
+        chosen:user.username,
+        repUserId:userId, repUsername:user.username,
+        repIsMember:true,
+        clear:0,
+      }));
+
+      // FIX: auto-clear después de 45 min
+      armRepAutoTimer();
+      setStatus('⭐ '+user.username+' es el representante VIP','ok');
+
+    } catch(e) {
+      setStatus('⚠️ Error al seleccionar suscriptor','err');
+    } finally {
+      // FIX: garantizar que el botón siempre se reactive aunque haya error
+      btn.disabled=false;
+      btn.textContent='🚨 ACTIVAR MODO VIP — Representante Suscriptor';
+    }
+  }, 4200);
+}
+
+// FIX: armar el timer de auto-clear del rep
+function armRepAutoTimer(){
+  if(repAutoTimer) clearTimeout(repAutoTimer);
+  repAutoTimer = setTimeout(()=>{
+    if(currentRep){
+      limpiarRep();
+      setStatus('⏰ Representante auto-eliminado (45min)','loading');
+    }
+  }, REP_AUTO_CLEAR_MS);
+  startRepTicker();
 }
 
 function relayMessage(userId,username,text){
-  if(!text)return;
+  if(!text) return;
   localStorage.setItem(LS_MSG,JSON.stringify({userId,username,text,ts:Date.now()}));
   document.getElementById('repLast').textContent='"'+text.substring(0,80)+'"';
 }
@@ -289,11 +361,25 @@ function silenciarTTS(){
 
 function limpiarRep(){
   currentRep=null;
-  localStorage.setItem('chat_demand', '0'); // pausar polling
+  if(repAutoTimer){ clearTimeout(repAutoTimer); repAutoTimer=null; }
+  if(repTimerTicker){ clearInterval(repTimerTicker); repTimerTicker=null; }
+  document.getElementById('repTimer').textContent='';
+  localStorage.setItem('chat_demand','0');
   document.getElementById('repCard').classList.remove('show');
   const prev=JSON.parse(localStorage.getItem(LS_REP)||'{}');
   localStorage.setItem(LS_REP,JSON.stringify({...prev,repUserId:null,repUsername:null,clear:Date.now()}));
   setStatus('Representante eliminado','');
+}
+
+function resetTodo(){
+  limpiarRep();
+  // FIX: ocultar banner demo al resetear
+  document.getElementById('demoWarning').style.display='none';
+  localStorage.removeItem('chat_users');
+  localStorage.removeItem('chat_messages');
+  recentUsers={};
+  setStatus('Reset completo','ok');
+  setTimeout(()=>setStatus('',''),2000);
 }
 
 function testTTS(){
@@ -322,13 +408,16 @@ function modoDemo(){
     users[u.id]={username:u.name,src:u.src,lastSeen:now,text:'',isMember:!!u.isMember};
   });
   localStorage.setItem('chat_users',JSON.stringify(users));
-  localStorage.setItem('chat_status',JSON.stringify({ytConnected:true,kickConnected:true,keyIdx:0}));
+  localStorage.setItem('chat_status',JSON.stringify({ytConnected:true,kickConnected:true,keyIdx:0,ts:Date.now()}));
+
+  // FIX: mostrar banner de advertencia demo
+  document.getElementById('demoWarning').style.display='block';
   setStatus('🧪 Modo prueba activo — '+fakeUsers.length+' usuarios cargados','ok');
 }
 
 function setStatus(msg,type){
   const el=document.getElementById('statusBar');
-  el.textContent=msg;el.className='status '+(type||'');
+  el.textContent=msg; el.className='status '+(type||'');
 }
 </script>
 </body>
