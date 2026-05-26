@@ -139,7 +139,7 @@ let windowSecs  = 10;
 let soloSubs    = false;
 let currentRep  = null;
 let recentUsers = {};
-window._lastRepMsgTs = 0;
+// (lastRepQueueTs se declara junto al interval del rep más abajo)
 
 // FIX: timeout automático para rep (45 min) — evita que quede pegado indefinidamente
 const REP_AUTO_CLEAR_MS = 45 * 60 * 1000;
@@ -171,18 +171,26 @@ setInterval(()=>{
   }catch(e){}
 }, 500);
 
-// ══ Escuchar mensajes del rep ══
+// ══ Escuchar mensajes del rep — escanea chat_queue, no chat_messages ══
+// ANTES: leía chat_messages (último mensaje). Con 1400 personas, el mensaje
+//        del rep se sobreescribía antes de que el interval de 100ms lo leyera.
+// AHORA: escanea chat_queue buscando mensajes del rep por userId.
+//        Con queue de 500 mensajes, ningún mensaje del rep se pierde.
+let lastRepQueueTs = 0;
 setInterval(()=>{
   try{
     if(!currentRep) return;
-    const rawMsg = localStorage.getItem('chat_messages');
-    if(!rawMsg) return;
-    const msg = JSON.parse(rawMsg);
-    if(!msg.ts||msg.ts===window._lastRepMsgTs) return;
-    window._lastRepMsgTs = msg.ts;
-    if(msg.userId === currentRep.userId){
-      relayMessage(msg.userId, msg.username, msg.text);
-    }
+    const raw = localStorage.getItem('chat_queue');
+    if(!raw) return;
+    const queue = JSON.parse(raw);
+    // Buscar mensajes del rep más recientes que el último procesado
+    const repMsgs = queue.filter(m => m.userId === currentRep.userId && m.ts > lastRepQueueTs);
+    if(!repMsgs.length) return;
+    // Actualizar timestamp para no reprocesar
+    lastRepQueueTs = Math.max(...repMsgs.map(m => m.ts));
+    // Relayar el más reciente
+    const latest = repMsgs[repMsgs.length - 1];
+    relayMessage(latest.userId, latest.username, latest.text);
   }catch(e){}
 }, 100);
 
@@ -361,6 +369,7 @@ function silenciarTTS(){
 
 function limpiarRep(){
   currentRep=null;
+  lastRepQueueTs = 0; // resetear para que el próximo rep empiece desde cero
   if(repAutoTimer){ clearTimeout(repAutoTimer); repAutoTimer=null; }
   if(repTimerTicker){ clearInterval(repTimerTicker); repTimerTicker=null; }
   document.getElementById('repTimer').textContent='';
