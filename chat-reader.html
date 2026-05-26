@@ -137,33 +137,47 @@ let lastPollSuccess = 0;
 // FIX 2: timestamp ISO del último mensaje procesado — evita duplicados al reconectar
 let lastMsgPublishedAt = '';
 
-// ══ Guardar mensaje ══
+// ══ pushMessage — para mensajes individuales (Kick) ══
 function pushMessage(userId, username, text, src, isMember) {
   if(!text) return;
-  totalMsg++;
-  document.getElementById('statMsg').textContent = totalMsg;
-
   const msg = { userId, username, text, src, isMember: !!isMember, ts: Date.now() };
-  localStorage.setItem(LS_CHAT, JSON.stringify(msg));
+  batchPushMessages([msg]);
+}
 
-  // Cola para votos
+// ══ batchPushMessages — para lotes de YouTube (N mensajes, 1 sola escritura a queue) ══
+// ANTES: pushMessage × 200 = 200 read-modify-write de localStorage → cola saturada
+// AHORA: 1 lectura + append de todos + 1 escritura → 0 pérdidas
+function batchPushMessages(msgs) {
+  if(!msgs.length) return;
+  const now = Date.now();
+
+  // ── Actualizar último mensaje (para rep-overlay/control) ──
+  const last = msgs[msgs.length - 1];
+  localStorage.setItem(LS_CHAT, JSON.stringify(last));
+
+  // ── Queue: una sola lectura + append + una sola escritura ──
   let queue = [];
   try { queue = JSON.parse(localStorage.getItem(LS_QUEUE) || '[]'); } catch(e) {}
-  queue.push(msg);
-  if(queue.length > 100) queue = queue.slice(-100);
+  queue.push(...msgs);
+  if(queue.length > 500) queue = queue.slice(-500); // FIX: 100 → 500
   localStorage.setItem(LS_QUEUE, JSON.stringify(queue));
 
-  // Usuarios activos
+  // ── Usuarios activos: una sola lectura + update todos + una sola escritura ──
   let users = {};
   try { users = JSON.parse(localStorage.getItem(LS_USERS) || '{}'); } catch(e) {}
-  users[userId] = { username, src, lastSeen: Date.now(), text, isMember: !!isMember };
+  for(const msg of msgs) {
+    users[msg.userId] = { username:msg.username, src:msg.src, lastSeen:now, text:msg.text, isMember:msg.isMember };
+  }
   // FIX 4: limpiar usuarios que no se han visto en más de 24h
-  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const cutoff = now - 24 * 60 * 60 * 1000;
   for(const uid in users) { if(users[uid].lastSeen < cutoff) delete users[uid]; }
   localStorage.setItem(LS_USERS, JSON.stringify(users));
-  document.getElementById('statUsers').textContent = Object.keys(users).length;
 
-  addLog(username, text, src);
+  // ── UI ──
+  totalMsg += msgs.length;
+  document.getElementById('statMsg').textContent = totalMsg;
+  document.getElementById('statUsers').textContent = Object.keys(users).length;
+  addLog(last.username, last.text, last.src);
   saveStatus(true);
 }
 
@@ -298,7 +312,7 @@ function startPolling() {
 async function pollYouTube() {
   if(!ytChatId) return;
   try {
-    const url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${ytChatId}&part=snippet,authorDetails&maxResults=200&key=${API_KEYS[keyIdx]}${ytNextToken ? '&pageToken='+ytNextToken : ''}`;
+    const url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${ytChatId}&part=snippet,authorDetails&maxResults=2000&key=${API_KEYS[keyIdx]}${ytNextToken ? '&pageToken='+ytNextToken : ''}`;
     const res  = await fetch(url);
     const data = await res.json();
 
@@ -338,6 +352,8 @@ async function pollYouTube() {
     setConnectedUI(true);
     saveStatus(true);
 
+    // ── Procesar lote completo → un solo batch write ──
+    const batch = [];
     for(const item of (data.items || [])) {
       const uid      = item.authorDetails?.channelId;
       const name     = item.authorDetails?.displayName || 'Usuario';
@@ -347,15 +363,16 @@ async function pollYouTube() {
         item.authorDetails?.isChatModerator ||
         item.authorDetails?.isChatOwner
       );
-      if(!uid) continue;
+      if(!uid || !text) continue;
 
       // FIX 2: saltar mensajes ya procesados (duplicados por reconexión)
       const publishedAt = item.snippet?.publishedAt || '';
       if(publishedAt && publishedAt <= lastMsgPublishedAt) continue;
       if(publishedAt > lastMsgPublishedAt) lastMsgPublishedAt = publishedAt;
 
-      pushMessage(uid, name, text, 'yt', isMember);
+      batch.push({ userId:uid, username:name, text, src:'yt', isMember:!!isMember, ts:Date.now() });
     }
+    if(batch.length) batchPushMessages(batch);
 
     // Respetar el intervalo que pide YouTube (mínimo 3s)
     const interval = Math.max(3000, data.pollingIntervalMillis || 3000);
