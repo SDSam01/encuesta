@@ -34,6 +34,7 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 .cand-tag{font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);}
 .cand-tag.yt{border-left:2px solid #ff5555;}
 .cand-tag.kick{border-left:2px solid #53fc53;}
+.cand-tag.twitch{border-left:2px solid #9146FF;}
 .cand-count{font-size:11px;color:rgba(255,255,255,.25);margin-top:4px;}
 .window-row{display:flex;align-items:center;gap:8px;margin-top:6px;}
 .window-label{font-size:10px;color:rgba(255,255,255,.3);font-weight:600;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
@@ -109,6 +110,7 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
   <div class="conn-row">
     <span class="cbadge cb-yt" id="dotYT">▶ YouTube</span>
     <span class="cbadge cb-kick" id="dotKick">⚡ Kick</span>
+    <span class="cbadge" style="background:rgba(145,70,255,.1);color:#9146FF;border:1px solid rgba(145,70,255,.25);" id="dotTwitch">🟣 Twitch</span>
   </div>
   <div class="candidates">
     <div class="cand-count" id="candCount">0 personas activas en el chat</div>
@@ -156,6 +158,8 @@ setInterval(()=>{
     el.textContent='🟢 Chat Reader activo — key '+(cs.keyIdx+1||1)+'/6';
     document.getElementById('dotYT').classList.add('on');
     if(cs.kickConnected) document.getElementById('dotKick').classList.add('on');
+    if(cs.twitchConnected) document.getElementById('dotTwitch').classList.add('on');
+    else document.getElementById('dotTwitch').classList.remove('on');
   } else {
     el.className='reader-status reader-err';
     el.textContent='⚠️ Chat Reader no conectado — ábrelo primero';
@@ -264,7 +268,7 @@ function buscarRep(){
 
   document.getElementById('repCard').classList.add('show');
   document.getElementById('repName').textContent=user.username;
-  document.getElementById('repSrc').textContent=user.src==='yt'?'▶ YOUTUBE':'⚡ KICK';
+  document.getElementById('repSrc').textContent=user.src==='yt'?'▶ YOUTUBE':user.src==='kick'?'⚡ KICK':'🟣 TWITCH';
   document.getElementById('repLast').textContent='Esperando mensaje...';
 
   const candidates=Object.entries(recentUsers)
@@ -316,7 +320,7 @@ function activarModVip(){
 
       document.getElementById('repCard').classList.add('show');
       document.getElementById('repName').textContent='⭐ '+user.username;
-      document.getElementById('repSrc').textContent=user.src==='yt'?'▶ YOUTUBE':'⚡ KICK';
+      document.getElementById('repSrc').textContent=user.src==='yt'?'▶ YOUTUBE':user.src==='kick'?'⚡ KICK':'🟣 TWITCH';
       document.getElementById('repLast').textContent='Esperando mensaje...';
 
       const candidates=Object.entries(recentUsers)
