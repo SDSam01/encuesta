@@ -8,7 +8,6 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-family:'Bebas Neue',sans-serif;}
 
-/* ══ Sirena ══ */
 #sirenOverlay{
   position:fixed;inset:0;z-index:60;pointer-events:none;
   opacity:0;transition:opacity .3s;
@@ -42,7 +41,6 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
   animation:sirenText .5s infinite alternate;
 }
 
-/* ══ Fondo ══ */
 #bg{
   position:fixed;inset:0;background:rgba(0,0,0,0);
   transition:background .5s;pointer-events:none;z-index:10;
@@ -50,12 +48,8 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 #bg.show{background:rgba(0,0,0,0.85);}
 #bg.jackpot{background:rgba(0,0,0,0.92);}
 
-/* ══ Canvas partículas ══ */
 #particles{position:fixed;inset:0;z-index:15;pointer-events:none;}
 
-/* ══════════════════════════════
-   ANIMACIÓN NORMAL (viewer)
-══════════════════════════════ */
 #stage{
   position:fixed;inset:0;z-index:20;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -82,9 +76,6 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 .s-badge{font-size:20px;letter-spacing:4px;color:rgba(255,208,0,.6);margin-top:14px;opacity:0;transition:opacity .5s;}
 .s-badge.show{opacity:1;}
 
-/* ══════════════════════════════
-   JACKPOT MODE (suscriptores)
-══════════════════════════════ */
 #jackpotStage{
   position:fixed;inset:0;z-index:22;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -92,7 +83,6 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 }
 #jackpotStage.show{opacity:1;}
 
-/* Título jackpot */
 .jp-eyebrow{
   font-size:30px;letter-spacing:12px;color:rgba(255,215,0,.7);
   margin-bottom:24px;text-transform:uppercase;
@@ -101,35 +91,23 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 }
 @keyframes eyebrowPulse{from{opacity:.7;}to{opacity:1;}}
 
-/* ══ Slot machine — EPIC SIZE ══ */
-.jp-slots{
-  display:flex;gap:24px;margin-bottom:40px;
-}
+.jp-slots{display:flex;gap:24px;margin-bottom:40px;}
 .jp-reel{
   width:380px;height:160px;
   background:linear-gradient(180deg,rgba(0,0,0,.9),rgba(20,10,0,.95));
   border:3px solid rgba(255,215,0,.5);
   border-radius:20px;overflow:hidden;position:relative;
-  box-shadow:
-    0 0 40px rgba(255,215,0,.35),
-    0 0 80px rgba(255,150,0,.15),
-    inset 0 0 40px rgba(0,0,0,.6);
+  box-shadow:0 0 40px rgba(255,215,0,.35),0 0 80px rgba(255,150,0,.15),inset 0 0 40px rgba(0,0,0,.6);
   animation:reelGlow 2s ease-in-out infinite alternate;
 }
 @keyframes reelGlow{
   from{box-shadow:0 0 30px rgba(255,215,0,.25),0 0 60px rgba(255,150,0,.1),inset 0 0 30px rgba(0,0,0,.6);}
   to{box-shadow:0 0 50px rgba(255,215,0,.5),0 0 100px rgba(255,150,0,.25),inset 0 0 40px rgba(0,0,0,.6);}
 }
-.jp-reel::before,.jp-reel::after{
-  content:'';position:absolute;left:0;right:0;height:50px;z-index:2;pointer-events:none;
-}
+.jp-reel::before,.jp-reel::after{content:'';position:absolute;left:0;right:0;height:50px;z-index:2;pointer-events:none;}
 .jp-reel::before{top:0;background:linear-gradient(rgba(0,0,0,.95),transparent);}
 .jp-reel::after{bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.95));}
-.jp-reel-inner{
-  position:absolute;width:100%;
-  transition:transform 0s;
-  display:flex;flex-direction:column;align-items:center;
-}
+.jp-reel-inner{position:absolute;width:100%;transition:transform 0s;display:flex;flex-direction:column;align-items:center;}
 .jp-reel-item{
   height:160px;display:flex;align-items:center;justify-content:center;
   font-size:42px;letter-spacing:3px;color:rgba(255,255,255,.7);
@@ -143,20 +121,16 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
   font-size:48px;
 }
 
-/* Líneas central del slot — doble */
 .jp-reel-line{
   position:absolute;top:50%;left:0;right:0;height:3px;
   background:linear-gradient(90deg,transparent 0%,rgba(255,215,0,.8) 30%,rgba(255,255,200,1) 50%,rgba(255,215,0,.8) 70%,transparent 100%);
   transform:translateY(-50%);z-index:3;
   box-shadow:0 0 12px rgba(255,215,0,.6),0 0 24px rgba(255,215,0,.3);
 }
-.jp-reel-line::before,.jp-reel-line::after{
-  content:'';position:absolute;left:0;right:0;height:1px;background:rgba(255,215,0,.3);
-}
+.jp-reel-line::before,.jp-reel-line::after{content:'';position:absolute;left:0;right:0;height:1px;background:rgba(255,215,0,.3);}
 .jp-reel-line::before{top:-8px;}
 .jp-reel-line::after{bottom:-8px;}
 
-/* Spotlight */
 #jpSpotlight{
   position:fixed;top:0;left:50%;transform:translateX(-50%);
   width:800px;height:600px;
@@ -164,81 +138,44 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
   pointer-events:none;z-index:0;
   animation:spotPulse 1.5s infinite alternate;
 }
-@keyframes spotPulse{
-  from{opacity:.6;}to{opacity:1;}
-}
+@keyframes spotPulse{from{opacity:.6;}to{opacity:1;}}
 
-/* ══ JACKPOT reveal ══ */
 #jpReveal{
   position:fixed;inset:0;z-index:35;
-  display:none;
-  flex-direction:column;align-items:center;justify-content:center;
-  text-align:center;
-  background:rgba(0,0,0,0.92);
-  opacity:0;
-  transition:opacity .6s ease;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;background:rgba(0,0,0,0.92);
+  opacity:0;transition:opacity .6s ease;
 }
-#jpReveal.show{
-  display:flex;
-  opacity:1;
-  animation:revealBgIn .6s ease forwards;
-}
-@keyframes revealBgIn{
-  from{background:rgba(0,0,0,0);}
-  to{background:rgba(0,0,0,0.92);}
-}
+#jpReveal.show{display:flex;opacity:1;animation:revealBgIn .6s ease forwards;}
+@keyframes revealBgIn{from{background:rgba(0,0,0,0);}to{background:rgba(0,0,0,0.92);}}
 
 .jp-jackpot-text{
   font-size:130px;letter-spacing:12px;
   background:linear-gradient(180deg,#FFEE00 0%,#FFD700 30%,#FFA500 70%,#FF6B00 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
-  text-shadow:none;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;
   filter:drop-shadow(0 0 40px rgba(255,215,0,.9)) drop-shadow(0 0 80px rgba(255,150,0,.6));
   animation:jpTextIn .7s cubic-bezier(.34,1.56,.64,1) forwards, jpTextPulse 1.5s 0.7s infinite alternate;
   opacity:0;line-height:1;
 }
-@keyframes jpTextIn{
-  0%{opacity:0;transform:scale(.5) translateY(-40px);letter-spacing:2px;}
-  70%{opacity:1;transform:scale(1.06) translateY(4px);}
-  100%{opacity:1;transform:scale(1) translateY(0);letter-spacing:12px;}
-}
-@keyframes jpTextPulse{
-  from{filter:drop-shadow(0 0 30px rgba(255,215,0,.7)) drop-shadow(0 0 60px rgba(255,150,0,.4));transform:scale(1);}
-  to{filter:drop-shadow(0 0 60px rgba(255,215,0,1)) drop-shadow(0 0 120px rgba(255,150,0,.7));transform:scale(1.04);}
-}
+@keyframes jpTextIn{0%{opacity:0;transform:scale(.5) translateY(-40px);letter-spacing:2px;}70%{opacity:1;transform:scale(1.06) translateY(4px);}100%{opacity:1;transform:scale(1) translateY(0);letter-spacing:12px;}}
+@keyframes jpTextPulse{from{filter:drop-shadow(0 0 30px rgba(255,215,0,.7)) drop-shadow(0 0 60px rgba(255,150,0,.4));transform:scale(1);}to{filter:drop-shadow(0 0 60px rgba(255,215,0,1)) drop-shadow(0 0 120px rgba(255,150,0,.7));transform:scale(1.04);}}
 
 .jp-winner-name{
   font-size:110px;letter-spacing:8px;color:#fff;line-height:1;margin-top:16px;
-  text-shadow:
-    0 0 30px rgba(255,255,255,.9),
-    0 0 60px rgba(255,215,0,.7),
-    0 0 100px rgba(255,215,0,.4),
-    0 4px 20px rgba(0,0,0,.8);
+  text-shadow:0 0 30px rgba(255,255,255,.9),0 0 60px rgba(255,215,0,.7),0 0 100px rgba(255,215,0,.4),0 4px 20px rgba(0,0,0,.8);
   animation:jpNameIn .9s cubic-bezier(.34,1.56,.64,1) .5s forwards, jpNamePulse 2s 1.4s infinite alternate;
   opacity:0;
 }
-@keyframes jpNameIn{
-  0%{opacity:0;transform:scale(.2) translateY(60px);letter-spacing:0px;}
-  50%{opacity:1;transform:scale(1.12) translateY(-8px);}
-  75%{transform:scale(.95) translateY(2px);}
-  100%{opacity:1;transform:scale(1) translateY(0);letter-spacing:8px;}
-}
-@keyframes jpNamePulse{
-  from{text-shadow:0 0 30px rgba(255,255,255,.7),0 0 60px rgba(255,215,0,.5);}
-  to{text-shadow:0 0 50px rgba(255,255,255,1),0 0 100px rgba(255,215,0,.8),0 0 150px rgba(255,150,0,.4);}
-}
+@keyframes jpNameIn{0%{opacity:0;transform:scale(.2) translateY(60px);letter-spacing:0px;}50%{opacity:1;transform:scale(1.12) translateY(-8px);}75%{transform:scale(.95) translateY(2px);}100%{opacity:1;transform:scale(1) translateY(0);letter-spacing:8px;}}
+@keyframes jpNamePulse{from{text-shadow:0 0 30px rgba(255,255,255,.7),0 0 60px rgba(255,215,0,.5);}to{text-shadow:0 0 50px rgba(255,255,255,1),0 0 100px rgba(255,215,0,.8),0 0 150px rgba(255,150,0,.4);}}
 
 .jp-sub-badge{
-  font-size:22px;letter-spacing:8px;color:rgba(255,215,0,.9);
-  margin-top:18px;opacity:0;
-  transition:opacity .6s ease, transform .6s cubic-bezier(.34,1.56,.64,1);
-  transform:translateY(20px);
+  font-size:22px;letter-spacing:8px;color:rgba(255,215,0,.9);margin-top:18px;opacity:0;
+  transition:opacity .6s ease, transform .6s cubic-bezier(.34,1.56,.64,1);transform:translateY(20px);
   text-shadow:0 0 16px rgba(255,215,0,.7),0 0 32px rgba(255,150,0,.4);
 }
 .jp-sub-badge.show{opacity:1;transform:translateY(0);}
 
-/* Flash dorado para jackpot */
 #jpFlash{
   position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0;
   background:radial-gradient(ellipse at center,rgba(255,215,0,.6) 0%,rgba(255,150,0,0) 70%);
@@ -246,7 +183,6 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 }
 #jpFlash.show{opacity:1;}
 
-/* ══ HUD rep activo ══ */
 #repHud{
   position:fixed;top:55px;left:1120px;
   display:flex;align-items:center;gap:10px;
@@ -255,11 +191,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
   z-index:30;opacity:0;transition:opacity .5s;pointer-events:none;
 }
 #repHud.normal{border:1px solid rgba(255,208,0,.3);}
-#repHud.sub{
-  border:1px solid rgba(255,215,0,.7);
-  box-shadow:0 0 15px rgba(255,215,0,.3),0 0 30px rgba(255,150,0,.15);
-  background:rgba(20,12,0,.85);
-}
+#repHud.sub{border:1px solid rgba(255,215,0,.7);box-shadow:0 0 15px rgba(255,215,0,.3),0 0 30px rgba(255,150,0,.15);background:rgba(20,12,0,.85);}
 #repHud.show{opacity:1;}
 .hud-dot{width:10px;height:10px;border-radius:50%;background:#FFD000;animation:hdot 1.2s infinite;}
 @keyframes hdot{0%,100%{opacity:1;}50%{opacity:.2;}}
@@ -269,17 +201,13 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 .hud-name{font-size:17px;letter-spacing:2px;color:#FFD000;text-shadow:0 0 10px rgba(255,208,0,.6);}
 .hud-name.sub{color:#FFD700;text-shadow:0 0 15px rgba(255,215,0,.8),0 0 30px rgba(255,150,0,.4);}
 
-/* ══ TTS mensaje ══ */
 #ttsMsg{
   position:fixed;top:840px;left:940px;
   background:rgba(0,0,0,0.78);border:1px solid rgba(255,208,0,.25);
   border-radius:12px;padding:12px 20px;width:480px;
   z-index:30;opacity:0;transition:opacity .3s;pointer-events:none;
 }
-#ttsMsg.sub-rep{
-  border-color:rgba(255,215,0,.5);
-  box-shadow:0 0 12px rgba(255,215,0,.2);
-}
+#ttsMsg.sub-rep{border-color:rgba(255,215,0,.5);box-shadow:0 0 12px rgba(255,215,0,.2);}
 #ttsMsg.show{opacity:1;}
 .tts-user{font-size:15px;letter-spacing:2px;color:rgba(255,208,0,.7);margin-bottom:3px;}
 .tts-text{font-family:'Inter',sans-serif;font-size:19px;font-weight:700;color:#fff;letter-spacing:.5px;}
@@ -296,7 +224,6 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 <canvas id="particles"></canvas>
 <div id="jpFlash"></div>
 
-<!-- ANIMACIÓN NORMAL -->
 <div id="stage">
   <div class="s-eyebrow">Seleccionando...</div>
   <div class="s-title">REPRESENTANTE<br>DEL STREAM</div>
@@ -309,7 +236,6 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
   <div class="s-badge" id="sBadge">🎤 REPRESENTANTE OFICIAL</div>
 </div>
 
-<!-- JACKPOT MODE -->
 <div id="jackpotStage">
   <div class="jp-eyebrow">⭐ Buscando suscriptor ⭐</div>
   <div id="jpSpotlight"></div>
@@ -320,14 +246,12 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
   </div>
 </div>
 
-<!-- JACKPOT REVEAL — body level, position fixed -->
 <div id="jpReveal">
   <div class="jp-jackpot-text">👑 MIEMBRO VIP 👑</div>
   <div class="jp-winner-name" id="jpWinnerName">USUARIO</div>
   <div class="jp-sub-badge" id="jpSubBadge">⭐ REPRESENTANTE OFICIAL ⭐</div>
 </div>
 
-<!-- HUD activo -->
 <div id="repHud" class="normal">
   <span class="hud-dot"></span>
   <span id="hudCrown" style="display:none" class="hud-crown">👑</span>
@@ -335,7 +259,6 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
   <span class="hud-name" id="hudName">-</span>
 </div>
 
-<!-- TTS mensaje -->
 <div id="ttsMsg">
   <div class="tts-user" id="ttsMsgUser"></div>
   <div class="tts-text" id="ttsMsgText"></div>
@@ -347,12 +270,78 @@ let repUserId=null, repUsername=null, repIsSubscriber=false;
 let ttsTimeout=null, msgTimeout=null;
 let particles=[], pRAF=null;
 let lastTrigger=0, lastClear=0, pendingRep=null;
+// FIX: estado de la sirena para poder interrumpirla
+let sirenTimer=null, lastSirenTs=0;
 
-// ══ Polling localStorage ══
+// ══ FIX: AudioContext lazy con unlock periódico ══
+let _ac=null;
+function getAC(){
+  if(!_ac){
+    try{ _ac=new(window.AudioContext||window.webkitAudioContext)(); }
+    catch(e){ return null; }
+  }
+  if(_ac.state!=='running') _ac.resume().catch(()=>{});
+  return _ac;
+}
+const _audioUnlocker=setInterval(()=>{
+  const ac=getAC();
+  if(ac&&ac.state==='running') clearInterval(_audioUnlocker);
+},1000);
+
+// ══ FIX: Warmup de TTS para OBS ══
+// En OBS el speechSynthesis puede estar bloqueado sin interacción previa
+// Llamar getVoices() y un utterance silencioso ayuda a desbloquearlo
+function warmupTTS(){
+  try{
+    window.speechSynthesis.getVoices();
+    const u=new SpeechSynthesisUtterance(' ');
+    u.volume=0; u.rate=2;
+    window.speechSynthesis.speak(u);
+    setTimeout(()=>{ try{ window.speechSynthesis.cancel(); }catch(e){} },200);
+  }catch(e){}
+}
+warmupTTS();
+setTimeout(warmupTTS,2000);
+setTimeout(warmupTTS,5000);
+
+// ══ FIX: Polling de rep_siren — antes NUNCA se leía en el overlay ══
+// rep-control escribe rep_siren al localStorage pero el overlay nunca lo leía
+setInterval(()=>{
+  try{
+    const raw=localStorage.getItem('rep_siren');
+    if(!raw) return;
+    const s=JSON.parse(raw);
+    if(s.ts&&s.ts!==lastSirenTs){
+      lastSirenTs=s.ts;
+      showSirenAnimation();
+    }
+  }catch(e){}
+},300);
+
+// FIX: mostrar sirena y permitir interrupción
+function showSirenAnimation(){
+  const so=document.getElementById('sirenOverlay');
+  so.classList.add('show');
+  playSirenSound();
+  if(sirenTimer) clearTimeout(sirenTimer);
+  sirenTimer=setTimeout(()=>{
+    so.classList.remove('show');
+    sirenTimer=null;
+  },4000);
+}
+
+// FIX: ocultar sirena aunque esté a mitad de animación (para clear inmediato)
+function hideSirenAnimation(){
+  if(sirenTimer){ clearTimeout(sirenTimer); sirenTimer=null; }
+  document.getElementById('sirenOverlay').classList.remove('show');
+  stopSirenSound();
+}
+
+// ══ Polling principal del estado ══
 setInterval(()=>{
   try{
     const raw=localStorage.getItem(LS);
-    if(!raw)return;
+    if(!raw) return;
     const s=JSON.parse(raw);
     if(s.trigger&&s.trigger!==lastTrigger){
       lastTrigger=s.trigger;
@@ -368,9 +357,9 @@ setInterval(()=>{
 setInterval(()=>{
   try{
     const raw=localStorage.getItem('rep_message');
-    if(!raw)return;
+    if(!raw) return;
     const m=JSON.parse(raw);
-    if(!m.ts||m.ts===window._lastMsgTs)return;
+    if(!m.ts||m.ts===window._lastMsgTs) return;
     window._lastMsgTs=m.ts;
     if(repUserId&&m.userId===repUserId) speakMessage(repUsername,m.text,repIsSubscriber);
   }catch(e){}
@@ -388,21 +377,21 @@ function voiceFingerprint(username,isSub){
 }
 
 function speakMessage(username,text,isSub){
-  if(!text||text.length>200)return;
+  if(!text||text.length>200) return;
   window.speechSynthesis.cancel();
   document.getElementById('ttsMsgUser').textContent=(isSub?'⭐ ':'')+username;
   document.getElementById('ttsMsgText').textContent=text;
   const ttsEl=document.getElementById('ttsMsg');
   ttsEl.classList.toggle('sub-rep',!!isSub);
   ttsEl.classList.add('show');
-  if(msgTimeout)clearTimeout(msgTimeout);
+  if(msgTimeout) clearTimeout(msgTimeout);
   msgTimeout=setTimeout(()=>ttsEl.classList.remove('show'),5000);
   const{pitch,rate}=voiceFingerprint(username,isSub);
   const utt=new SpeechSynthesisUtterance(text);
-  utt.lang='es-MX';utt.pitch=pitch;utt.rate=rate;
+  utt.lang='es-MX'; utt.pitch=pitch; utt.rate=rate;
   const voices=window.speechSynthesis.getVoices();
   const esVoice=voices.find(v=>v.lang.startsWith('es'))||voices[0];
-  if(esVoice)utt.voice=esVoice;
+  if(esVoice) utt.voice=esVoice;
   window.speechSynthesis.speak(utt);
 }
 
@@ -430,20 +419,23 @@ function startAnimation(candidates,chosen){
 function revealChosen(name){
   document.getElementById('shuffleZone').style.display='none';
   const el=document.getElementById('chosenName');
-  el.textContent=name.toUpperCase();el.style.display='block';
-  void el.offsetWidth;el.classList.add('show');
+  el.textContent=name.toUpperCase(); el.style.display='block';
+  void el.offsetWidth; el.classList.add('show');
   setTimeout(()=>document.getElementById('sBadge').classList.add('show'),400);
   setTimeout(()=>{
-    document.getElementById('bg').className = '';
+    document.getElementById('bg').className='';
     document.getElementById('stage').classList.remove('show');
     stopParticles();
     activateRep(false);
   },6000);
 }
 
-// ══ JACKPOT MODE ══
+// ══ FIX: JACKPOT MODE — pad pool para evitar undefined en reeles ══
 function startJackpot(candidates,chosen){
-  const pool=candidates.length>0?candidates:['???'];
+  // FIX: garantizar mínimo 6 nombres únicos para que los reeles giren correctamente
+  let pool=candidates.length>0?[...candidates]:[chosen||'???'];
+  while(pool.length<6) pool=[...pool,...pool.slice(0,Math.max(1,6-pool.length))];
+
   document.getElementById('bg').className='jackpot show';
   document.getElementById('jpReveal').classList.remove('show');
   document.getElementById('jpSubBadge').classList.remove('show');
@@ -451,73 +443,60 @@ function startJackpot(candidates,chosen){
   startParticles(true);
   playJackpotSpin();
 
-  // Construir reels con nombres del pool
   [0,1,2].forEach(i=>{
     const inner=document.getElementById(`reel${i}inner`);
     inner.innerHTML='';
-    // Rellenar con nombres aleatorios para scroll
     const items=[...pool,...pool,...pool,...pool,chosen].sort(()=>Math.random()-.5);
     items.forEach(name=>{
       const div=document.createElement('div');
       div.className='jp-reel-item';
-      div.textContent=name.substring(0,14).toUpperCase();
+      // FIX: fallback a '???' si name es undefined
+      div.textContent=(name||'???').substring(0,14).toUpperCase();
       inner.appendChild(div);
     });
-    // Posición inicial aleatoria
     inner.style.transition='none';
     inner.style.transform=`translateY(-${Math.floor(Math.random()*items.length)*90}px)`;
   });
 
-  // Hacer girar cada reel y detenerlos uno por uno
-  spinReel(0, chosen, pool, ()=>{
-    setTimeout(()=>spinReel(1, chosen, pool, ()=>{
-      setTimeout(()=>spinReel(2, chosen, pool, ()=>{
-        // Los 3 detuvieron — reveal jackpot
+  spinReel(0,chosen,pool,()=>{
+    setTimeout(()=>spinReel(1,chosen,pool,()=>{
+      setTimeout(()=>spinReel(2,chosen,pool,()=>{
         setTimeout(()=>revealJackpot(chosen),500);
       }),400);
     }),400);
   });
 }
 
-function spinReel(reelIdx, winner, pool, onStop){
+function spinReel(reelIdx,winner,pool,onStop){
   const inner=document.getElementById(`reel${reelIdx}inner`);
   const items=inner.querySelectorAll('.jp-reel-item');
   const itemH=160;
   const totalH=items.length*itemH;
-
-  // Velocidad inicial alta, desacelera gradualmente
   const spinDuration=1200+reelIdx*350;
   const start=performance.now();
   let currentPos=0;
-  let velocity=30; // píxeles por frame inicial
+  const velocity=30;
 
   function animate(now){
     const elapsed=now-start;
     const progress=Math.min(elapsed/spinDuration,1);
-
-    // Easing: velocidad alta al inicio, baja exponencialmente
     const easedVel=velocity*Math.pow(1-progress,2);
     currentPos=(currentPos+Math.max(easedVel,0.5))%totalH;
-
     inner.style.transition='none';
     inner.style.transform=`translateY(-${currentPos}px)`;
 
     if(progress<1){
       requestAnimationFrame(animate);
     } else {
-      // Encontrar el winner y hacer snap con bounce
-      let winnerIdx=-1;
+      // FIX: fallback si el winner no está en los items
+      let winnerIdx=0;
+      const winnerText=(winner||'???').substring(0,14).toUpperCase();
       Array.from(items).forEach((el,i)=>{
-        if(el.textContent===winner.substring(0,14).toUpperCase()) winnerIdx=i;
+        if(el.textContent===winnerText) winnerIdx=i;
       });
-      if(winnerIdx===-1) winnerIdx=0;
-
       const targetPos=winnerIdx*itemH;
-
-      // Pasar un poco del target (overshoot) luego bounce back
       inner.style.transition='transform .25s ease-in';
       inner.style.transform=`translateY(-${targetPos+15}px)`;
-
       setTimeout(()=>{
         inner.style.transition='transform .35s cubic-bezier(.34,1.56,.64,1)';
         inner.style.transform=`translateY(-${targetPos}px)`;
@@ -531,7 +510,6 @@ function spinReel(reelIdx, winner, pool, onStop){
 }
 
 function revealJackpot(name){
-  // Flash dorado doble
   const flash=document.getElementById('jpFlash');
   flash.classList.add('show');
   setTimeout(()=>{
@@ -540,34 +518,30 @@ function revealJackpot(name){
     setTimeout(()=>{flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),120);},320);
   },120);
 
-  // Ocultar reeles PERO mantener el fondo
   document.getElementById('jackpotStage').classList.remove('show');
   document.getElementById('bg').className='jackpot show';
 
-  // Mostrar reveal — position:fixed independiente del jackpotStage
   const reveal=document.getElementById('jpReveal');
-  document.getElementById('jpWinnerName').textContent=name.toUpperCase();
+  document.getElementById('jpWinnerName').textContent=(name||'???').toUpperCase();
   document.getElementById('jpSubBadge').classList.remove('show');
   reveal.classList.remove('show');
   void reveal.offsetWidth;
   reveal.classList.add('show');
 
   playJackpotWin();
-
   setTimeout(()=>document.getElementById('jpSubBadge').classList.add('show'),700);
   startParticles(true);
 
-  // Nombre visible 6 segundos
   setTimeout(()=>{
     reveal.classList.remove('show');
     document.getElementById('bg').className='';
     stopParticles();
-    setTimeout(()=>activateRep(true), 500);
+    setTimeout(()=>activateRep(true),500);
   },4000);
 }
 
 function activateRep(isSub){
-  if(!pendingRep)return;
+  if(!pendingRep) return;
   repUserId=pendingRep.userId;
   repUsername=pendingRep.username;
   repIsSubscriber=isSub;
@@ -584,11 +558,13 @@ function activateRep(isSub){
 }
 
 function clearRep(){
-  repUserId=null;repUsername=null;repIsSubscriber=false;
+  // FIX: también interrumpir la sirena si está corriendo
+  hideSirenAnimation();
+  repUserId=null; repUsername=null; repIsSubscriber=false;
   window.speechSynthesis.cancel();
   document.getElementById('repHud').classList.remove('show');
   document.getElementById('ttsMsg').classList.remove('show');
-  document.getElementById('bg').className = '';
+  document.getElementById('bg').className='';
   document.getElementById('stage').classList.remove('show');
   document.getElementById('jackpotStage').classList.remove('show');
   document.getElementById('jpReveal').classList.remove('show');
@@ -598,7 +574,7 @@ function clearRep(){
 // ══ Partículas ══
 function startParticles(jackpot){
   const canvas=document.getElementById('particles');
-  canvas.width=1920;canvas.height=1080;
+  canvas.width=1920; canvas.height=1080;
   const ctx=canvas.getContext('2d');
   const colors=jackpot
     ?['#FFD700','#FFC200','#FFEC00','#FF8C00','#ffffff','#FFD000','#FFA500']
@@ -620,11 +596,11 @@ function startParticles(jackpot){
   function loop(){
     ctx.clearRect(0,0,1920,1080);
     particles.forEach(p=>{
-      p.x+=p.vx;p.y+=p.vy;p.rot+=p.rotV;
+      p.x+=p.vx; p.y+=p.vy; p.rot+=p.rotV;
       if(jackpot&&p.y>1100){p.y=-20;p.x=Math.random()*1920;}
       else if(!jackpot){if(p.x<0||p.x>1920)p.vx*=-1;if(p.y<0||p.y>1080)p.vy*=-1;}
-      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);
-      ctx.globalAlpha=p.opacity;ctx.shadowColor=p.color;ctx.shadowBlur=jackpot?12:8;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.globalAlpha=p.opacity; ctx.shadowColor=p.color; ctx.shadowBlur=jackpot?12:8;
       ctx.fillStyle=p.color;
       if(jackpot&&p.w>0){ctx.fillRect(-p.w/2,-p.r/2,p.w,p.r);}
       else{ctx.beginPath();ctx.arc(0,0,p.r,0,Math.PI*2);ctx.fill();}
@@ -632,7 +608,7 @@ function startParticles(jackpot){
     });
     pRAF=requestAnimationFrame(loop);
   }
-  if(pRAF)cancelAnimationFrame(pRAF);
+  if(pRAF) cancelAnimationFrame(pRAF);
   loop();
 }
 
@@ -643,260 +619,243 @@ function stopParticles(){
 }
 
 // ══ Audio Engine ══
-const AC = new (window.AudioContext || window.webkitAudioContext)();
-
-// Utilidades
-function makeNoise(duration) {
-  const buf = AC.createBuffer(1, AC.sampleRate * duration, AC.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  const src = AC.createBufferSource();
-  src.buffer = buf;
+function makeNoise(duration){
+  const ac=getAC(); if(!ac) return null;
+  const buf=ac.createBuffer(1,ac.sampleRate*duration,ac.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+  const src=ac.createBufferSource();
+  src.buffer=buf;
   return src;
 }
 
-function makeOsc(type, freq) {
-  const o = AC.createOscillator();
-  o.type = type; o.frequency.value = freq;
+function makeOsc(type,freq){
+  const ac=getAC(); if(!ac) return null;
+  const o=ac.createOscillator();
+  o.type=type; o.frequency.value=freq;
   return o;
 }
 
-function conn(...nodes) {
-  for (let i = 0; i < nodes.length - 1; i++) nodes[i].connect(nodes[i+1]);
-  nodes[nodes.length-1].connect(AC.destination);
+function conn(...nodes){
+  const ac=getAC(); if(!ac) return;
+  for(let i=0;i<nodes.length-1;i++) if(nodes[i]&&nodes[i+1]) nodes[i].connect(nodes[i+1]);
+  if(nodes[nodes.length-1]) nodes[nodes.length-1].connect(ac.destination);
 }
 
-// ══ Sonido del reel girando (loop durante el spin) ══
-let reelSpinSource = null;
-function startReelSpinSound() {
-  AC.resume();
+// ══ FIX: Sonido de sirena real con posibilidad de parar ══
+let sirenOscSource=null;
+function playSirenSound(){
+  const ac=getAC(); if(!ac) return;
+  stopSirenSound();
+  const t=ac.currentTime;
+  const o=ac.createOscillator();
+  const g=ac.createGain();
+  const f=ac.createBiquadFilter();
+  f.type='lowpass'; f.frequency.value=900;
+
+  // Sweep ascendente/descendente × 4 ciclos
+  for(let i=0;i<8;i++){
+    const st=t+i*0.5;
+    o.frequency.setValueAtTime(600,st);
+    o.frequency.linearRampToValueAtTime(1200,st+0.25);
+    o.frequency.linearRampToValueAtTime(600,st+0.5);
+  }
+  o.type='sawtooth';
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(0.28,t+0.15);
+  g.gain.setValueAtTime(0.28,t+3.6);
+  g.gain.linearRampToValueAtTime(0,t+4.0);
+
+  o.connect(f); f.connect(g); g.connect(ac.destination);
+  o.start(t); o.stop(t+4.0);
+  sirenOscSource=o;
+}
+
+function stopSirenSound(){
+  if(sirenOscSource){
+    try{ sirenOscSource.stop(); }catch(e){}
+    sirenOscSource=null;
+  }
+}
+
+// ══ Reel spin sound ══
+let reelSpinSource=null;
+function startReelSpinSound(){
+  const ac=getAC(); if(!ac) return;
   stopReelSpinSound();
-  // Ruido mecánico de rodillos girando
-  const bufLen = AC.sampleRate * 0.5;
-  const buf = AC.createBuffer(1, bufLen, AC.sampleRate);
-  const d = buf.getChannelData(0);
-  // Patrón de clicks mecánicos
-  for (let i = 0; i < bufLen; i++) {
-    const pos = i / bufLen;
-    // Base de ruido
-    d[i] = (Math.random() * 2 - 1) * 0.15;
-    // Clicks periódicos (simula dientes de engranaje)
-    const clickFreq = 12;
-    if (Math.sin(pos * Math.PI * 2 * clickFreq) > 0.92) {
-      d[i] += (Math.random() * 2 - 1) * 0.6 * Math.pow(Math.abs(Math.sin(pos * Math.PI * 2 * clickFreq)), 8);
+  const bufLen=ac.sampleRate*0.5;
+  const buf=ac.createBuffer(1,bufLen,ac.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<bufLen;i++){
+    const pos=i/bufLen;
+    d[i]=(Math.random()*2-1)*0.15;
+    const clickFreq=12;
+    if(Math.sin(pos*Math.PI*2*clickFreq)>0.92){
+      d[i]+=(Math.random()*2-1)*0.6*Math.pow(Math.abs(Math.sin(pos*Math.PI*2*clickFreq)),8);
     }
   }
-  reelSpinSource = AC.createBufferSource();
-  reelSpinSource.buffer = buf;
-  reelSpinSource.loop = true;
-
-  const filter = AC.createBiquadFilter();
-  filter.type = 'bandpass'; filter.frequency.value = 800; filter.Q.value = 1.5;
-
-  const gain = AC.createGain();
-  gain.gain.setValueAtTime(0, AC.currentTime);
-  gain.gain.linearRampToValueAtTime(0.35, AC.currentTime + 0.3);
-
-  conn(reelSpinSource, filter, gain);
+  reelSpinSource=ac.createBufferSource();
+  reelSpinSource.buffer=buf;
+  reelSpinSource.loop=true;
+  const filter=ac.createBiquadFilter();
+  filter.type='bandpass'; filter.frequency.value=800; filter.Q.value=1.5;
+  const gain=ac.createGain();
+  gain.gain.setValueAtTime(0,ac.currentTime);
+  gain.gain.linearRampToValueAtTime(0.35,ac.currentTime+0.3);
+  reelSpinSource.connect(filter); filter.connect(gain); gain.connect(ac.destination);
   reelSpinSource.start();
 }
 
-function stopReelSpinSound() {
-  if (reelSpinSource) {
-    try {
-      reelSpinSource.stop();
-    } catch(e) {}
-    reelSpinSource = null;
+function stopReelSpinSound(){
+  if(reelSpinSource){
+    try{ reelSpinSource.stop(); }catch(e){}
+    reelSpinSource=null;
   }
 }
 
-// ══ Click al detenerse cada reel ══
-function playReelStop(idx) {
-  AC.resume();
-  const t = AC.currentTime;
-
-  // 1. Impacto mecánico pesado
-  const impactBuf = AC.createBuffer(1, AC.sampleRate * 0.08, AC.sampleRate);
-  const id = impactBuf.getChannelData(0);
-  for (let i = 0; i < id.length; i++) {
-    id[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / id.length, 1.5);
-  }
-  const impact = AC.createBufferSource();
-  impact.buffer = impactBuf;
-  const impF = AC.createBiquadFilter();
-  impF.type = 'lowpass'; impF.frequency.value = 500;
-  const impG = AC.createGain();
-  impG.gain.setValueAtTime(0.7, t);
-  impG.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-  conn(impact, impF, impG);
+function playReelStop(idx){
+  const ac=getAC(); if(!ac) return;
+  const t=ac.currentTime;
+  const impactBuf=ac.createBuffer(1,ac.sampleRate*0.08,ac.sampleRate);
+  const id=impactBuf.getChannelData(0);
+  for(let i=0;i<id.length;i++) id[i]=(Math.random()*2-1)*Math.pow(1-i/id.length,1.5);
+  const impact=ac.createBufferSource(); impact.buffer=impactBuf;
+  const impF=ac.createBiquadFilter(); impF.type='lowpass'; impF.frequency.value=500;
+  const impG=ac.createGain();
+  impG.gain.setValueAtTime(0.7,t); impG.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+  impact.connect(impF); impF.connect(impG); impG.connect(ac.destination);
   impact.start(t);
 
-  // 2. Tono metálico de confirmación (diferente por reel)
-  const tones = [[392, 523], [523, 659], [659, 784]];
-  const [f1, f2] = tones[idx];
-  const metal = makeOsc('triangle', f1);
-  const metalG = AC.createGain();
-  const metalF = AC.createBiquadFilter();
-  metalF.type = 'peaking'; metalF.frequency.value = 2000; metalF.gain.value = 6;
-  metal.frequency.setValueAtTime(f1, t);
-  metal.frequency.exponentialRampToValueAtTime(f2, t + 0.08);
-  metalG.gain.setValueAtTime(0.5, t);
-  metalG.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-  conn(metal, metalF, metalG);
-  metal.start(t); metal.stop(t + 0.25);
+  const tones=[[392,523],[523,659],[659,784]];
+  const[f1,f2]=tones[idx];
+  const metal=makeOsc('triangle',f1); if(!metal) return;
+  const metalG=ac.createGain();
+  const metalF=ac.createBiquadFilter(); metalF.type='peaking'; metalF.frequency.value=2000; metalF.gain.value=6;
+  metal.frequency.setValueAtTime(f1,t); metal.frequency.exponentialRampToValueAtTime(f2,t+0.08);
+  metalG.gain.setValueAtTime(0.5,t); metalG.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+  metal.connect(metalF); metalF.connect(metalG); metalG.connect(ac.destination);
+  metal.start(t); metal.stop(t+0.25);
 
-  // 3. Tail de campana
-  const bell = makeOsc('sine', f2 * 2);
-  const bellG = AC.createGain();
-  bellG.gain.setValueAtTime(0.15, t + 0.05);
-  bellG.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-  conn(bell, bellG);
-  bell.start(t + 0.05); bell.stop(t + 0.6);
+  const bell=makeOsc('sine',f2*2); if(!bell) return;
+  const bellG=ac.createGain();
+  bellG.gain.setValueAtTime(0.15,t+0.05); bellG.gain.exponentialRampToValueAtTime(0.001,t+0.6);
+  bell.connect(bellG); bellG.connect(ac.destination);
+  bell.start(t+0.05); bell.stop(t+0.6);
 
-  // Detener sonido de spin en el último reel
-  if (idx === 2) setTimeout(stopReelSpinSound, 200);
+  if(idx===2) setTimeout(stopReelSpinSound,200);
 }
 
-// ══ Suspense durante el spin ══
-function playJackpotSpin() {
-  AC.resume();
-  const t = AC.currentTime;
-
-  // Intro dramática: acorde de suspenso menor
-  [[146, 0], [174, 0.1], [220, 0.2], [261, 0.3]].forEach(([freq, delay]) => {
-    const o = makeOsc('sine', freq);
-    const g = AC.createGain();
-    g.gain.setValueAtTime(0.0, t + delay);
-    g.gain.linearRampToValueAtTime(0.2, t + delay + 0.15);
-    g.gain.setValueAtTime(0.2, t + delay + 0.8);
-    g.gain.exponentialRampToValueAtTime(0.001, t + delay + 1.5);
-    conn(o, g);
-    o.start(t + delay); o.stop(t + delay + 1.5);
+function playJackpotSpin(){
+  const ac=getAC(); if(!ac) return;
+  const t=ac.currentTime;
+  [[146,0],[174,0.1],[220,0.2],[261,0.3]].forEach(([freq,delay])=>{
+    const o=makeOsc('sine',freq); if(!o) return;
+    const g=ac.createGain();
+    g.gain.setValueAtTime(0.0,t+delay);
+    g.gain.linearRampToValueAtTime(0.2,t+delay+0.15);
+    g.gain.setValueAtTime(0.2,t+delay+0.8);
+    g.gain.exponentialRampToValueAtTime(0.001,t+delay+1.5);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t+delay); o.stop(t+delay+1.5);
   });
-
-  // Drum roll con ruido — redoble de tambor
-  const rollDuration = 2.5;
-  for (let i = 0; i < 40; i++) {
-    const st = t + 0.3 + (i / 40) * rollDuration;
-    const intensity = Math.pow(i / 40, 2); // acelera hacia el final
-    const nBuf = AC.createBuffer(1, AC.sampleRate * 0.03, AC.sampleRate);
-    const nd = nBuf.getChannelData(0);
-    for (let j = 0; j < nd.length; j++) nd[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / nd.length, 2);
-    const ns = AC.createBufferSource(); ns.buffer = nBuf;
-    const nf = AC.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 200 + intensity * 400;
-    const ng = AC.createGain();
-    ng.gain.setValueAtTime(0.1 + intensity * 0.4, st);
-    ng.gain.exponentialRampToValueAtTime(0.001, st + 0.04);
-    conn(ns, nf, ng);
+  const rollDuration=2.5;
+  for(let i=0;i<40;i++){
+    const st=t+0.3+(i/40)*rollDuration;
+    const intensity=Math.pow(i/40,2);
+    const nBuf=ac.createBuffer(1,ac.sampleRate*0.03,ac.sampleRate);
+    const nd=nBuf.getChannelData(0);
+    for(let j=0;j<nd.length;j++) nd[j]=(Math.random()*2-1)*Math.pow(1-j/nd.length,2);
+    const ns=ac.createBufferSource(); ns.buffer=nBuf;
+    const nf=ac.createBiquadFilter(); nf.type='bandpass'; nf.frequency.value=200+intensity*400;
+    const ng=ac.createGain();
+    ng.gain.setValueAtTime(0.1+intensity*0.4,st); ng.gain.exponentialRampToValueAtTime(0.001,st+0.04);
+    ns.connect(nf); nf.connect(ng); ng.connect(ac.destination);
     ns.start(st);
   }
-
-  // Iniciar loop de rieles
-  setTimeout(startReelSpinSound, 400);
+  setTimeout(startReelSpinSound,400);
 }
 
-// ══ JACKPOT WIN — Fanfarria épica ══
-function playJackpotWin() {
-  AC.resume();
+function playJackpotWin(){
+  const ac=getAC(); if(!ac) return;
   stopReelSpinSound();
-  const t = AC.currentTime;
+  const t=ac.currentTime;
 
-  // 1. BOOM de impacto (sub-bass + explosion noise)
-  const sub = makeOsc('sine', 80);
-  const subG = AC.createGain();
-  sub.frequency.setValueAtTime(80, t);
-  sub.frequency.exponentialRampToValueAtTime(30, t + 0.6);
-  subG.gain.setValueAtTime(1.0, t);
-  subG.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
-  conn(sub, subG);
-  sub.start(t); sub.stop(t + 0.7);
+  const sub=makeOsc('sine',80); if(!sub) return;
+  const subG=ac.createGain();
+  sub.frequency.setValueAtTime(80,t); sub.frequency.exponentialRampToValueAtTime(30,t+0.6);
+  subG.gain.setValueAtTime(1.0,t); subG.gain.exponentialRampToValueAtTime(0.001,t+0.7);
+  sub.connect(subG); subG.connect(ac.destination);
+  sub.start(t); sub.stop(t+0.7);
 
-  // Explosion noise
-  const expBuf = AC.createBuffer(1, AC.sampleRate * 0.3, AC.sampleRate);
-  const expD = expBuf.getChannelData(0);
-  for (let i = 0; i < expD.length; i++) expD[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / expD.length, 0.8);
-  const exp = AC.createBufferSource(); exp.buffer = expBuf;
-  const expF = AC.createBiquadFilter(); expF.type = 'lowpass'; expF.frequency.value = 300;
-  const expG = AC.createGain();
-  expG.gain.setValueAtTime(0.8, t);
-  expG.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-  conn(exp, expF, expG);
+  const expBuf=ac.createBuffer(1,ac.sampleRate*0.3,ac.sampleRate);
+  const expD=expBuf.getChannelData(0);
+  for(let i=0;i<expD.length;i++) expD[i]=(Math.random()*2-1)*Math.pow(1-i/expD.length,0.8);
+  const exp=ac.createBufferSource(); exp.buffer=expBuf;
+  const expF=ac.createBiquadFilter(); expF.type='lowpass'; expF.frequency.value=300;
+  const expG=ac.createGain();
+  expG.gain.setValueAtTime(0.8,t); expG.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+  exp.connect(expF); expF.connect(expG); expG.connect(ac.destination);
   exp.start(t);
 
-  // 2. Fanfarria dorada — trompetas sintéticas con harmónicos
-  const trumpetNotes = [523, 659, 784, 1047, 1319, 1047, 784, 1047, 1319, 1568];
-  const trumpetTimes = [0.1, 0.17, 0.24, 0.31, 0.38, 0.52, 0.59, 0.66, 0.73, 0.80];
-  trumpetNotes.forEach((freq, i) => {
-    // Fundamental
-    const o1 = makeOsc('sawtooth', freq);
-    const o2 = makeOsc('square', freq * 2);
-    const mix = AC.createGain(); mix.gain.value = 0.5;
-    const mix2 = AC.createGain(); mix2.gain.value = 0.15;
-    const filter = AC.createBiquadFilter();
-    filter.type = 'lowpass'; filter.frequency.value = freq * 3;
-    const env = AC.createGain();
-    const st = t + trumpetTimes[i];
-    env.gain.setValueAtTime(0, st);
-    env.gain.linearRampToValueAtTime(0.35, st + 0.04);
-    env.gain.setValueAtTime(0.3, st + 0.08);
-    env.gain.exponentialRampToValueAtTime(0.001, st + 0.18);
+  const trumpetNotes=[523,659,784,1047,1319,1047,784,1047,1319,1568];
+  const trumpetTimes=[0.1,0.17,0.24,0.31,0.38,0.52,0.59,0.66,0.73,0.80];
+  trumpetNotes.forEach((freq,i)=>{
+    const o1=makeOsc('sawtooth',freq); if(!o1) return;
+    const o2=makeOsc('square',freq*2);
+    const mix=ac.createGain(); mix.gain.value=0.5;
+    const mix2=ac.createGain(); mix2.gain.value=0.15;
+    const filter=ac.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value=freq*3;
+    const env=ac.createGain();
+    const st=t+trumpetTimes[i];
+    env.gain.setValueAtTime(0,st); env.gain.linearRampToValueAtTime(0.35,st+0.04);
+    env.gain.setValueAtTime(0.3,st+0.08); env.gain.exponentialRampToValueAtTime(0.001,st+0.18);
     o1.connect(mix); o2.connect(mix2);
     mix.connect(filter); mix2.connect(filter);
-    filter.connect(env); env.connect(AC.destination);
-    o1.start(st); o1.stop(st + 0.2);
-    o2.start(st); o2.stop(st + 0.2);
+    filter.connect(env); env.connect(ac.destination);
+    o1.start(st); o1.stop(st+0.2);
+    o2.start(st); o2.stop(st+0.2);
   });
 
-  // 3. Acorde de victoria sostenido — cuerdas
-  [[523, 0.95], [659, 0.85], [784, 0.9], [1047, 0.75], [1319, 0.6]].forEach(([freq, vol], i) => {
-    const o = makeOsc('sine', freq);
-    const g = AC.createGain();
-    const st = t + 0.9 + i * 0.02;
-    g.gain.setValueAtTime(0, st);
-    g.gain.linearRampToValueAtTime(vol * 0.18, st + 0.1);
-    g.gain.setValueAtTime(vol * 0.18, st + 1.2);
-    g.gain.exponentialRampToValueAtTime(0.001, st + 2.5);
-    conn(o, g);
-    o.start(st); o.stop(st + 2.5);
+  [[523,0.95],[659,0.85],[784,0.9],[1047,0.75],[1319,0.6]].forEach(([freq,vol],i)=>{
+    const o=makeOsc('sine',freq); if(!o) return;
+    const g=ac.createGain();
+    const st=t+0.9+i*0.02;
+    g.gain.setValueAtTime(0,st); g.gain.linearRampToValueAtTime(vol*0.18,st+0.1);
+    g.gain.setValueAtTime(vol*0.18,st+1.2); g.gain.exponentialRampToValueAtTime(0.001,st+2.5);
+    o.connect(g); g.connect(ac.destination);
+    o.start(st); o.stop(st+2.5);
   });
 
-  // 4. Cascada de monedas — clicks rápidos ascendentes
-  for (let i = 0; i < 25; i++) {
-    const st = t + 0.5 + i * 0.06 + Math.random() * 0.03;
-    const coinFreq = 1200 + i * 80 + Math.random() * 200;
-    const coin = makeOsc('sine', coinFreq);
-    const coinG = AC.createGain();
-    coinG.gain.setValueAtTime(0.12, st);
-    coinG.gain.exponentialRampToValueAtTime(0.001, st + 0.08);
-    conn(coin, coinG);
-    coin.start(st); coin.stop(st + 0.1);
+  for(let i=0;i<25;i++){
+    const st=t+0.5+i*0.06+Math.random()*0.03;
+    const coinFreq=1200+i*80+Math.random()*200;
+    const coin=makeOsc('sine',coinFreq); if(!coin) return;
+    const coinG=ac.createGain();
+    coinG.gain.setValueAtTime(0.12,st); coinG.gain.exponentialRampToValueAtTime(0.001,st+0.08);
+    coin.connect(coinG); coinG.connect(ac.destination);
+    coin.start(st); coin.stop(st+0.1);
   }
 
-  // 5. Reverb simulado — eco de sala grande
-  [[0.15, 0.6], [0.3, 0.4], [0.5, 0.25], [0.8, 0.15]].forEach(([delay, vol]) => {
-    [523, 784, 1047].forEach(freq => {
-      const o = makeOsc('sine', freq);
-      const g = AC.createGain();
-      g.gain.setValueAtTime(vol * 0.08, t + delay);
-      g.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.4);
-      conn(o, g);
-      o.start(t + delay); o.stop(t + delay + 0.4);
+  [[0.15,0.6],[0.3,0.4],[0.5,0.25],[0.8,0.15]].forEach(([delay,vol])=>{
+    [523,784,1047].forEach(freq=>{
+      const o=makeOsc('sine',freq); if(!o) return;
+      const g=ac.createGain();
+      g.gain.setValueAtTime(vol*0.08,t+delay); g.gain.exponentialRampToValueAtTime(0.001,t+delay+0.4);
+      o.connect(g); g.connect(ac.destination);
+      o.start(t+delay); o.stop(t+delay+0.4);
     });
   });
 
-  // 6. Shimmer final de campanas
-  [2093, 2637, 3136, 3951, 4186].forEach((freq, i) => {
-    const o = makeOsc('sine', freq);
-    const g = AC.createGain();
-    const st = t + 1.0 + i * 0.12;
-    g.gain.setValueAtTime(0.12, st);
-    g.gain.exponentialRampToValueAtTime(0.001, st + 0.8);
-    conn(o, g);
-    o.start(st); o.stop(st + 0.8);
+  [2093,2637,3136,3951,4186].forEach((freq,i)=>{
+    const o=makeOsc('sine',freq); if(!o) return;
+    const g=ac.createGain();
+    const st=t+1.0+i*0.12;
+    g.gain.setValueAtTime(0.12,st); g.gain.exponentialRampToValueAtTime(0.001,st+0.8);
+    o.connect(g); g.connect(ac.destination);
+    o.start(st); o.stop(st+0.8);
   });
 }
 
-window.speechSynthesis.getVoices();
 window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
 </script>
 </body>
