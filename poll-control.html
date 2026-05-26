@@ -40,14 +40,13 @@ input:focus{border-color:rgba(255,185,0,0.4);}
 .timer-display{font-size:28px;font-weight:900;text-align:center;font-variant-numeric:tabular-nums;margin:8px 0;letter-spacing:-1px;}
 .timer-display.urgent{color:#f87171;animation:tblink 0.5s infinite;}
 @keyframes tblink{0%,100%{opacity:1;}50%{opacity:.4;}}
-.help-link{color:rgba(255,185,0,0.4);font-size:10px;text-decoration:none;display:inline-block;margin-top:3px;}
-.saved-note{font-size:10px;color:rgba(255,185,0,0.5);margin-top:3px;display:none;}
 .timer-btn{padding:8px;border-radius:8px;font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);transition:all .15s;text-align:center;}
 .timer-btn:hover{background:rgba(255,255,255,0.1);color:#fff;}
 .timer-btn.active{background:rgba(255,185,0,0.15);border-color:rgba(255,185,0,0.4);color:#FFD000;}
 .reader-status{font-size:11px;padding:8px 12px;border-radius:8px;margin-bottom:8px;text-align:center;font-weight:600;}
 .reader-ok{background:rgba(68,222,128,0.1);border:1px solid rgba(68,222,128,0.3);color:#4ade80;}
 .reader-err{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#f87171;}
+.reader-warn{background:rgba(255,165,0,0.1);border:1px solid rgba(255,165,0,0.3);color:#FFA500;}
 </style>
 </head>
 <body>
@@ -55,7 +54,6 @@ input:focus{border-color:rgba(255,185,0,0.4);}
 <h1>🎯 Poll Control</h1>
 <div class="sub">Panel privado — solo tú lo ves. OBS muestra solo el overlay.</div>
 
-<!-- Estado del Chat Reader -->
 <div id="readerStatus" class="reader-status reader-err">⚠️ Chat Reader no conectado — ábrelo primero</div>
 
 <div class="live-bar" id="liveBar">
@@ -63,7 +61,6 @@ input:focus{border-color:rgba(255,185,0,0.4);}
   <span id="liveText">Encuesta activa</span>
 </div>
 
-<!-- ENCUESTA -->
 <div class="section">
   <div class="section-title">Encuesta</div>
   <label>Pregunta</label>
@@ -90,7 +87,6 @@ input:focus{border-color:rgba(255,185,0,0.4);}
   </div>
 </div>
 
-<!-- VOTOS EN TIEMPO REAL -->
 <div class="section" id="votesSection" style="display:none;">
   <div class="section-title">Votos en tiempo real</div>
   <div class="timer-display" id="timerDisp">2:00</div>
@@ -117,9 +113,8 @@ input:focus{border-color:rgba(255,185,0,0.4);}
 <script>
 const $ = id => document.getElementById(id);
 const LS = 'poll_state';
-
-// ══ SIN NINGUNA LLAMADA A YOUTUBE API ══
-// Todo se lee del localStorage que escribe chat-reader.html
+// FIX: umbral para detectar reader caído (15 segundos sin actualizar)
+const READER_ALIVE_MS = 15000;
 
 const state = {
   votes:{A:0,B:0}, voters:{},
@@ -128,17 +123,31 @@ const state = {
   msgInterval:null
 };
 
-// Monitorear estado del Chat Reader
+// ══ FIX: Detectar Chat Reader caído por timestamp ══
+// Antes solo chequeaba cs.ytConnected — si el reader muere, el flag queda en true
+// Ahora verifica que cs.ts haya sido actualizado en los últimos 15s
 setInterval(()=>{
-  const cs = JSON.parse(localStorage.getItem('chat_status')||'{}');
-  const el = $('readerStatus');
-  if(cs.ytConnected){
-    el.className='reader-status reader-ok';
-    el.textContent='🟢 Chat Reader conectado — key '+(cs.keyIdx+1)+'/6';
-  } else {
-    el.className='reader-status reader-err';
-    el.textContent='⚠️ Chat Reader no conectado — ábrelo primero';
-  }
+  try {
+    const cs = JSON.parse(localStorage.getItem('chat_status')||'{}');
+    const el = $('readerStatus');
+    const now = Date.now();
+    const tsAge = cs.ts ? now - cs.ts : Infinity;
+
+    if(cs.ytConnected && tsAge < READER_ALIVE_MS) {
+      // Verde: conectado y activo
+      el.className = 'reader-status reader-ok';
+      el.textContent = '🟢 Chat Reader activo — key '+(cs.keyIdx+1)+'/6';
+    } else if(cs.ytConnected && tsAge >= READER_ALIVE_MS) {
+      // Amarillo: estaba conectado pero no ha actualizado en >15s
+      const secs = Math.round(tsAge / 1000);
+      el.className = 'reader-status reader-warn';
+      el.textContent = `⚠️ Chat Reader sin actividad (${secs}s) — puede haberse caído`;
+    } else {
+      // Rojo: no conectado
+      el.className = 'reader-status reader-err';
+      el.textContent = '⚠️ Chat Reader no conectado — ábrelo primero';
+    }
+  } catch(e) {}
 }, 1000);
 
 function setDuration(min, btn){
@@ -165,7 +174,13 @@ function startTimer(){
     const r=Math.max(0,Math.ceil((state.timerEnd-Date.now())/1000));
     updateTimerDisplay(r);
     save();
-    if(r===0){clearInterval(state.timerInterval);$('liveText').textContent='⏱ Tiempo agotado';}
+    if(r===0){
+      clearInterval(state.timerInterval);
+      $('liveText').textContent='⏱ Tiempo agotado';
+      // FIX: Auto-detener encuesta después de 8s
+      // (da tiempo al overlay para mostrar la animación del ganador)
+      setTimeout(()=>{ if(state.active) stopPoll(); }, 8000);
+    }
   },500);
 }
 
@@ -213,11 +228,12 @@ function resetVotes(){
   save();
 }
 
-// ══ INICIAR — sin YouTube, lee del chat-reader ══
 function startPoll(){
-  // Verificar que chat-reader está conectado
   const cs=JSON.parse(localStorage.getItem('chat_status')||'{}');
-  if(!cs.ytConnected){
+  const now = Date.now();
+  const tsAge = cs.ts ? now - cs.ts : Infinity;
+
+  if(!cs.ytConnected || tsAge >= READER_ALIVE_MS){
     setStatus('⚠️ Conecta el Chat Reader primero','err');
     return;
   }
@@ -228,36 +244,38 @@ function startPoll(){
   setLive(true);
   startTimer();
   save();
-  localStorage.setItem('chat_demand', '1'); // activar polling
+  localStorage.setItem('chat_demand', '1');
   setStatus('🟢 Encuesta activa — leyendo del Chat Reader','ok');
-
-  // Leer mensajes del chat-reader via localStorage
   startReadingMessages();
 }
 
+// ══ FIX: Optimización — compara string crudo antes de parsear JSON ══
+// Antes: parseaba JSON cada 100ms aunque no hubiera cambios
+// Ahora: solo parsea cuando el string cambia realmente
 function startReadingMessages(){
   if(state.msgInterval)clearInterval(state.msgInterval);
-  let lastTs = Date.now(); // solo procesar mensajes DESPUÉS de iniciar
+  let lastTs = Date.now();
+  let lastQueueRaw = ''; // FIX: cache del raw string
 
-  // Pequeño delay para que el overlay aparezca primero
-  setTimeout(()=>{ lastTs = Date.now(); }, 800);
+  // FIX: delay 1500ms (era 800ms) — da más margen para que el overlay aparezca en OBS
+  setTimeout(()=>{ lastTs = Date.now(); }, 1500);
 
   state.msgInterval=setInterval(()=>{
     if(!state.active){clearInterval(state.msgInterval);return;}
     if(state.timerEnd>0&&Date.now()>state.timerEnd)return;
 
     try{
-      // Leer cola
       const raw=localStorage.getItem('chat_queue');
-      if(!raw)return;
+      // FIX: salir inmediatamente si el string no cambió — evita JSON.parse en vano
+      if(!raw || raw === lastQueueRaw) return;
+      lastQueueRaw = raw;
+
       const queue=JSON.parse(raw);
       if(!queue.length)return;
 
-      // Procesar solo mensajes nuevos
       const newMsgs = queue.filter(m=>m.ts>lastTs);
       if(!newMsgs.length)return;
 
-      // Actualizar timestamp al más reciente
       lastTs = Math.max(...newMsgs.map(m=>m.ts));
 
       let updated=false;
@@ -273,10 +291,10 @@ function startReadingMessages(){
         $('vcA').textContent=state.votes.A;
         $('vcB').textContent=state.votes.B;
         save();
-        setStatus('🗳️ '+( state.votes.A+state.votes.B)+' votos','ok');
+        setStatus('🗳️ '+(state.votes.A+state.votes.B)+' votos','ok');
       }
     }catch(e){}
-  },100); // 100ms — más rápido
+  },100);
 }
 
 function startDemo(){
@@ -301,7 +319,7 @@ function stopPoll(){
   if(state.msgInterval)clearInterval(state.msgInterval);
   state.active=false;state.timerEnd=0;
   localStorage.setItem(LS,JSON.stringify({active:false}));
-  localStorage.setItem('chat_demand', '0'); // pausar polling
+  localStorage.setItem('chat_demand', '0');
   setLive(false);$('startBtn').disabled=false;
   setStatus('Encuesta detenida','');
 }
