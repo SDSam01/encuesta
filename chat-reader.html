@@ -24,13 +24,14 @@ input:focus{border-color:rgba(255,185,0,.4);}
 .cbadge.on{opacity:1;}
 .cb-yt{background:rgba(255,0,0,.12);color:#ff5555;border:1px solid rgba(255,85,85,.2);}
 .cb-kick{background:rgba(83,252,83,.07);color:#53fc53;border:1px solid rgba(83,252,83,.18);}
+.cb-twitch{background:rgba(145,70,255,.1);color:#9146FF;border:1px solid rgba(145,70,255,.25);}
 .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;}
 .stat{background:rgba(255,255,255,.04);border-radius:8px;padding:8px;text-align:center;}
 .stat-num{font-size:20px;font-weight:900;color:#FFD000;}
 .stat-lbl{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
 .log{max-height:100px;overflow-y:auto;margin-top:8px;}
 .log-item{font-size:10px;color:rgba(255,255,255,.4);padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);}
-.src-yt{color:#ff5555;}.src-kick{color:#53fc53;}
+.src-yt{color:#ff5555;}.src-kick{color:#53fc53;}.src-twitch{color:#9146FF;}
 .status-bar{font-size:11px;text-align:center;margin-top:8px;min-height:16px;padding:6px;border-radius:8px;}
 .status-bar.ok{color:#4ade80;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);}
 .status-bar.err{color:#f87171;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);}
@@ -80,6 +81,7 @@ input:focus{border-color:rgba(255,185,0,.4);}
   <div class="conn-row">
     <span class="cbadge cb-yt" id="dotYT">▶ YouTube</span>
     <span class="cbadge cb-kick" id="dotKick">⚡ Kick</span>
+    <span class="cbadge cb-twitch" id="dotTwitch">🟣 Twitch</span>
   </div>
   <button class="power-btn off" id="powerBtn" onclick="togglePower()">
     <span id="powerIcon">⏻</span>
@@ -114,6 +116,10 @@ const API_KEYS = [
   // Nuevas keys se agregan aquí
 ];
 const KICK_ROOM_ID = '6043540';
+const TWITCH_CHANNEL = 'sdsam'; // canal hardcoded, nunca mostrar en UI
+
+let twitchWs = null;
+let twitchReconnectTimer = null;
 
 // ══ localStorage keys ══
 const LS_CHAT   = 'chat_messages';
@@ -194,6 +200,7 @@ function saveStatus(ytOn) {
   localStorage.setItem(LS_STATUS, JSON.stringify({
     ytConnected: ytOn,
     kickConnected: document.getElementById('dotKick').classList.contains('on'),
+    twitchConnected: document.getElementById('dotTwitch').classList.contains('on'),
     keyIdx,
     ts: Date.now()
   }));
@@ -294,6 +301,7 @@ async function connect() {
 
     startPolling();
     connectKick();
+    connectTwitch();
     startWatchdog();
 
   } catch(e) {
@@ -437,13 +445,16 @@ function togglePower() {
     ytChatId = null;
     if(pollTimer) clearTimeout(pollTimer);
     if(reconnectTimer) clearInterval(reconnectTimer);
+    if(twitchWs) { try{ twitchWs.close(); }catch(e){} twitchWs = null; }
+    if(twitchReconnectTimer) { clearTimeout(twitchReconnectTimer); twitchReconnectTimer = null; }
     document.getElementById('dotYT').classList.remove('on');
     document.getElementById('dotKick').classList.remove('on');
+    document.getElementById('dotTwitch').classList.remove('on');
     setConnectedUI(false);
     setBigStatus('', '');
     setStatus('Desconectado', '');
     localStorage.setItem(LS_STATUS, JSON.stringify({
-      ytConnected: false, kickConnected: false, keyIdx, ts: Date.now()
+      ytConnected: false, kickConnected: false, twitchConnected: false, keyIdx, ts: Date.now()
     }));
     // NO borramos LS_CHATID al desconectar — lo reutilizamos al reconectar
   } else {
@@ -481,6 +492,85 @@ function connectKick() {
       pushMessage(uid, name, text, 'kick', isSub);
     });
   } catch(e) {}
+}
+
+// ══ Twitch IRC (WebSocket anónimo — no requiere API key ni OAuth) ══
+function connectTwitch() {
+  if(twitchReconnectTimer){ clearTimeout(twitchReconnectTimer); twitchReconnectTimer=null; }
+  if(twitchWs){ try{ twitchWs.close(); }catch(e){} }
+
+  try {
+    const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+    twitchWs = ws;
+
+    ws.onopen = () => {
+      // Solicitar tags para obtener info de suscriptores
+      ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
+      // Login anónimo — no requiere cuenta ni token
+      ws.send('NICK justinfan' + Math.floor(Math.random() * 99999));
+      ws.send(`JOIN #${TWITCH_CHANNEL}`);
+    };
+
+    ws.onmessage = (e) => {
+      const raw = e.data.trim();
+
+      // Responder PING para mantener la conexión viva
+      if(raw.startsWith('PING')) {
+        ws.send('PONG :tmi.twitch.tv');
+        return;
+      }
+
+      // Confirmar que el JOIN fue exitoso
+      if(raw.includes(`JOIN #${TWITCH_CHANNEL}`)) {
+        document.getElementById('dotTwitch').classList.add('on');
+        saveStatus(connected);
+        return;
+      }
+
+      // Solo procesar PRIVMSG (mensajes del chat)
+      if(!raw.includes('PRIVMSG')) return;
+
+      // Parsear tags de Twitch (subscriber, badges, etc.)
+      let tags = {};
+      if(raw.startsWith('@')) {
+        const tagEnd = raw.indexOf(' ');
+        raw.slice(1, tagEnd).split(';').forEach(tag => {
+          const eq = tag.indexOf('=');
+          if(eq > -1) tags[tag.slice(0,eq)] = tag.slice(eq+1);
+        });
+      }
+
+      // Extraer username y mensaje
+      // Formato: @tags :username!username@username.tmi.twitch.tv PRIVMSG #canal :mensaje
+      const match = raw.match(/:(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :(.+)$/);
+      if(!match) return;
+
+      const username = match[1];
+      const text     = match[2].trim();
+      if(!text || !username) return;
+
+      // Detectar suscriptores por tags
+      const isSub = tags['subscriber'] === '1' ||
+                    (tags['badges'] || '').includes('subscriber') ||
+                    (tags['badges'] || '').includes('founder');
+
+      pushMessage('twitch_' + username, username, text, 'twitch', isSub);
+    };
+
+    ws.onclose = () => {
+      document.getElementById('dotTwitch').classList.remove('on');
+      saveStatus(connected);
+      // Reconectar automáticamente si seguimos conectados
+      if(connected) {
+        twitchReconnectTimer = setTimeout(connectTwitch, 5000);
+      }
+    };
+
+    ws.onerror = () => { ws.close(); };
+
+  } catch(e) {
+    if(connected) twitchReconnectTimer = setTimeout(connectTwitch, 8000);
+  }
 }
 
 function setBigStatus(msg, type) {
