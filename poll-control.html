@@ -113,47 +113,61 @@ input:focus{border-color:rgba(255,185,0,0.4);}
 <script>
 const $ = id => document.getElementById(id);
 const LS = 'poll_state';
-// FIX: umbral para detectar reader caído (15 segundos sin actualizar)
 const READER_ALIVE_MS = 15000;
 
 const state = {
-  votes:{A:0,B:0}, voters:{},
+  votes:{A:0,B:0},
   active:false, duration:2,
-  timerEnd:0, timerInterval:null,
-  msgInterval:null
+  timerEnd:0, timerInterval:null
 };
 
-// ══ FIX: Detectar Chat Reader caído por timestamp ══
-// Antes solo chequeaba cs.ytConnected — si el reader muere, el flag queda en true
-// Ahora verifica que cs.ts haya sido actualizado en los últimos 15s
+// ══ Estado del Chat Reader ══
 setInterval(()=>{
   try {
     const cs = JSON.parse(localStorage.getItem('chat_status')||'{}');
     const el = $('readerStatus');
     const now = Date.now();
     const tsAge = cs.ts ? now - cs.ts : Infinity;
-
     if(cs.ytConnected && tsAge < READER_ALIVE_MS) {
-      // Verde: conectado y activo
       el.className = 'reader-status reader-ok';
       el.textContent = '🟢 Chat Reader activo — key '+(cs.keyIdx+1)+'/6';
     } else if(cs.ytConnected && tsAge >= READER_ALIVE_MS) {
-      // Amarillo: estaba conectado pero no ha actualizado en >15s
-      const secs = Math.round(tsAge / 1000);
+      const secs = Math.round(tsAge/1000);
       el.className = 'reader-status reader-warn';
       el.textContent = `⚠️ Chat Reader sin actividad (${secs}s) — puede haberse caído`;
     } else {
-      // Rojo: no conectado
       el.className = 'reader-status reader-err';
       el.textContent = '⚠️ Chat Reader no conectado — ábrelo primero';
     }
   } catch(e) {}
 }, 1000);
 
+// ══ Sincronizar votos desde poll_state (escrito por chat-reader) ══
+// poll-control ya NO cuenta votos — solo los muestra
+setInterval(()=>{
+  if(!state.active) return;
+  try {
+    const raw = localStorage.getItem(LS);
+    if(!raw) return;
+    const ps = JSON.parse(raw);
+    if(!ps.active) return;
+    const newA = ps.vA || 0;
+    const newB = ps.vB || 0;
+    if(newA !== state.votes.A || newB !== state.votes.B) {
+      state.votes.A = newA;
+      state.votes.B = newB;
+      $('vcA').textContent = newA;
+      $('vcB').textContent = newB;
+      const total = newA + newB;
+      if(total > 0) setStatus('🗳️ ' + total + ' votos — YouTube + Kick + Twitch', 'ok');
+    }
+  } catch(e) {}
+}, 200);
+
 function setDuration(min, btn){
-  state.duration=min;
+  state.duration = min;
   document.querySelectorAll('.timer-btn').forEach(b=>b.classList.remove('active'));
-  if(btn)btn.classList.add('active');
+  if(btn) btn.classList.add('active');
   updateTimerDisplay(min*60);
 }
 
@@ -167,164 +181,145 @@ function updateTimerDisplay(sec){
 
 function startTimer(){
   if(state.duration===0){state.timerEnd=0;save();return;}
-  state.timerEnd=Date.now()+state.duration*60*1000;
+  state.timerEnd = Date.now()+state.duration*60*1000;
   save();
-  if(state.timerInterval)clearInterval(state.timerInterval);
-  state.timerInterval=setInterval(()=>{
-    const r=Math.max(0,Math.ceil((state.timerEnd-Date.now())/1000));
+  if(state.timerInterval) clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(()=>{
+    const r = Math.max(0, Math.ceil((state.timerEnd-Date.now())/1000));
     updateTimerDisplay(r);
     save();
     if(r===0){
       clearInterval(state.timerInterval);
-      $('liveText').textContent='⏱ Tiempo agotado';
-      // FIX: Auto-detener encuesta después de 8s
-      // (da tiempo al overlay para mostrar la animación del ganador)
+      $('liveText').textContent = '⏱ Tiempo agotado';
       setTimeout(()=>{ if(state.active) stopPoll(); }, 8000);
     }
-  },500);
+  }, 500);
 }
 
+// save() preserva vA/vB escritos por chat-reader — no los sobreescribe
 function save(){
-  localStorage.setItem(LS,JSON.stringify({
-    active:state.active,
-    question:$('question').value,
-    nameA:$('nameA').value,
-    nameB:$('nameB').value,
-    vA:state.votes.A,
-    vB:state.votes.B,
-    timerEnd:state.timerEnd,
-    duration:state.duration,
+  let current = {};
+  try { current = JSON.parse(localStorage.getItem(LS) || '{}'); } catch(e) {}
+  localStorage.setItem(LS, JSON.stringify({
+    ...current,
+    active:   state.active,
+    question: $('question').value,
+    nameA:    $('nameA').value,
+    nameB:    $('nameB').value,
+    timerEnd: state.timerEnd,
+    duration: state.duration,
   }));
 }
 
 function setLive(on){
-  state.active=on;
-  $('liveBar').style.display=on?'flex':'none';
-  $('stopBtn').style.display=on?'block':'none';
-  $('startBtn').style.display=on?'none':'block';
-  $('votesSection').style.display=on?'block':'none';
+  state.active = on;
+  $('liveBar').style.display   = on ? 'flex'  : 'none';
+  $('stopBtn').style.display   = on ? 'block' : 'none';
+  $('startBtn').style.display  = on ? 'none'  : 'block';
+  $('votesSection').style.display = on ? 'block' : 'none';
   if(on){
-    $('labelA').textContent=$('nameA').value.toUpperCase();
-    $('labelB').textContent=$('nameB').value.toUpperCase();
-    $('liveText').textContent='Encuesta activa — overlay visible en OBS';
+    $('labelA').textContent = $('nameA').value.toUpperCase();
+    $('labelB').textContent = $('nameB').value.toUpperCase();
+    $('liveText').textContent = 'Encuesta activa — overlay visible en OBS';
   }
 }
 
-function cv(side,d){
-  state.votes[side]=Math.max(0,state.votes[side]+d);
-  $('vc'+side).textContent=state.votes[side];
-  save();
+// cv() escribe directo en poll_state para que chat-reader lo respete
+function cv(side, d){
+  try {
+    const raw = localStorage.getItem(LS);
+    if(!raw) return;
+    const ps = JSON.parse(raw);
+    const key = 'v' + side;
+    ps[key] = Math.max(0, (ps[key] || 0) + d);
+    state.votes[side] = ps[key];
+    $('vc' + side).textContent = ps[key];
+    localStorage.setItem(LS, JSON.stringify(ps));
+  } catch(e) {}
 }
 
 function resetVotes(){
-  state.votes={A:0,B:0};
-  state.voters={};
-  $('vcA').textContent='0';$('vcB').textContent='0';
-  state.timerEnd=0;
-  if(state.timerInterval)clearInterval(state.timerInterval);
+  state.votes = {A:0, B:0};
+  $('vcA').textContent = '0';
+  $('vcB').textContent = '0';
+  state.timerEnd = 0;
+  if(state.timerInterval) clearInterval(state.timerInterval);
   updateTimerDisplay(state.duration*60);
-  $('liveText').textContent='Encuesta activa — overlay visible en OBS';
+  $('liveText').textContent = 'Encuesta activa — overlay visible en OBS';
+  // Limpiar votos y votantes para encuesta nueva
+  localStorage.removeItem('poll_voters');
+  localStorage.setItem(LS, JSON.stringify({
+    active: true,
+    question: $('question').value,
+    nameA: $('nameA').value,
+    nameB: $('nameB').value,
+    vA: 0, vB: 0,
+    timerEnd: 0,
+    duration: state.duration,
+  }));
   startTimer();
-  save();
 }
 
 function startPoll(){
-  const cs=JSON.parse(localStorage.getItem('chat_status')||'{}');
+  const cs = JSON.parse(localStorage.getItem('chat_status')||'{}');
   const now = Date.now();
   const tsAge = cs.ts ? now - cs.ts : Infinity;
-
   if(!cs.ytConnected || tsAge >= READER_ALIVE_MS){
     setStatus('⚠️ Conecta el Chat Reader primero','err');
     return;
   }
 
-  $('startBtn').disabled=true;
-  state.votes={A:0,B:0};
-  state.voters={};
+  $('startBtn').disabled = true;
+  state.votes = {A:0, B:0};
   setLive(true);
+
+  // Limpiar votantes de la encuesta anterior
+  localStorage.removeItem('poll_voters');
+
+  // Escribir estado inicial limpio — chat-reader empieza a contar desde aquí
+  localStorage.setItem(LS, JSON.stringify({
+    active: true,
+    question: $('question').value,
+    nameA: $('nameA').value,
+    nameB: $('nameB').value,
+    vA: 0, vB: 0,
+    timerEnd: 0,
+    duration: state.duration,
+  }));
+
   startTimer();
-  save();
-  localStorage.setItem('chat_demand', '1');
-  setStatus('🟢 Encuesta activa — leyendo del Chat Reader','ok');
-  startReadingMessages();
-}
-
-// ══ FIX: Optimización — compara string crudo antes de parsear JSON ══
-// Antes: parseaba JSON cada 100ms aunque no hubiera cambios
-// Ahora: solo parsea cuando el string cambia realmente
-function startReadingMessages(){
-  if(state.msgInterval)clearInterval(state.msgInterval);
-  let lastTs = Date.now();
-  let lastQueueRaw = ''; // FIX: cache del raw string
-
-  // FIX: delay 1500ms (era 800ms) — da más margen para que el overlay aparezca en OBS
-  setTimeout(()=>{ lastTs = Date.now(); }, 1500);
-
-  state.msgInterval=setInterval(()=>{
-    if(!state.active){clearInterval(state.msgInterval);return;}
-    if(state.timerEnd>0&&Date.now()>state.timerEnd)return;
-
-    try{
-      const raw=localStorage.getItem('chat_queue');
-      // FIX: salir inmediatamente si el string no cambió — evita JSON.parse en vano
-      if(!raw || raw === lastQueueRaw) return;
-      lastQueueRaw = raw;
-
-      const queue=JSON.parse(raw);
-      if(!queue.length)return;
-
-      const newMsgs = queue.filter(m=>m.ts>lastTs);
-      if(!newMsgs.length)return;
-
-      lastTs = Math.max(...newMsgs.map(m=>m.ts));
-
-      let updated=false;
-      for(const msg of newMsgs){
-        const txt=(msg.text||'').trim().toLowerCase();
-        const uid=msg.userId;
-        if(!uid||state.voters[uid]) continue;
-        if(txt==='a'||txt==='!a'){state.voters[uid]='A';state.votes.A++;updated=true;}
-        else if(txt==='b'||txt==='!b'){state.voters[uid]='B';state.votes.B++;updated=true;}
-      }
-
-      if(updated){
-        $('vcA').textContent=state.votes.A;
-        $('vcB').textContent=state.votes.B;
-        save();
-        setStatus('🗳️ '+(state.votes.A+state.votes.B)+' votos','ok');
-      }
-    }catch(e){}
-  },100);
+  setStatus('🟢 Encuesta activa — votos contados en tiempo real (YT + Kick + Twitch)','ok');
 }
 
 function startDemo(){
-  $('startBtn').disabled=true;
-  state.votes={A:0,B:0};state.voters={};
-  setLive(true);startTimer();save();
+  $('startBtn').disabled = true;
+  state.votes = {A:0, B:0};
+  setLive(true);
+  localStorage.removeItem('poll_voters');
+  localStorage.setItem(LS, JSON.stringify({ active:true, question:$('question').value, nameA:$('nameA').value, nameB:$('nameB').value, vA:0, vB:0, timerEnd:0, duration:state.duration }));
+  startTimer();
   setStatus('🧪 Modo prueba activo','ok');
-  let t=0;
-  const dv=['A','B','A','A','B','A','B','B','A','A','B','A','A','B','A','B'];
-  const di=setInterval(()=>{
+  let t = 0;
+  const dv = ['A','B','A','A','B','A','B','B','A','A','B','A','A','B','A','B'];
+  const di = setInterval(()=>{
     if(t>=dv.length){clearInterval(di);return;}
     if(state.timerEnd>0&&Date.now()>state.timerEnd){clearInterval(di);return;}
-    state.votes[dv[t++]]++;
-    $('vcA').textContent=state.votes.A;
-    $('vcB').textContent=state.votes.B;
-    save();
-  },600);
+    cv(dv[t++], 1);
+  }, 600);
 }
 
 function stopPoll(){
-  if(state.timerInterval)clearInterval(state.timerInterval);
-  if(state.msgInterval)clearInterval(state.msgInterval);
-  state.active=false;state.timerEnd=0;
-  localStorage.setItem(LS,JSON.stringify({active:false}));
-  localStorage.setItem('chat_demand', '0');
-  setLive(false);$('startBtn').disabled=false;
+  if(state.timerInterval) clearInterval(state.timerInterval);
+  state.active = false;
+  state.timerEnd = 0;
+  localStorage.setItem(LS, JSON.stringify({active:false}));
+  localStorage.removeItem('poll_voters');
+  setLive(false);
+  $('startBtn').disabled = false;
   setStatus('Encuesta detenida','');
 }
 
-function setStatus(msg,type){const el=$('statusBar');el.textContent=msg;el.className='status '+(type||'');}
+function setStatus(msg,type){ const el=$('statusBar'); el.textContent=msg; el.className='status '+(type||''); }
 
 updateTimerDisplay(2*60);
 </script>
