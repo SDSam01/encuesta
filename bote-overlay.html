@@ -111,14 +111,13 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 <body>
 
 <div id="boteWidget">
-  <div class="bote-label">🏦 BOTE DEL CHAT</div>
+  <div class="bote-label">💰 DINERO DEL CHAT</div>
   <div class="bote-box" id="boteBox">
     <span class="bote-icon">🪙</span>
     <span class="bote-amount" id="boteAmount">0</span>
     <span class="bote-currency">COINS</span>
     <div class="bote-delta" id="boteDelta"></div>
   </div>
-  <div class="bote-last" id="boteLast"></div>
 </div>
 
 <script>
@@ -154,13 +153,6 @@ setInterval(() => {
       showDelta(diff);
       lastAmount = amount;
       document.getElementById('boteAmount').textContent = formatNum(amount);
-    }
-
-    // Último evento
-    const hist = data.history || [];
-    if(hist.length && hist[hist.length-1].ts !== lastEventTs) {
-      lastEventTs = hist[hist.length-1].ts;
-      document.getElementById('boteLast').textContent = hist[hist.length-1].label || '';
     }
   } catch(e) {}
 }, 300);
