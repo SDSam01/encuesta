@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Bote Overlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
+
+#boteWidget{
+  position:fixed;
+  bottom:160px;
+  right:40px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .5s;
+}
+#boteWidget.visible{opacity:1;}
+
+.bote-label{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;letter-spacing:4px;
+  color:rgba(255,208,0,.5);
+  margin-bottom:4px;
+}
+
+.bote-box{
+  background:rgba(0,0,0,.75);
+  border:1px solid rgba(255,208,0,.35);
+  border-radius:14px;
+  padding:10px 20px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  box-shadow:0 0 20px rgba(255,208,0,.1);
+  position:relative;
+  overflow:hidden;
+}
+
+.bote-icon{font-size:20px;line-height:1;}
+
+.bote-amount{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:36px;
+  letter-spacing:2px;
+  color:#FFD000;
+  text-shadow:0 0 15px rgba(255,208,0,.6);
+  font-variant-numeric:tabular-nums;
+  min-width:120px;
+  text-align:right;
+  transition:color .3s;
+}
+
+.bote-currency{
+  font-family:'Inter',sans-serif;
+  font-size:11px;font-weight:700;
+  color:rgba(255,208,0,.4);
+  letter-spacing:1px;
+  align-self:flex-end;
+  padding-bottom:4px;
+}
+
+/* Delta flash */
+.bote-delta{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-family:'Bebas Neue',sans-serif;
+  font-size:32px;letter-spacing:2px;
+  pointer-events:none;
+  opacity:0;
+}
+.bote-delta.up{color:#4ade80;animation:deltaUp .9s ease-out forwards;}
+.bote-delta.down{color:#f87171;animation:deltaDown .9s ease-out forwards;}
+
+@keyframes deltaUp{
+  0%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  60%{opacity:1;transform:translate(-50%,-120%) scale(1.15);}
+  100%{opacity:0;transform:translate(-50%,-180%) scale(.9);}
+}
+@keyframes deltaDown{
+  0%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  60%{opacity:1;transform:translate(-50%,20%) scale(1.15);}
+  100%{opacity:0;transform:translate(-50%,80%) scale(.9);}
+}
+
+/* Último evento */
+.bote-last{
+  font-family:'Inter',sans-serif;
+  font-size:10px;font-weight:700;
+  color:rgba(255,255,255,.25);
+  letter-spacing:.5px;
+  margin-top:5px;
+  max-width:200px;
+  text-align:center;
+  min-height:14px;
+  transition:opacity .3s;
+}
+
+/* Glow al subir/bajar */
+@keyframes glowUp{0%,100%{box-shadow:0 0 20px rgba(255,208,0,.1);}50%{box-shadow:0 0 40px rgba(74,222,128,.5),0 0 60px rgba(74,222,128,.2);}}
+@keyframes glowDown{0%,100%{box-shadow:0 0 20px rgba(255,208,0,.1);}50%{box-shadow:0 0 40px rgba(248,113,113,.5),0 0 60px rgba(248,113,113,.2);}}
+.bote-box.flash-up{animation:glowUp .8s ease;}
+.bote-box.flash-down{animation:glowDown .8s ease;}
+</style>
+</head>
+<body>
+
+<div id="boteWidget">
+  <div class="bote-label">🏦 BOTE DEL CHAT</div>
+  <div class="bote-box" id="boteBox">
+    <span class="bote-icon">🪙</span>
+    <span class="bote-amount" id="boteAmount">0</span>
+    <span class="bote-currency">COINS</span>
+    <div class="bote-delta" id="boteDelta"></div>
+  </div>
+  <div class="bote-last" id="boteLast"></div>
+</div>
+
+<script>
+let lastAmount = 0;
+let lastEventTs = 0;
+
+function formatNum(n) {
+  return n.toLocaleString('es-MX');
+}
+
+function showDelta(diff) {
+  const el = document.getElementById('boteDelta');
+  const box = document.getElementById('boteBox');
+  el.className = 'bote-delta';
+  void el.offsetWidth;
+  el.textContent = (diff > 0 ? '+' : '') + formatNum(diff);
+  el.className = 'bote-delta ' + (diff > 0 ? 'up' : 'down');
+  box.className = 'bote-box ' + (diff > 0 ? 'flash-up' : 'flash-down');
+  setTimeout(() => { box.className = 'bote-box'; }, 800);
+}
+
+setInterval(() => {
+  try {
+    const raw = localStorage.getItem('stream_bote');
+    if(!raw) { document.getElementById('boteWidget').classList.remove('visible'); return; }
+    const data = JSON.parse(raw);
+
+    document.getElementById('boteWidget').classList.add('visible');
+
+    const amount = data.amount || 0;
+    if(amount !== lastAmount) {
+      const diff = amount - lastAmount;
+      showDelta(diff);
+      lastAmount = amount;
+      document.getElementById('boteAmount').textContent = formatNum(amount);
+    }
+
+    // Último evento
+    const hist = data.history || [];
+    if(hist.length && hist[hist.length-1].ts !== lastEventTs) {
+      lastEventTs = hist[hist.length-1].ts;
+      document.getElementById('boteLast').textContent = hist[hist.length-1].label || '';
+    }
+  } catch(e) {}
+}, 300);
+</script>
+</body>
+</html>

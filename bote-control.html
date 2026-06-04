@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Bote Control</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0a0f;font-family:'Inter',sans-serif;color:#fff;padding:14px;max-width:500px;margin:0 auto;}
+h1{font-size:14px;font-weight:700;margin-bottom:2px;}
+.sub{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:12px;}
+
+.section{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:10px;}
+.sec-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:10px;}
+
+/* Bote display */
+.bote-display{
+  text-align:center;
+  font-size:48px;font-weight:900;
+  color:#FFD000;
+  letter-spacing:-1px;
+  font-variant-numeric:tabular-nums;
+  margin-bottom:10px;
+  text-shadow:0 0 20px rgba(255,208,0,.3);
+}
+.bote-display span{font-size:14px;color:rgba(255,208,0,.4);font-weight:600;letter-spacing:1px;display:block;margin-top:2px;}
+
+/* Quick adjust buttons */
+.quick-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;}
+.qbtn{
+  padding:8px 4px;border-radius:9px;font-size:11px;font-weight:700;
+  cursor:pointer;font-family:'Inter',sans-serif;border:1px solid;
+  transition:.15s;text-align:center;line-height:1.2;
+}
+.qbtn-up{background:rgba(74,222,128,.08);border-color:rgba(74,222,128,.25);color:#4ade80;}
+.qbtn-up:hover{background:rgba(74,222,128,.18);}
+.qbtn-down{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.25);color:#f87171;}
+.qbtn-down:hover{background:rgba(248,113,113,.18);}
+
+.section-divider{
+  font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,.2);text-align:center;margin:6px 0;
+}
+
+/* Manual adjust */
+.manual-row{display:flex;gap:6px;align-items:center;margin-top:8px;}
+.manual-row input{
+  flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;padding:7px 10px;color:#fff;font-size:13px;
+  font-family:'Inter',sans-serif;outline:none;
+}
+.manual-row input:focus{border-color:rgba(255,208,0,.4);}
+.btn-manual-up{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(74,222,128,.3);background:rgba(74,222,128,.1);color:#4ade80;font-family:'Inter',sans-serif;}
+.btn-manual-down{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.1);color:#f87171;font-family:'Inter',sans-serif;}
+
+/* Tienda toggle */
+.shop-toggle{
+  width:100%;padding:13px;border-radius:11px;font-size:14px;font-weight:700;
+  cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:10px;
+  transition:.15s;border:1px solid;letter-spacing:.5px;
+}
+.shop-toggle.open{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.4);color:#f87171;}
+.shop-toggle.open:hover{background:rgba(248,113,113,.22);}
+.shop-toggle.closed{background:rgba(255,208,0,.12);border-color:rgba(255,208,0,.4);color:#FFD000;}
+.shop-toggle.closed:hover{background:rgba(255,208,0,.22);}
+
+/* Items de la tienda */
+.item-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;padding:10px 12px;margin-bottom:6px;
+  display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;
+}
+.item-card.sold{opacity:.4;pointer-events:none;}
+.item-icon-sm{font-size:18px;}
+.item-info-sm .item-name-sm{font-size:12px;font-weight:700;color:#fff;}
+.item-info-sm .item-price-sm{font-size:10px;color:rgba(255,208,0,.5);margin-top:1px;}
+.item-actions{display:flex;gap:5px;}
+.btn-buy-coins{
+  padding:5px 9px;border-radius:7px;font-size:10px;font-weight:700;
+  cursor:pointer;font-family:'Inter',sans-serif;
+  border:1px solid rgba(255,208,0,.3);background:rgba(255,208,0,.1);color:#FFD000;
+  white-space:nowrap;
+}
+.btn-buy-coins:hover{background:rgba(255,208,0,.2);}
+.btn-buy-money{
+  padding:5px 9px;border-radius:7px;font-size:10px;font-weight:700;
+  cursor:pointer;font-family:'Inter',sans-serif;
+  border:1px solid rgba(74,222,128,.3);background:rgba(74,222,128,.1);color:#4ade80;
+  white-space:nowrap;
+}
+.btn-buy-money:hover{background:rgba(74,222,128,.2);}
+.item-sold-badge{
+  font-size:10px;font-weight:700;color:rgba(255,255,255,.3);
+  background:rgba(255,255,255,.06);border-radius:6px;padding:4px 8px;
+}
+
+/* Comprador input */
+.buyer-input-row{display:flex;gap:6px;margin-bottom:8px;align-items:center;}
+.buyer-label{font-size:10px;font-weight:600;color:rgba(255,255,255,.3);white-space:nowrap;letter-spacing:.5px;text-transform:uppercase;}
+.buyer-input{
+  flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;padding:6px 10px;color:#fff;font-size:12px;
+  font-family:'Inter',sans-serif;outline:none;
+}
+.buyer-input:focus{border-color:rgba(255,208,0,.4);}
+
+/* Reset */
+.btn-reset{
+  width:100%;padding:9px;border-radius:9px;font-size:11px;font-weight:700;
+  cursor:pointer;font-family:'Inter',sans-serif;
+  border:1px solid rgba(255,100,100,.25);background:rgba(255,100,100,.07);
+  color:rgba(255,100,100,.6);transition:.15s;margin-top:6px;
+}
+.btn-reset:hover{color:#ff8888;background:rgba(255,100,100,.15);}
+
+/* Historial */
+.hist-item{font-size:10px;color:rgba(255,255,255,.35);padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.hist-item .up{color:#4ade80;}.hist-item .down{color:#f87171;}
+.log{max-height:90px;overflow-y:auto;margin-top:6px;}
+
+.status{font-size:10px;text-align:center;color:rgba(255,208,0,.5);margin-top:6px;min-height:14px;}
+</style>
+</head>
+<body>
+
+<h1>🏦 Bote Control</h1>
+<div class="sub">Control del bote colectivo y la tienda del stream</div>
+
+<!-- BOTE -->
+<div class="section">
+  <div class="sec-title">Bote del Chat</div>
+  <div class="bote-display" id="boteDisp">0<span>COINS</span></div>
+
+  <div class="section-divider">Sumar por evento</div>
+  <div class="quick-grid">
+    <button class="qbtn qbtn-up" onclick="addBote(80,'✅ Encuesta ganada')">+80<br><small>Encuesta ✅</small></button>
+    <button class="qbtn qbtn-up" onclick="addBote(150,'🥊 1vs1 Chat ganado')">+150<br><small>1vs1 Chat ✅</small></button>
+    <button class="qbtn qbtn-up" onclick="addBote(250,'⭐ 1vs1 Miembro ganado')">+250<br><small>1vs1 Miembro ✅</small></button>
+  </div>
+
+  <div class="section-divider">Restar por evento</div>
+  <div class="quick-grid">
+    <button class="qbtn qbtn-down" onclick="addBote(-80,'❌ Encuesta perdida')">−80<br><small>Encuesta ❌</small></button>
+    <button class="qbtn qbtn-down" onclick="addBote(-150,'🥊 1vs1 Chat perdido')">−150<br><small>1vs1 Chat ❌</small></button>
+    <button class="qbtn qbtn-down" onclick="addBote(-250,'⭐ 1vs1 Miembro perdido')">−250<br><small>1vs1 Miembro ❌</small></button>
+  </div>
+
+  <div class="manual-row">
+    <input type="number" id="manualAmt" placeholder="Cantidad manual..." />
+    <button class="btn-manual-up" onclick="manualAdd()">+ Sumar</button>
+    <button class="btn-manual-down" onclick="manualSub()">− Restar</button>
+  </div>
+
+  <div class="log" id="histLog"></div>
+  <button class="btn-reset" onclick="resetBote()">🔄 Reset bote (inicio de stream)</button>
+  <div class="status" id="boteStatus"></div>
+</div>
+
+<!-- TIENDA -->
+<div class="section">
+  <div class="sec-title">Tienda</div>
+
+  <button class="shop-toggle closed" id="shopToggle" onclick="toggleShop()">
+    🛒 Abrir Tienda en Overlay
+  </button>
+
+  <div class="buyer-input-row">
+    <span class="buyer-label">Comprador:</span>
+    <input type="text" id="buyerName" class="buyer-input" placeholder="Nombre del viewer..."/>
+  </div>
+
+  <div id="itemCards"></div>
+  <button class="btn-reset" onclick="resetShop()">🔄 Reset tienda (todos disponibles)</button>
+</div>
+
+<script>
+const ITEMS = [
+  { id:'halfchat',  icon:'💛', name:'+½ Vida Chat',   priceCoins:350,  priceMXN:90,   realOnly:false },
+  { id:'halfsam',   icon:'🤍', name:'+½ Vida Sam',    priceCoins:350,  priceMXN:90,   realOnly:false },
+  { id:'onechat',   icon:'❤️',  name:'+1 Vida Chat',   priceCoins:600,  priceMXN:170,  realOnly:false },
+  { id:'onesam',    icon:'💙', name:'+1 Vida Sam',    priceCoins:600,  priceMXN:170,  realOnly:false },
+  { id:'fillchat',  icon:'💖', name:'Rellenar Chat',  priceCoins:1200, priceMXN:350,  realOnly:false },
+  { id:'fillsam',   icon:'🔷', name:'Rellenar Sam',   priceCoins:1200, priceMXN:350,  realOnly:false },
+  { id:'fillall',   icon:'👑', name:'Rellenar TODAS', priceCoins:0,    priceMXN:650,  realOnly:true  },
+];
+
+function getBote() {
+  try { return JSON.parse(localStorage.getItem('stream_bote') || '{"amount":0,"history":[]}'); } catch(e) { return {amount:0,history:[]}; }
+}
+
+function getShop() {
+  try { return JSON.parse(localStorage.getItem('shop_state') || '{"open":false,"sold":{}}'); } catch(e) { return {open:false,sold:{}}; }
+}
+
+function saveBote(data) {
+  localStorage.setItem('stream_bote', JSON.stringify(data));
+  refreshUI();
+}
+
+function saveShop(data) {
+  localStorage.setItem('shop_state', JSON.stringify(data));
+  renderItems();
+}
+
+function addBote(amount, label) {
+  const data = getBote();
+  data.amount = Math.max(0, (data.amount||0) + amount);
+  if(!data.history) data.history=[];
+  data.history.push({ change:amount, label, ts:Date.now() });
+  if(data.history.length > 50) data.history = data.history.slice(-50);
+  saveBote(data);
+  setStatus((amount>0?'✅ +':'❌ ')+Math.abs(amount)+' — '+label);
+}
+
+function manualAdd() {
+  const v = parseInt(document.getElementById('manualAmt').value) || 0;
+  if(v>0) addBote(v,'🔧 Ajuste manual');
+  document.getElementById('manualAmt').value='';
+}
+
+function manualSub() {
+  const v = parseInt(document.getElementById('manualAmt').value) || 0;
+  if(v>0) addBote(-v,'🔧 Ajuste manual');
+  document.getElementById('manualAmt').value='';
+}
+
+function resetBote() {
+  saveBote({amount:0, history:[{change:0,label:'🔄 Reset de stream',ts:Date.now()}]});
+  setStatus('Bote reseteado');
+}
+
+function toggleShop() {
+  const shop = getShop();
+  shop.open = !shop.open;
+  saveShop(shop);
+  updateShopToggle(shop.open);
+}
+
+function updateShopToggle(open) {
+  const btn = document.getElementById('shopToggle');
+  if(open) {
+    btn.className='shop-toggle open';
+    btn.textContent='❌ Cerrar Tienda';
+  } else {
+    btn.className='shop-toggle closed';
+    btn.textContent='🛒 Abrir Tienda en Overlay';
+  }
+}
+
+function buyItem(itemId, withCoins) {
+  const item = ITEMS.find(i=>i.id===itemId);
+  if(!item) return;
+  const buyer = document.getElementById('buyerName').value.trim() || 'Anónimo';
+  const shop = getShop();
+
+  if(shop.sold?.[itemId]) { setStatus('⚠️ Este ítem ya fue comprado','err'); return; }
+
+  if(withCoins) {
+    const bote = getBote();
+    if((bote.amount||0) < item.priceCoins) { setStatus('⚠️ No hay suficientes coins'); return; }
+    bote.amount -= item.priceCoins;
+    bote.history.push({change:-item.priceCoins, label:`🛒 ${buyer} compró ${item.name}`, ts:Date.now()});
+    saveBote(bote);
+  }
+
+  shop.sold = shop.sold || {};
+  shop.sold[itemId] = {buyer, ts:Date.now(), method: withCoins?'coins':'money'};
+  saveShop(shop);
+
+  // Trigger animación en overlay
+  localStorage.setItem('shop_purchase', JSON.stringify({itemId, buyer, ts:Date.now()}));
+  setStatus(`✅ ${buyer} compró: ${item.name}`);
+}
+
+function resetShop() {
+  saveShop({open:false, sold:{}});
+  updateShopToggle(false);
+  setStatus('Tienda reseteada — todos los ítems disponibles');
+}
+
+function renderItems() {
+  const shop = getShop();
+  const container = document.getElementById('itemCards');
+  container.innerHTML = '';
+  ITEMS.forEach(item => {
+    const sold = shop.sold?.[item.id];
+    const div = document.createElement('div');
+    div.className = 'item-card' + (sold ? ' sold' : '');
+    div.innerHTML = `
+      <span class="item-icon-sm">${item.icon}</span>
+      <div class="item-info-sm">
+        <div class="item-name-sm">${item.name}</div>
+        <div class="item-price-sm">
+          ${item.realOnly ? '' : `🪙 ${item.priceCoins.toLocaleString()} coins  •  `}💵 $${item.priceMXN} MXN
+        </div>
+        ${sold ? `<div style="font-size:9px;color:rgba(74,222,128,.5);margin-top:2px;">Comprado por: ${sold.buyer}</div>` : ''}
+      </div>
+      <div class="item-actions">
+        ${sold ? '<span class="item-sold-badge">✓ Vendido</span>' : `
+          ${item.realOnly ? '' : `<button class="btn-buy-coins" onclick="buyItem('${item.id}',true)">🪙 Coins</button>`}
+          <button class="btn-buy-money" onclick="buyItem('${item.id}',false)">💵 MXN</button>
+        `}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function refreshUI() {
+  const data = getBote();
+  document.getElementById('boteDisp').innerHTML = (data.amount||0).toLocaleString('es-MX') + '<span>COINS</span>';
+  const hist = (data.history||[]).slice().reverse();
+  const log = document.getElementById('histLog');
+  log.innerHTML = hist.slice(0,20).map(h =>
+    `<div class="hist-item"><span class="${h.change>=0?'up':'down'}">${h.change>=0?'+':''}${h.change}</span> ${h.label}</div>`
+  ).join('');
+  const shop = getShop();
+  updateShopToggle(shop.open);
+}
+
+function setStatus(msg) {
+  const el = document.getElementById('boteStatus');
+  el.textContent = msg;
+  setTimeout(()=>el.textContent='', 3000);
+}
+
+// Actualizar UI cada 500ms
+setInterval(refreshUI, 500);
+renderItems();
+refreshUI();
+</script>
+</body>
+</html>
