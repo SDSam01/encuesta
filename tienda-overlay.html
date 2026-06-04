@@ -177,13 +177,13 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 <script>
 // ══ Items de la tienda ══
 const ITEMS = [
-  { id:'halfchat',  icon:'💛', name:'+½ Vida Chat',      priceCoins:350,  priceMXN:90,   color:'#FFD000', side:'chat',  amount:.5 },
-  { id:'halfsam',   icon:'🤍', name:'+½ Vida Sam',       priceCoins:350,  priceMXN:90,   color:'#ffffff', side:'sam',   amount:.5 },
-  { id:'onechat',   icon:'❤️',  name:'+1 Vida Chat',      priceCoins:600,  priceMXN:170,  color:'#ff4444', side:'chat',  amount:1  },
-  { id:'onesam',    icon:'💙', name:'+1 Vida Sam',       priceCoins:600,  priceMXN:170,  color:'#4488ff', side:'sam',   amount:1  },
-  { id:'fillchat',  icon:'💖', name:'Rellenar Chat',     priceCoins:1200, priceMXN:350,  color:'#ff4444', side:'chat',  amount:'full' },
-  { id:'fillsam',   icon:'🔷', name:'Rellenar Sam',      priceCoins:1200, priceMXN:350,  color:'#4488ff', side:'sam',   amount:'full' },
-  { id:'fillall',   icon:'👑', name:'Rellenar TODAS',    priceCoins:0,    priceMXN:650,  color:'#FFD000', side:'all',   amount:'full', realOnly:true },
+  { id:'halfchat',  icon:'💛', name:'+½ Vida Chat',      priceCoins:600,  priceMXN:90,   priceBits:450,  color:'#FFD000', side:'chat',  amount:.5 },
+  { id:'halfsam',   icon:'🤍', name:'+½ Vida Sam',       priceCoins:600,  priceMXN:90,   priceBits:450,  color:'#ffffff', side:'sam',   amount:.5 },
+  { id:'onechat',   icon:'❤️',  name:'+1 Vida Chat',      priceCoins:1100, priceMXN:170,  priceBits:850,  color:'#ff4444', side:'chat',  amount:1  },
+  { id:'onesam',    icon:'💙', name:'+1 Vida Sam',       priceCoins:1100, priceMXN:170,  priceBits:850,  color:'#4488ff', side:'sam',   amount:1  },
+  { id:'fillchat',  icon:'💖', name:'Rellenar Chat',     priceCoins:2000, priceMXN:350,  priceBits:1750, color:'#ff4444', side:'chat',  amount:'full' },
+  { id:'fillsam',   icon:'🔷', name:'Rellenar Sam',      priceCoins:2000, priceMXN:350,  priceBits:1750, color:'#4488ff', side:'sam',   amount:'full' },
+  { id:'fillall',   icon:'👑', name:'Rellenar TODAS',    priceCoins:0,    priceMXN:650,  priceBits:3250, color:'#FFD000', side:'all',   amount:'full', realOnly:true },
 ];
 
 let shopState = {};
@@ -201,8 +201,10 @@ function renderItems(state) {
       <div class="item-info">
         <div class="item-name">${item.name}</div>
         <div class="item-price">
-          ${item.realOnly ? '' : `🪙 ${item.priceCoins.toLocaleString()} coins  •  `}
-          💵 $${item.priceMXN} MXN
+          ${item.realOnly ? '' : `🪙 ${item.priceCoins.toLocaleString()} coins`}
+        </div>
+        <div class="item-price" style="margin-top:2px;">
+          ▶ $${item.priceMXN} MXN  •  🟣 ${item.priceBits.toLocaleString()} bits
         </div>
       </div>
     `;
@@ -222,11 +224,21 @@ function playPurchaseAnim(itemId, buyerName) {
   setTimeout(() => badge.classList.remove('show'), 5000);
 
   if(itemId === 'fillall') {
+    soundModoDios();
+    screenFlash('#FFD000', 400);
     playMegaAnim(buyerName);
   } else if(itemId === 'fillchat' || itemId === 'fillsam') {
+    soundRefill(item.color);
+    screenFlash(item.color, 300);
     playRefillAnim(item.color, item.name, buyerName);
+  } else if(item.amount === 1) {
+    soundOne(item.color);
+    screenFlash(item.color, 250);
+    playHeartAnim(item.color, false, item.name);
   } else {
-    playHeartAnim(item.color, item.amount === .5, item.name);
+    soundHalf(item.color);
+    screenFlash(item.color, 180);
+    playHeartAnim(item.color, true, item.name);
   }
 }
 
@@ -366,6 +378,179 @@ function drawHeart(ctx, x, y, size) {
   ctx.bezierCurveTo(x+s*3, y-s*5, x+s*8, y-s*1, x, y+s*4);
   ctx.bezierCurveTo(x-s*8, y-s*1, x-s*3, y-s*5, x, y-s*2);
   ctx.fill();
+}
+
+// ══ Audio Engine ══
+let _ac = null;
+function getAC() {
+  if(!_ac) { try{ _ac = new(window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } }
+  if(_ac.state !== 'running') _ac.resume().catch(()=>{});
+  return _ac;
+}
+const _unlock = setInterval(()=>{ const ac=getAC(); if(ac&&ac.state==='running') clearInterval(_unlock); }, 1000);
+
+function makeOsc(type, freq) {
+  const ac = getAC(); if(!ac) return null;
+  const o = ac.createOscillator(); o.type=type; o.frequency.value=freq; return o;
+}
+function conn(...nodes) {
+  const ac = getAC(); if(!ac) return;
+  for(let i=0;i<nodes.length-1;i++) if(nodes[i]&&nodes[i+1]) nodes[i].connect(nodes[i+1]);
+  if(nodes[nodes.length-1]) nodes[nodes.length-1].connect(ac.destination);
+}
+
+// Sonido +½ vida — 2 coin tings rápidos
+function soundHalf(color) {
+  const ac = getAC(); if(!ac) return;
+  const t = ac.currentTime;
+  const isChat = color === '#FFD000' || color === '#ff4444';
+  const baseFreq = isChat ? 1200 : 1000;
+  [0, 0.12].forEach((delay, i) => {
+    const o = makeOsc('sine', baseFreq + i*200); if(!o) return;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.3, t+delay);
+    g.gain.exponentialRampToValueAtTime(0.001, t+delay+0.18);
+    conn(o, g); o.start(t+delay); o.stop(t+delay+0.2);
+  });
+  // Sub click
+  const sub = makeOsc('sine', 80); if(!sub) return;
+  const sg = ac.createGain();
+  sg.gain.setValueAtTime(0.25, t); sg.gain.exponentialRampToValueAtTime(0.001, t+0.1);
+  conn(sub, sg); sub.start(t); sub.stop(t+0.1);
+}
+
+// Sonido +1 vida — 3 tings + acorde cálido
+function soundOne(color) {
+  const ac = getAC(); if(!ac) return;
+  const t = ac.currentTime;
+  const isChat = color === '#ff4444';
+  const freqs = isChat ? [880, 1100, 1320] : [660, 880, 1050];
+  freqs.forEach((freq, i) => {
+    const o = makeOsc('sine', freq); if(!o) return;
+    const g = ac.createGain();
+    const st = t + i*0.1;
+    g.gain.setValueAtTime(0.28, st);
+    g.gain.exponentialRampToValueAtTime(0.001, st+0.35);
+    conn(o, g); o.start(st); o.stop(st+0.4);
+  });
+  // Acorde suave debajo
+  [220, 330, 440].forEach((freq, i) => {
+    const o = makeOsc('sine', freq); if(!o) return;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0, t+0.1); g.gain.linearRampToValueAtTime(0.12, t+0.2);
+    g.gain.exponentialRampToValueAtTime(0.001, t+1.2);
+    conn(o, g); o.start(t+0.1); o.stop(t+1.2);
+  });
+  // Bass punch
+  const sub = makeOsc('sine', 60); if(!sub) return;
+  const sg = ac.createGain();
+  sg.gain.setValueAtTime(0.5, t); sg.gain.exponentialRampToValueAtTime(0.001, t+0.25);
+  conn(sub, sg); sub.start(t); sub.stop(t+0.3);
+}
+
+// Sonido rellenar un lado — cascada de monedas + fanfarria
+function soundRefill(color) {
+  const ac = getAC(); if(!ac) return;
+  const t = ac.currentTime;
+  // Cascada de coins (8 tings ascendentes)
+  for(let i=0; i<8; i++) {
+    const freq = 800 + i*120 + Math.random()*60;
+    const o = makeOsc('sine', freq); if(!o) return;
+    const g = ac.createGain();
+    const st = t + i*0.07;
+    g.gain.setValueAtTime(0.22, st); g.gain.exponentialRampToValueAtTime(0.001, st+0.2);
+    conn(o, g); o.start(st); o.stop(st+0.22);
+  }
+  // Fanfarria 3 notas
+  const isChat = color === '#ff4444';
+  const base = isChat ? 523 : 392;
+  [base, base*1.25, base*1.5].forEach((freq, i) => {
+    const o = makeOsc('triangle', freq); if(!o) return;
+    const g = ac.createGain();
+    const st = t + 0.3 + i*0.15;
+    g.gain.setValueAtTime(0.3, st); g.gain.exponentialRampToValueAtTime(0.001, st+0.5);
+    conn(o, g); o.start(st); o.stop(st+0.55);
+  });
+  // Sub boom
+  const sub = makeOsc('sine', 50); if(!sub) return;
+  const sg = ac.createGain();
+  sg.gain.setValueAtTime(0.7, t); sg.gain.exponentialRampToValueAtTime(0.001, t+0.4);
+  conn(sub, sg); sub.start(t); sub.stop(t+0.45);
+}
+
+// Sonido Modo Dios — épico completo
+function soundModoDios() {
+  const ac = getAC(); if(!ac) return;
+  const t = ac.currentTime;
+  // BOOM sub-bass
+  const sub = makeOsc('sine', 55); if(!sub) return;
+  const sg = ac.createGain();
+  sub.frequency.setValueAtTime(55, t); sub.frequency.exponentialRampToValueAtTime(25, t+0.8);
+  sg.gain.setValueAtTime(1.0, t); sg.gain.exponentialRampToValueAtTime(0.001, t+0.9);
+  conn(sub, sg); sub.start(t); sub.stop(t+0.9);
+  // Explosion noise
+  const bufLen = ac.sampleRate * 0.35;
+  const buf = ac.createBuffer(1, bufLen, ac.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length, 0.7);
+  const ns = ac.createBufferSource(); ns.buffer=buf;
+  const nf = ac.createBiquadFilter(); nf.type='lowpass'; nf.frequency.value=400;
+  const ng = ac.createGain();
+  ng.gain.setValueAtTime(0.7, t); ng.gain.exponentialRampToValueAtTime(0.001, t+0.4);
+  ns.connect(nf); nf.connect(ng); ng.connect(ac.destination); ns.start(t);
+  // Cascada de coins épica (15 tings)
+  for(let i=0;i<15;i++) {
+    const freq = 600 + i*100 + Math.random()*80;
+    const o = makeOsc('sine', freq); if(!o) return;
+    const g = ac.createGain();
+    const st = t + 0.2 + i*0.06 + Math.random()*0.03;
+    g.gain.setValueAtTime(0.18, st); g.gain.exponentialRampToValueAtTime(0.001, st+0.15);
+    conn(o, g); o.start(st); o.stop(st+0.18);
+  }
+  // Fanfarria de trompetas (7 notas)
+  const notes = [523, 659, 784, 1047, 1319, 1047, 1568];
+  const times = [0.15, 0.22, 0.29, 0.36, 0.43, 0.58, 0.65];
+  notes.forEach((freq, i) => {
+    const o = makeOsc('sawtooth', freq); if(!o) return;
+    const g = ac.createGain();
+    const f = ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value=freq*3;
+    const st = t + times[i];
+    g.gain.setValueAtTime(0, st); g.gain.linearRampToValueAtTime(0.28, st+0.04);
+    g.gain.setValueAtTime(0.25, st+0.1); g.gain.exponentialRampToValueAtTime(0.001, st+0.22);
+    o.connect(f); f.connect(g); g.connect(ac.destination);
+    o.start(st); o.stop(st+0.25);
+  });
+  // Acorde final sostenido
+  [523, 659, 784, 1047].forEach((freq, i) => {
+    const o = makeOsc('sine', freq); if(!o) return;
+    const g = ac.createGain();
+    const st = t + 0.8 + i*0.02;
+    g.gain.setValueAtTime(0, st); g.gain.linearRampToValueAtTime(0.15, st+0.1);
+    g.gain.setValueAtTime(0.15, st+1.5); g.gain.exponentialRampToValueAtTime(0.001, st+3.0);
+    conn(o, g); o.start(st); o.stop(st+3.0);
+  });
+  // Shimmer campanas
+  [2093, 2637, 3136, 4186].forEach((freq, i) => {
+    const o = makeOsc('sine', freq); if(!o) return;
+    const g = ac.createGain();
+    const st = t + 1.0 + i*0.14;
+    g.gain.setValueAtTime(0.14, st); g.gain.exponentialRampToValueAtTime(0.001, st+1.0);
+    conn(o, g); o.start(st); o.stop(st+1.0);
+  });
+}
+
+// ══ Flash de pantalla por color ══
+function screenFlash(color, duration=300) {
+  const flash = document.createElement('div');
+  flash.style.cssText = `
+    position:fixed;inset:0;z-index:60;pointer-events:none;
+    background:${color};opacity:.18;
+    transition:opacity ${duration}ms ease;
+  `;
+  document.body.appendChild(flash);
+  void flash.offsetWidth;
+  flash.style.opacity='0';
+  setTimeout(()=>flash.remove(), duration+50);
 }
 
 // ══ Polling ══
