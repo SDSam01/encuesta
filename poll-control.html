@@ -142,24 +142,36 @@ setInterval(()=>{
   } catch(e) {}
 }, 1000);
 
-// ══ Sincronizar votos desde poll_state (escrito por chat-reader) ══
-// poll-control ya NO cuenta votos — solo los muestra
+// ══ Sincronizar votos desde poll_vote_delta (escrito por chat-reader) ══
+// FIX: lee del delta acumulado en lugar de poll_state directamente
+// Esto evita que save() del timer sobreescriba los votos
+let lastDeltaTs = 0;
 setInterval(()=>{
   if(!state.active) return;
   try {
-    const raw = localStorage.getItem(LS);
-    if(!raw) return;
-    const ps = JSON.parse(raw);
-    if(!ps.active) return;
-    const newA = ps.vA || 0;
-    const newB = ps.vB || 0;
-    if(newA !== state.votes.A || newB !== state.votes.B) {
-      state.votes.A = newA;
-      state.votes.B = newB;
-      $('vcA').textContent = newA;
-      $('vcB').textContent = newB;
-      const total = newA + newB;
-      if(total > 0) setStatus('🗳️ ' + total + ' votos — YouTube + Kick + Twitch', 'ok');
+    // Leer delta acumulado por chat-reader
+    const dRaw = localStorage.getItem('poll_vote_delta');
+    if(dRaw) {
+      const delta = JSON.parse(dRaw);
+      if(delta.ts && delta.ts !== lastDeltaTs) {
+        lastDeltaTs = delta.ts;
+        state.votes.A = delta.vA || 0;
+        state.votes.B = delta.vB || 0;
+        $('vcA').textContent = state.votes.A;
+        $('vcB').textContent = state.votes.B;
+        const total = state.votes.A + state.votes.B;
+        if(total > 0) setStatus('🗳️ ' + total + ' votos — YouTube + Kick + Twitch', 'ok');
+        // Sincronizar poll_state con los valores reales del delta
+        const raw = localStorage.getItem('poll_state');
+        if(raw) {
+          const ps = JSON.parse(raw);
+          if(ps.active) {
+            ps.vA = state.votes.A;
+            ps.vB = state.votes.B;
+            localStorage.setItem('poll_state', JSON.stringify(ps));
+          }
+        }
+      }
     }
   } catch(e) {}
 }, 200);
@@ -246,8 +258,9 @@ function resetVotes(){
   if(state.timerInterval) clearInterval(state.timerInterval);
   updateTimerDisplay(state.duration*60);
   $('liveText').textContent = 'Encuesta activa — overlay visible en OBS';
-  // Limpiar votos y votantes para encuesta nueva
   localStorage.removeItem('poll_voters');
+  localStorage.setItem('poll_vote_delta', JSON.stringify({vA:0, vB:0, ts:Date.now()}));
+  lastDeltaTs = 0;
   localStorage.setItem(LS, JSON.stringify({
     active: true,
     question: $('question').value,
@@ -273,8 +286,10 @@ function startPoll(){
   state.votes = {A:0, B:0};
   setLive(true);
 
-  // Limpiar votantes de la encuesta anterior
+  // Limpiar votantes y delta de la encuesta anterior
   localStorage.removeItem('poll_voters');
+  localStorage.setItem('poll_vote_delta', JSON.stringify({vA:0, vB:0, ts:Date.now()}));
+  lastDeltaTs = 0;
 
   // Escribir estado inicial limpio — chat-reader empieza a contar desde aquí
   localStorage.setItem(LS, JSON.stringify({
@@ -314,6 +329,8 @@ function stopPoll(){
   state.timerEnd = 0;
   localStorage.setItem(LS, JSON.stringify({active:false}));
   localStorage.removeItem('poll_voters');
+  localStorage.removeItem('poll_vote_delta');
+  lastDeltaTs = 0;
   setLive(false);
   $('startBtn').disabled = false;
   setStatus('Encuesta detenida','');
