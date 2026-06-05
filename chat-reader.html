@@ -161,40 +161,55 @@ function batchPushMessages(msgs) {
 }
 
 // ══ countVotesFromBatch — núcleo del nuevo sistema de votos ══
-// Opera directamente sobre el lote completo antes de que la queue lo trunce.
-// Escribe vA/vB en poll_state para que poll-control y poll-overlay los lean.
+// FIX 1: regex más amplio — captura "aa", "aaa", "a!", "!a!", "A!!", etc.
+// FIX 2: escribe vA/vB en clave separada (poll_votes_delta) para evitar
+//         race condition con save() de poll-control que sobreescribe poll_state.
 function countVotesFromBatch(msgs) {
   try {
     const pollRaw = localStorage.getItem('poll_state');
     if(!pollRaw) return;
     const poll = JSON.parse(pollRaw);
     if(!poll.active) return;
-    // Respetar el timer — no contar si ya terminó
     if(poll.timerEnd > 0 && Date.now() > poll.timerEnd) return;
 
-    // Leer quién ya votó
     let voters = {};
     try { voters = JSON.parse(localStorage.getItem('poll_voters') || '{}'); } catch(e) {}
 
+    // FIX 1: acepta "a", "aa", "aaa", "!a", "a!", "!a!", "A!!", etc.
+    // No cuenta palabras que empiecen con a/b como "antes", "bien"
+    const isVoteA = txt => /^!*a+!*$/i.test(txt);
+    const isVoteB = txt => /^!*b+!*$/i.test(txt);
+
     let dA = 0, dB = 0;
     for(const msg of msgs) {
-      const txt = (msg.text || '').trim().toLowerCase();
+      const txt = (msg.text || '').trim();
       const uid = msg.userId;
       if(!uid || voters[uid]) continue;
-      if(txt === 'a' || txt === '!a') { voters[uid] = 'A'; dA++; }
-      else if(txt === 'b' || txt === '!b') { voters[uid] = 'B'; dB++; }
+      if(isVoteA(txt))      { voters[uid] = 'A'; dA++; }
+      else if(isVoteB(txt)) { voters[uid] = 'B'; dB++; }
     }
 
     if(dA === 0 && dB === 0) return;
 
-    // Re-leer poll_state justo antes de escribir
-    // (minimiza race condition con poll-control)
-    const latest = JSON.parse(localStorage.getItem('poll_state') || '{}');
-    if(!latest.active) return;
-    latest.vA = (latest.vA || 0) + dA;
-    latest.vB = (latest.vB || 0) + dB;
-    localStorage.setItem('poll_state', JSON.stringify(latest));
+    // FIX 2: escribir delta en clave separada para evitar race condition
+    // poll-control lee poll_vote_delta y lo suma a su estado interno
+    let delta = { vA: 0, vB: 0, ts: 0 };
+    try { delta = JSON.parse(localStorage.getItem('poll_vote_delta') || '{"vA":0,"vB":0,"ts":0}'); } catch(e) {}
+    delta.vA += dA;
+    delta.vB += dB;
+    delta.ts = Date.now();
+    localStorage.setItem('poll_vote_delta', JSON.stringify(delta));
     localStorage.setItem('poll_voters', JSON.stringify(voters));
+
+    // También actualizar poll_state directamente como respaldo
+    try {
+      const latest = JSON.parse(localStorage.getItem('poll_state') || '{}');
+      if(latest.active) {
+        latest.vA = (latest.vA || 0) + dA;
+        latest.vB = (latest.vB || 0) + dB;
+        localStorage.setItem('poll_state', JSON.stringify(latest));
+      }
+    } catch(e) {}
   } catch(e) {}
 }
 
