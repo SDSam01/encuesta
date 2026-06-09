@@ -7,17 +7,14 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 
-/* Flash rojo — más intenso, bordes agresivos */
 #flashRed{
   position:fixed;inset:0;pointer-events:none;z-index:100;opacity:0;
-  background:
-    radial-gradient(ellipse at center, rgba(255,0,0,0) 15%, rgba(255,0,0,0.95) 100%),
+  background:radial-gradient(ellipse at center, rgba(255,0,0,0) 15%, rgba(255,0,0,0.95) 100%),
     linear-gradient(rgba(200,0,0,0.3), rgba(200,0,0,0.3));
   transition:opacity .05s;
 }
 #flashRed.show{opacity:1;}
 
-/* Shake de toda la pantalla */
 @keyframes screenShake{
   0%{transform:translate(0,0) rotate(0);}
   10%{transform:translate(-12px,-8px) rotate(-1deg);}
@@ -33,7 +30,6 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 }
 body.shake{animation:screenShake .5s cubic-bezier(.36,.07,.19,.97);}
 
-/* Flash verde */
 #flashGreen{
   position:fixed;inset:0;pointer-events:none;z-index:100;opacity:0;
   background:radial-gradient(ellipse at center, rgba(0,255,0,0) 20%, rgba(0,255,0,0.72) 100%);
@@ -41,11 +37,8 @@ body.shake{animation:screenShake .5s cubic-bezier(.36,.07,.19,.97);}
 }
 #flashGreen.show{opacity:1;}
 
-/* ══ Widget — ocupa todo el lienzo, centrado ══ */
 #widget{
-  position:fixed;
-  bottom:60px;
-  left:0;right:0;
+  position:fixed;bottom:60px;left:0;right:0;
   display:flex;flex-direction:column;align-items:center;gap:14px;
   opacity:0;transform:translateY(20px);
   transition:opacity .35s ease, transform .35s ease;
@@ -53,52 +46,29 @@ body.shake{animation:screenShake .5s cubic-bezier(.36,.07,.19,.97);}
 }
 #widget.visible{opacity:1;transform:translateY(0);}
 
-/* Fondo oscuro detrás de los corazones */
 .w-bg{
-  background:rgba(0,0,0,0.55);
-  border:1px solid rgba(255,255,255,0.07);
-  border-radius:20px;
-  padding:20px 48px 18px;
-  backdrop-filter:blur(4px);
+  background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.07);
+  border-radius:20px;padding:20px 48px 18px;backdrop-filter:blur(4px);
   display:flex;flex-direction:column;align-items:center;gap:12px;
 }
-
 .w-label{
-  font-family:'Courier New',monospace;
-  font-size:18px;font-weight:700;letter-spacing:6px;
-  color:rgba(255,255,255,.55);text-transform:uppercase;
-  text-shadow:0 0 12px rgba(255,50,50,.4);
+  font-family:'Courier New',monospace;font-size:18px;font-weight:700;letter-spacing:6px;
+  color:rgba(255,255,255,.55);text-transform:uppercase;text-shadow:0 0 12px rgba(255,50,50,.4);
 }
-
 .hearts-row{
   display:flex;gap:20px;
   filter:drop-shadow(0 4px 16px rgba(255,0,0,.6)) drop-shadow(0 0 30px rgba(255,0,0,.25));
 }
-
-.heart-wrap{
-  width:120px;height:120px;
-  transition:transform .1s;
-}
-
-/* Animación daño */
+.heart-wrap{width:120px;height:120px;transition:transform .1s;}
 .heart-wrap.hit{animation:heartHit .55s cubic-bezier(.36,.07,.19,.97);}
 @keyframes heartHit{
-  0%{transform:scale(1.6) rotate(-12deg);}
-  25%{transform:scale(0.75) rotate(8deg);}
-  50%{transform:scale(1.15) rotate(-4deg);}
-  100%{transform:scale(1) rotate(0);}
+  0%{transform:scale(1.6) rotate(-12deg);}25%{transform:scale(0.75) rotate(8deg);}
+  50%{transform:scale(1.15) rotate(-4deg);}100%{transform:scale(1) rotate(0);}
 }
-
-/* Animación curación */
 .heart-wrap.heal{animation:heartHeal .5s ease-out;}
 @keyframes heartHeal{
-  0%{transform:scale(1);}
-  40%{transform:scale(1.5);}
-  70%{transform:scale(0.9);}
-  100%{transform:scale(1);}
+  0%{transform:scale(1);}40%{transform:scale(1.5);}70%{transform:scale(0.9);}100%{transform:scale(1);}
 }
-
-/* Shake del widget completo */
 #widget.shake{animation:wShake .5s ease-out;}
 @keyframes wShake{
   0%,100%{transform:translateY(0) translateX(0);}
@@ -109,33 +79,24 @@ body.shake{animation:screenShake .5s cubic-bezier(.36,.07,.19,.97);}
   85%{transform:translateY(0) translateX(-5px);}
 }
 
-/* ══ YOU DIED ══ */
 #deathScreen{
   position:fixed;inset:0;pointer-events:none;z-index:99;
   display:flex;align-items:center;justify-content:center;
   opacity:0;transition:opacity .6s;
 }
 #deathScreen.show{opacity:1;}
-
 #chatRedOverlay{
-  position:fixed;inset:0;
-  background:rgba(180,0,0,0.6);
-  pointer-events:none;z-index:98;
-  opacity:0;transition:opacity .6s;
+  position:fixed;inset:0;background:rgba(180,0,0,0.6);
+  pointer-events:none;z-index:98;opacity:0;transition:opacity .6s;
 }
 #chatRedOverlay.show{opacity:1;}
-
 .death-text{
-  font-family:'Courier New',monospace;
-  font-size:120px;font-weight:900;
+  font-family:'Courier New',monospace;font-size:120px;font-weight:900;
   color:#FF0000;letter-spacing:10px;
-  text-shadow:0 0 50px rgba(255,0,0,1), 0 0 100px rgba(255,0,0,.6), 0 6px 30px rgba(0,0,0,1);
+  text-shadow:0 0 50px rgba(255,0,0,1),0 0 100px rgba(255,0,0,.6),0 6px 30px rgba(0,0,0,1);
   animation:deathPulse .9s infinite alternate;
 }
-@keyframes deathPulse{
-  from{opacity:.5;transform:scale(.96);}
-  to{opacity:1;transform:scale(1);}
-}
+@keyframes deathPulse{from{opacity:.5;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
 </style>
 </head>
 <body>
@@ -143,82 +104,50 @@ body.shake{animation:screenShake .5s cubic-bezier(.36,.07,.19,.97);}
 <div id="flashGreen"></div>
 <div id="chatRedOverlay"></div>
 <div id="deathScreen"><div class="death-text">YOU DIED</div></div>
-
 <div id="widget">
   <div class="w-bg">
     <div class="w-label">Sam</div>
     <div class="hearts-row" id="heartsRow"></div>
   </div>
 </div>
-
 <script>
-const LS = 'battle_state';
-let lastHit=0, lastHeal=0, lastHp=6, lastDead=false, hideTimeout=null;
-const AC = new (window.AudioContext||window.webkitAudioContext)();
+const LS='battle_state';
+let lastHit=0,lastHeal=0,lastHp=6,lastDead=false,hideTimeout=null;
+const AC=new (window.AudioContext||window.webkitAudioContext)();
 
 function playHit(){
-  AC.resume();
-  const t = AC.currentTime;
-
-  // Capa 1: Golpe sordo de bajo impacto (sub-bass punch)
-  const osc1 = AC.createOscillator();
-  const gain1 = AC.createGain();
-  osc1.connect(gain1); gain1.connect(AC.destination);
-  osc1.type = 'sine';
-  osc1.frequency.setValueAtTime(120, t);
-  osc1.frequency.exponentialRampToValueAtTime(40, t + 0.3);
-  gain1.gain.setValueAtTime(0.8, t);
-  gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-  osc1.start(t); osc1.stop(t + 0.35);
-
-  // Capa 2: Crack de impacto (high transient)
-  const osc2 = AC.createOscillator();
-  const gain2 = AC.createGain();
-  osc2.connect(gain2); gain2.connect(AC.destination);
-  osc2.type = 'sawtooth';
-  osc2.frequency.setValueAtTime(800, t);
-  osc2.frequency.exponentialRampToValueAtTime(100, t + 0.08);
-  gain2.gain.setValueAtTime(0.5, t);
-  gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-  osc2.start(t); osc2.stop(t + 0.1);
-
-  // Capa 3: Ruido blanco (impacto físico)
-  const bufferSize = AC.sampleRate * 0.15;
-  const buffer = AC.createBuffer(1, bufferSize, AC.sampleRate);
-  const data = buffer.getChannelData(0);
-  for(let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-  const noise = AC.createBufferSource();
-  const noiseGain = AC.createGain();
-  const noiseFilter = AC.createBiquadFilter();
-  noiseFilter.type = 'bandpass';
-  noiseFilter.frequency.value = 1200;
-  noiseFilter.Q.value = 0.5;
-  noise.buffer = buffer;
-  noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(AC.destination);
-  noiseGain.gain.setValueAtTime(0.4, t);
-  noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-  noise.start(t); noise.stop(t + 0.15);
-
-  // Capa 4: Reverb corto (eco de impacto)
-  const osc3 = AC.createOscillator();
-  const gain3 = AC.createGain();
-  osc3.connect(gain3); gain3.connect(AC.destination);
-  osc3.type = 'sine';
-  osc3.frequency.setValueAtTime(60, t + 0.05);
-  osc3.frequency.exponentialRampToValueAtTime(30, t + 0.4);
-  gain3.gain.setValueAtTime(0.3, t + 0.05);
-  gain3.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-  osc3.start(t + 0.05); osc3.stop(t + 0.4);
+  AC.resume();const t=AC.currentTime;
+  const osc1=AC.createOscillator(),gain1=AC.createGain();
+  osc1.connect(gain1);gain1.connect(AC.destination);osc1.type='sine';
+  osc1.frequency.setValueAtTime(120,t);osc1.frequency.exponentialRampToValueAtTime(40,t+.3);
+  gain1.gain.setValueAtTime(.8,t);gain1.gain.exponentialRampToValueAtTime(.001,t+.35);
+  osc1.start(t);osc1.stop(t+.35);
+  const osc2=AC.createOscillator(),gain2=AC.createGain();
+  osc2.connect(gain2);gain2.connect(AC.destination);osc2.type='sawtooth';
+  osc2.frequency.setValueAtTime(800,t);osc2.frequency.exponentialRampToValueAtTime(100,t+.08);
+  gain2.gain.setValueAtTime(.5,t);gain2.gain.exponentialRampToValueAtTime(.001,t+.1);
+  osc2.start(t);osc2.stop(t+.1);
+  const bufferSize=AC.sampleRate*.15,buffer=AC.createBuffer(1,bufferSize,AC.sampleRate);
+  const data=buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++)data[i]=Math.random()*2-1;
+  const noise=AC.createBufferSource(),noiseGain=AC.createGain(),noiseFilter=AC.createBiquadFilter();
+  noiseFilter.type='bandpass';noiseFilter.frequency.value=1200;noiseFilter.Q.value=.5;
+  noise.buffer=buffer;noise.connect(noiseFilter);noiseFilter.connect(noiseGain);noiseGain.connect(AC.destination);
+  noiseGain.gain.setValueAtTime(.4,t);noiseGain.gain.exponentialRampToValueAtTime(.001,t+.15);
+  noise.start(t);noise.stop(t+.15);
+  const osc3=AC.createOscillator(),gain3=AC.createGain();
+  osc3.connect(gain3);gain3.connect(AC.destination);osc3.type='sine';
+  osc3.frequency.setValueAtTime(60,t+.05);osc3.frequency.exponentialRampToValueAtTime(30,t+.4);
+  gain3.gain.setValueAtTime(.3,t+.05);gain3.gain.exponentialRampToValueAtTime(.001,t+.4);
+  osc3.start(t+.05);osc3.stop(t+.4);
 }
 
 function playHeal(){
   AC.resume();
   [330,392,523,659].forEach((f,i)=>{
     const o=AC.createOscillator(),g=AC.createGain();
-    o.connect(g);g.connect(AC.destination);
-    o.type='sine';const t=AC.currentTime+i*.09;
-    o.frequency.value=f;
-    g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);
+    o.connect(g);g.connect(AC.destination);o.type='sine';const t=AC.currentTime+i*.09;
+    o.frequency.value=f;g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);
     o.start(t);o.stop(t+.15);
   });
 }
@@ -227,10 +156,8 @@ function playDeath(){
   AC.resume();
   [220,196,165,147,110,98].forEach((f,i)=>{
     const o=AC.createOscillator(),g=AC.createGain();
-    o.connect(g);g.connect(AC.destination);
-    o.type='square';const t=AC.currentTime+i*.16;
-    o.frequency.value=f;
-    g.gain.setValueAtTime(.45,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);
+    o.connect(g);g.connect(AC.destination);o.type='square';const t=AC.currentTime+i*.16;
+    o.frequency.value=f;g.gain.setValueAtTime(.45,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);
     o.start(t);o.stop(t+.2);
   });
 }
@@ -238,35 +165,47 @@ function playDeath(){
 function doFlash(id){
   const el=document.getElementById(id);
   el.classList.add('show');
-  setTimeout(()=>{
-    el.classList.remove('show');
-    setTimeout(()=>{el.classList.add('show');setTimeout(()=>el.classList.remove('show'),90);},110);
-  },90);
+  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>{el.classList.add('show');setTimeout(()=>el.classList.remove('show'),90);},110);},90);
 }
 
 function doShake(){
-  document.body.classList.remove('shake');
-  void document.body.offsetWidth;
-  document.body.classList.add('shake');
-  setTimeout(()=>document.body.classList.remove('shake'), 500);
+  document.body.classList.remove('shake');void document.body.offsetWidth;
+  document.body.classList.add('shake');setTimeout(()=>document.body.classList.remove('shake'),500);
 }
 
+// ══ FIX: heartSVG con media vida correctamente dividida en x=8 ══
+// Antes: las filas inferiores usaban filled>=1 para todo el ancho → se veía relleno completo
+// Ahora: cada fila se divide en mitad izquierda (filled>=1) y mitad derecha (filled===2)
 function heartSVG(filled){
-  const c=filled===2?'#FF2222':filled===1?'#FF2222':'#1a1a1a';
-  const cr=filled===2?'#FF2222':'#1a1a1a';
-  const sh=filled>=1?'#FF7777':'#2a2a2a';
+  const red='#FF2222', dark='#1a1a1a', hi='#FF7777', dhi='#2a2a2a';
+  const lc  = filled>=1 ? red  : dark;  // color mitad izquierda
+  const rc  = filled===2 ? red  : dark;  // color mitad derecha
+  const lhi = filled>=1 ? hi   : dhi;   // highlight izquierdo
+  const rhi = filled===2 ? hi   : dhi;   // highlight derecho
   return `<svg viewBox="0 0 16 14" xmlns="http://www.w3.org/2000/svg" width="120" height="120" style="display:block;image-rendering:pixelated">
-    <rect x="1" y="0" width="3" height="2" fill="${sh}"/>
-    <rect x="4" y="0" width="4" height="1" fill="${c}"/>
-    <rect x="8" y="0" width="4" height="1" fill="${cr}"/>
-    <rect x="12" y="0" width="3" height="2" fill="${filled===2?sh:filled===1?cr:'#2a2a2a'}"/>
-    <rect x="0" y="1" width="8" height="4" fill="${c}"/>
-    <rect x="8" y="1" width="8" height="4" fill="${cr}"/>
-    <rect x="0" y="5" width="16" height="3" fill="${filled>=1?'#FF2222':'#1a1a1a'}"/>
-    <rect x="1" y="8" width="14" height="2" fill="${filled>=1?'#FF2222':'#1a1a1a'}"/>
-    <rect x="2" y="10" width="12" height="2" fill="${filled>=1?'#FF2222':'#1a1a1a'}"/>
-    <rect x="4" y="12" width="8" height="1" fill="${filled>=1?'#FF2222':'#1a1a1a'}"/>
-    <rect x="6" y="13" width="4" height="1" fill="${filled>=1?'#FF2222':'#1a1a1a'}"/>
+    <!-- Humps top row -->
+    <rect x="1"  y="0" width="3" height="2" fill="${lhi}"/>
+    <rect x="4"  y="0" width="4" height="1" fill="${lc}"/>
+    <rect x="8"  y="0" width="4" height="1" fill="${rc}"/>
+    <rect x="12" y="0" width="3" height="2" fill="${rhi}"/>
+    <!-- Upper body rows 1-4 — split at x=8 -->
+    <rect x="0"  y="1" width="8" height="4" fill="${lc}"/>
+    <rect x="8"  y="1" width="8" height="4" fill="${rc}"/>
+    <!-- Middle rows 5-7 — split at x=8 -->
+    <rect x="0"  y="5" width="8" height="3" fill="${lc}"/>
+    <rect x="8"  y="5" width="8" height="3" fill="${rc}"/>
+    <!-- Row 8-9 width=14 (x=1..14) — split at x=8 -->
+    <rect x="1"  y="8" width="7" height="2" fill="${lc}"/>
+    <rect x="8"  y="8" width="7" height="2" fill="${rc}"/>
+    <!-- Row 10-11 width=12 (x=2..13) — split at x=8 -->
+    <rect x="2"  y="10" width="6" height="2" fill="${lc}"/>
+    <rect x="8"  y="10" width="6" height="2" fill="${rc}"/>
+    <!-- Row 12 width=8 (x=4..11) — split at x=8 -->
+    <rect x="4"  y="12" width="4" height="1" fill="${lc}"/>
+    <rect x="8"  y="12" width="4" height="1" fill="${rc}"/>
+    <!-- Row 13 width=4 (x=6..9) — split at x=8 -->
+    <rect x="6"  y="13" width="2" height="1" fill="${lc}"/>
+    <rect x="8"  y="13" width="2" height="1" fill="${rc}"/>
   </svg>`;
 }
 
@@ -282,96 +221,41 @@ function renderHearts(hp){
   }
 }
 
-function showWidget(animClass, heartIdx, newHp){
+function showWidget(animClass,heartIdx,newHp){
   const widget=document.getElementById('widget');
   widget.classList.add('visible');
   renderHearts(lastHp);
-
-  // Shake
-  widget.classList.remove('shake');
-  void widget.offsetWidth;
-  widget.classList.add('shake');
-  setTimeout(()=>widget.classList.remove('shake'),500);
-
-  // Animar corazón
+  widget.classList.remove('shake');void widget.offsetWidth;
+  widget.classList.add('shake');setTimeout(()=>widget.classList.remove('shake'),500);
   const el=document.getElementById('heart_'+heartIdx);
-  if(el){
-    el.classList.remove('hit','heal');void el.offsetWidth;
-    el.classList.add(animClass);
-    setTimeout(()=>el.classList.remove(animClass),550);
-  }
-
-  // Actualizar tras animación
+  if(el){el.classList.remove('hit','heal');void el.offsetWidth;el.classList.add(animClass);setTimeout(()=>el.classList.remove(animClass),550);}
   setTimeout(()=>renderHearts(newHp),380);
-
-  // Auto-ocultar después de 3.5s
   if(hideTimeout)clearTimeout(hideTimeout);
-  hideTimeout=setTimeout(()=>{
-    widget.classList.remove('visible');
-  },3500);
+  hideTimeout=setTimeout(()=>widget.classList.remove('visible'),3500);
 }
 
 setInterval(()=>{
   try{
-    const raw=localStorage.getItem(LS);
-    if(!raw)return;
+    const raw=localStorage.getItem(LS);if(!raw)return;
     const s=JSON.parse(raw);
-
-    // DAÑO
     if(s.dannyHit&&s.dannyHit!==lastHit&&s.dannyHp<lastHp){
-      const old=lastHp;
-      lastHit=s.dannyHit;
-      if(s.dannyHp<=0){
-        playDeath();
-        renderHearts(0);
-        document.getElementById('widget').classList.add('visible');
-        if(hideTimeout)clearTimeout(hideTimeout);
-      } else {
-        doFlash('flashRed');doShake();playHit();
-        const idx=Math.min(2,Math.floor((old-1)/2));
-        showWidget('hit',idx,s.dannyHp);
-      }
+      const old=lastHp;lastHit=s.dannyHit;
+      if(s.dannyHp<=0){playDeath();renderHearts(0);document.getElementById('widget').classList.add('visible');if(hideTimeout)clearTimeout(hideTimeout);}
+      else{doFlash('flashRed');doShake();playHit();const idx=Math.min(2,Math.floor((old-1)/2));showWidget('hit',idx,s.dannyHp);}
       lastHp=s.dannyHp;
     }
-
-    // CURACIÓN
     if(s.dannyHeal&&s.dannyHeal!==lastHeal&&s.dannyHp>lastHp){
-      lastHeal=s.dannyHeal;
-      const old=lastHp;lastHp=s.dannyHp;
+      lastHeal=s.dannyHeal;lastHp=s.dannyHp;
       doFlash('flashGreen');playHeal();
-      const idx=Math.max(0,Math.min(2,Math.floor((s.dannyHp-1)/2)));
-      showWidget('heal',idx,s.dannyHp);
+      const idx=Math.max(0,Math.min(2,Math.floor((s.dannyHp-1)/2)));showWidget('heal',idx,s.dannyHp);
     }
-
-    // Sync silencioso (reset u otras actualizaciones sin hit/heal)
     if(s.dannyHp!==lastHp&&s.dannyHit===lastHit&&s.dannyHeal===lastHeal){
-      lastHp=s.dannyHp;
-      renderHearts(s.dannyHp);
-      // Ocultar widget al resetear
-      if(hideTimeout)clearTimeout(hideTimeout);
-      document.getElementById('widget').classList.remove('visible');
+      lastHp=s.dannyHp;renderHearts(s.dannyHp);
+      if(hideTimeout)clearTimeout(hideTimeout);document.getElementById('widget').classList.remove('visible');
     }
-
-    // OCULTAR/MOSTRAR manual desde control
-    if (s.dannyHidden) {
-      document.getElementById('widget').classList.remove('visible');
-      document.getElementById('deathScreen').classList.remove('show');
-      document.getElementById('chatRedOverlay').classList.remove('show');
-      return;
-    }
-
-    // YOU DIED
-    if(s.dannyDead&&!lastDead){
-      lastDead=true;
-      document.getElementById('deathScreen').classList.add('show');
-      document.getElementById('chatRedOverlay').classList.add('show');
-      document.getElementById('widget').classList.add('visible');
-      if(hideTimeout)clearTimeout(hideTimeout);
-    } else if(!s.dannyDead&&lastDead){
-      lastDead=false;
-      document.getElementById('deathScreen').classList.remove('show');
-      document.getElementById('chatRedOverlay').classList.remove('show');
-    }
+    if(s.dannyHidden){document.getElementById('widget').classList.remove('visible');document.getElementById('deathScreen').classList.remove('show');document.getElementById('chatRedOverlay').classList.remove('show');return;}
+    if(s.dannyDead&&!lastDead){lastDead=true;document.getElementById('deathScreen').classList.add('show');document.getElementById('chatRedOverlay').classList.add('show');document.getElementById('widget').classList.add('visible');if(hideTimeout)clearTimeout(hideTimeout);}
+    else if(!s.dannyDead&&lastDead){lastDead=false;document.getElementById('deathScreen').classList.remove('show');document.getElementById('chatRedOverlay').classList.remove('show');}
   }catch(e){}
 },200);
 
