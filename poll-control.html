@@ -14,7 +14,6 @@ h1{font-size:16px;font-weight:700;margin-bottom:4px;}
 label{display:block;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:4px;margin-top:10px;}
 label:first-of-type{margin-top:0;}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.timer-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;}
 input[type=text]{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;}
 input:focus{border-color:rgba(255,185,0,0.4);}
 .big-btn{width:100%;padding:11px;border-radius:10px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:.5px;transition:all .15s;border:1px solid;margin-top:6px;}
@@ -40,13 +39,17 @@ input:focus{border-color:rgba(255,185,0,0.4);}
 .timer-display{font-size:28px;font-weight:900;text-align:center;font-variant-numeric:tabular-nums;margin:8px 0;letter-spacing:-1px;}
 .timer-display.urgent{color:#f87171;animation:tblink 0.5s infinite;}
 @keyframes tblink{0%,100%{opacity:1;}50%{opacity:.4;}}
-.timer-btn{padding:8px;border-radius:8px;font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);transition:all .15s;text-align:center;}
-.timer-btn:hover{background:rgba(255,255,255,0.1);color:#fff;}
-.timer-btn.active{background:rgba(255,185,0,0.15);border-color:rgba(255,185,0,0.4);color:#FFD000;}
+/* Selector de opciones */
+.opts-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;}
+.opt-btn{padding:10px;border-radius:8px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);transition:all .15s;text-align:center;}
+.opt-btn:hover{background:rgba(255,255,255,0.1);color:#fff;}
+.opt-btn.active{background:rgba(255,185,0,0.15);border-color:rgba(255,185,0,0.4);color:#FFD000;}
 .reader-status{font-size:11px;padding:8px 12px;border-radius:8px;margin-bottom:8px;text-align:center;font-weight:600;}
 .reader-ok{background:rgba(68,222,128,0.1);border:1px solid rgba(68,222,128,0.3);color:#4ade80;}
 .reader-err{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#f87171;}
 .reader-warn{background:rgba(255,165,0,0.1);border:1px solid rgba(255,165,0,0.3);color:#FFA500;}
+/* Timer fijo */
+.timer-fixed{font-size:11px;color:rgba(255,185,0,.5);text-align:center;margin-top:6px;letter-spacing:1px;}
 </style>
 </head>
 <body>
@@ -65,43 +68,46 @@ input:focus{border-color:rgba(255,185,0,0.4);}
   <div class="section-title">Encuesta</div>
   <label>Pregunta</label>
   <input type="text" id="question" value="¿Qué eligen?">
-  <div class="two-col" style="margin-top:10px;">
+
+  <!-- Número de opciones -->
+  <label style="margin-top:12px;">Número de opciones</label>
+  <div class="opts-grid">
+    <button class="opt-btn active" onclick="setNumOpts(2,this)">2 opciones</button>
+    <button class="opt-btn" onclick="setNumOpts(3,this)">3 opciones</button>
+    <button class="opt-btn" onclick="setNumOpts(4,this)">4 opciones</button>
+  </div>
+  <div class="timer-fixed">⏱ Timer fijo: 30 segundos</div>
+
+  <!-- Opciones A y B siempre visibles -->
+  <div class="two-col" style="margin-top:12px;">
     <div>
-      <label><span class="dot" style="background:#FFB800;"></span>Opción A</label>
-      <input type="text" id="nameA" value="HOMER">
+      <label><span class="dot" style="background:#FF9114;"></span>Opción A</label>
+      <input type="text" id="nameA" value="OPCIÓN A">
     </div>
     <div>
-      <label><span class="dot" style="background:#CC1100;"></span>Opción B</label>
-      <input type="text" id="nameB" value="BART">
+      <label><span class="dot" style="background:#3B0202;"></span>Opción B</label>
+      <input type="text" id="nameB" value="OPCIÓN B">
     </div>
   </div>
-  <label style="margin-top:12px;">Duración del temporizador</label>
-  <div class="timer-grid">
-    <button class="timer-btn" onclick="setDuration(0.5,this)">30 seg</button>
-    <button class="timer-btn" onclick="setDuration(1,this)">1 min</button>
-    <button class="timer-btn active" onclick="setDuration(2,this)">2 min</button>
-    <button class="timer-btn" onclick="setDuration(3,this)">3 min</button>
-    <button class="timer-btn" onclick="setDuration(5,this)">5 min</button>
-    <button class="timer-btn" onclick="setDuration(10,this)">10 min</button>
-    <button class="timer-btn" onclick="setDuration(0,this)" style="grid-column:span 3;">Sin límite</button>
+
+  <!-- Opciones C y D opcionales -->
+  <div class="two-col" style="margin-top:10px;" id="rowCD" style="display:none;">
+    <div id="colC">
+      <label><span class="dot" style="background:#4488ff;"></span>Opción C</label>
+      <input type="text" id="nameC" value="OPCIÓN C">
+    </div>
+    <div id="colD" style="display:none;">
+      <label><span class="dot" style="background:#4ade80;"></span>Opción D</label>
+      <input type="text" id="nameD" value="OPCIÓN D">
+    </div>
   </div>
 </div>
 
+<!-- Votos en tiempo real -->
 <div class="section" id="votesSection" style="display:none;">
   <div class="section-title">Votos en tiempo real</div>
-  <div class="timer-display" id="timerDisp">2:00</div>
-  <div class="vote-row">
-    <span class="opt-tag"><span class="dot" style="background:#FFB800;"></span><span id="labelA">HOMER</span></span>
-    <button class="vbtn" onclick="cv('A',-1)">−</button>
-    <span class="vcount" id="vcA">0</span>
-    <button class="vbtn" onclick="cv('A',1)">+</button>
-  </div>
-  <div class="vote-row">
-    <span class="opt-tag"><span class="dot" style="background:#CC1100;"></span><span id="labelB">BART</span></span>
-    <button class="vbtn" onclick="cv('B',-1)">−</button>
-    <span class="vcount" id="vcB">0</span>
-    <button class="vbtn" onclick="cv('B',1)">+</button>
-  </div>
+  <div class="timer-display" id="timerDisp">30s</div>
+  <div id="voteRows"></div>
   <button class="big-btn btn-reset" onclick="resetVotes()">↺ Reiniciar votos</button>
 </div>
 
@@ -114,231 +120,250 @@ input:focus{border-color:rgba(255,185,0,0.4);}
 const $ = id => document.getElementById(id);
 const LS = 'poll_state';
 const READER_ALIVE_MS = 15000;
+const TIMER_SECS = 30; // siempre 30 segundos
+
+// Colores por opción
+const OPT_COLORS = { A:'#FF9114', B:'#3B0202', C:'#4488ff', D:'#4ade80' };
 
 const state = {
-  votes:{A:0,B:0},
-  active:false, duration:2,
+  votes:{A:0,B:0,C:0,D:0},
+  active:false,
+  numOpts:2,
   timerEnd:0, timerInterval:null
 };
 
-// ══ Estado del Chat Reader ══
-setInterval(()=>{
-  try {
-    const cs = JSON.parse(localStorage.getItem('chat_status')||'{}');
-    const el = $('readerStatus');
-    const now = Date.now();
-    const tsAge = cs.ts ? now - cs.ts : Infinity;
-    if(cs.ytConnected && tsAge < READER_ALIVE_MS) {
-      el.className = 'reader-status reader-ok';
-      el.textContent = '🟢 Chat Reader activo — key '+(cs.keyIdx+1)+'/6';
-    } else if(cs.ytConnected && tsAge >= READER_ALIVE_MS) {
-      const secs = Math.round(tsAge/1000);
-      el.className = 'reader-status reader-warn';
-      el.textContent = `⚠️ Chat Reader sin actividad (${secs}s) — puede haberse caído`;
-    } else {
-      el.className = 'reader-status reader-err';
-      el.textContent = '⚠️ Chat Reader no conectado — ábrelo primero';
-    }
-  } catch(e) {}
-}, 1000);
-
-// ══ Sincronizar votos desde poll_vote_delta (escrito por chat-reader) ══
-// FIX: lee del delta acumulado en lugar de poll_state directamente
-// Esto evita que save() del timer sobreescriba los votos
 let lastDeltaTs = 0;
+
+// ══ Reader status ══
+setInterval(()=>{
+  try{
+    const cs=JSON.parse(localStorage.getItem('chat_status')||'{}');
+    const el=$('readerStatus');
+    const now=Date.now();
+    const age=cs.ts?now-cs.ts:Infinity;
+    if(cs.ytConnected&&age<READER_ALIVE_MS){
+      el.className='reader-status reader-ok';
+      el.textContent='🟢 Chat Reader activo — key '+(cs.keyIdx+1)+'/6';
+    } else if(cs.ytConnected&&age>=READER_ALIVE_MS){
+      el.className='reader-status reader-warn';
+      el.textContent=`⚠️ Chat Reader sin actividad (${Math.round(age/1000)}s)`;
+    } else {
+      el.className='reader-status reader-err';
+      el.textContent='⚠️ Chat Reader no conectado — ábrelo primero';
+    }
+  }catch(e){}
+},1000);
+
+// ══ Sync votos desde delta ══
 setInterval(()=>{
   if(!state.active) return;
-  try {
-    // Leer delta acumulado por chat-reader
-    const dRaw = localStorage.getItem('poll_vote_delta');
-    if(dRaw) {
-      const delta = JSON.parse(dRaw);
-      if(delta.ts && delta.ts !== lastDeltaTs) {
-        lastDeltaTs = delta.ts;
-        state.votes.A = delta.vA || 0;
-        state.votes.B = delta.vB || 0;
-        $('vcA').textContent = state.votes.A;
-        $('vcB').textContent = state.votes.B;
-        const total = state.votes.A + state.votes.B;
-        if(total > 0) setStatus('🗳️ ' + total + ' votos — YouTube + Kick + Twitch', 'ok');
-        // Sincronizar poll_state con los valores reales del delta
-        const raw = localStorage.getItem('poll_state');
-        if(raw) {
-          const ps = JSON.parse(raw);
-          if(ps.active) {
-            ps.vA = state.votes.A;
-            ps.vB = state.votes.B;
-            localStorage.setItem('poll_state', JSON.stringify(ps));
-          }
+  try{
+    const dRaw=localStorage.getItem('poll_vote_delta');
+    if(!dRaw) return;
+    const delta=JSON.parse(dRaw);
+    if(delta.ts&&delta.ts!==lastDeltaTs){
+      lastDeltaTs=delta.ts;
+      state.votes.A=delta.vA||0;
+      state.votes.B=delta.vB||0;
+      state.votes.C=delta.vC||0;
+      state.votes.D=delta.vD||0;
+      renderVoteRows();
+      const total=state.votes.A+state.votes.B+state.votes.C+state.votes.D;
+      if(total>0) setStatus('🗳️ '+total+' votos — YT + Kick + Twitch','ok');
+      // Sync poll_state
+      const raw=localStorage.getItem(LS);
+      if(raw){
+        const ps=JSON.parse(raw);
+        if(ps.active){
+          ps.vA=state.votes.A;ps.vB=state.votes.B;
+          ps.vC=state.votes.C;ps.vD=state.votes.D;
+          localStorage.setItem(LS,JSON.stringify(ps));
         }
       }
     }
-  } catch(e) {}
-}, 200);
+  }catch(e){}
+},200);
 
-function setDuration(min, btn){
-  state.duration = min;
-  document.querySelectorAll('.timer-btn').forEach(b=>b.classList.remove('active'));
+function setNumOpts(n, btn){
+  state.numOpts=n;
+  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
-  updateTimerDisplay(min*60);
+  // Mostrar/ocultar fila C/D
+  $('rowCD').style.display=n>=3?'grid':'none';
+  $('colD').style.display=n>=4?'block':'none';
+  if(state.active) renderVoteRows();
+}
+
+function renderVoteRows(){
+  const keys=['A','B','C','D'].slice(0,state.numOpts);
+  const rows=$('voteRows');
+  rows.innerHTML='';
+  keys.forEach(k=>{
+    const name=($(('name'+k))?.value||k).toUpperCase();
+    const div=document.createElement('div');
+    div.className='vote-row';
+    div.innerHTML=`
+      <span class="opt-tag"><span class="dot" style="background:${OPT_COLORS[k]};"></span><span id="label${k}">${name}</span></span>
+      <button class="vbtn" onclick="cv('${k}',-1)">−</button>
+      <span class="vcount" id="vc${k}">${state.votes[k]}</span>
+      <button class="vbtn" onclick="cv('${k}',1)">+</button>
+    `;
+    rows.appendChild(div);
+  });
 }
 
 function updateTimerDisplay(sec){
-  if(!sec||sec<=0){$('timerDisp').textContent='∞';$('timerDisp').className='timer-display';return;}
-  if(sec<60){$('timerDisp').textContent=sec+'s';$('timerDisp').className='timer-display'+(sec<=5?' urgent':'');return;}
-  const m=Math.floor(sec/60),s=sec%60;
-  $('timerDisp').textContent=m+':'+(s<10?'0':'')+s;
-  $('timerDisp').className='timer-display'+(sec<=10?' urgent':'');
+  if(!sec||sec<=0){$('timerDisp').textContent='¡YA!';$('timerDisp').className='timer-display urgent';return;}
+  $('timerDisp').textContent=sec+'s';
+  $('timerDisp').className='timer-display'+(sec<=5?' urgent':'');
 }
 
 function startTimer(){
-  if(state.duration===0){state.timerEnd=0;save();return;}
-  state.timerEnd = Date.now()+state.duration*60*1000;
+  state.timerEnd=Date.now()+TIMER_SECS*1000;
   save();
   if(state.timerInterval) clearInterval(state.timerInterval);
-  state.timerInterval = setInterval(()=>{
-    const r = Math.max(0, Math.ceil((state.timerEnd-Date.now())/1000));
+  state.timerInterval=setInterval(()=>{
+    const r=Math.max(0,Math.ceil((state.timerEnd-Date.now())/1000));
     updateTimerDisplay(r);
     save();
     if(r===0){
       clearInterval(state.timerInterval);
-      $('liveText').textContent = '⏱ Tiempo agotado';
-      setTimeout(()=>{ if(state.active) stopPoll(); }, 8000);
+      $('liveText').textContent='⏱ Tiempo agotado';
+      setTimeout(()=>{ if(state.active) stopPoll(); },8000);
     }
-  }, 500);
+  },500);
 }
 
-// save() preserva vA/vB escritos por chat-reader — no los sobreescribe
+// save() preserva vA/vB/vC/vD escritos por chat-reader
 function save(){
-  let current = {};
-  try { current = JSON.parse(localStorage.getItem(LS) || '{}'); } catch(e) {}
-  localStorage.setItem(LS, JSON.stringify({
+  let current={};
+  try{ current=JSON.parse(localStorage.getItem(LS)||'{}'); }catch(e){}
+  localStorage.setItem(LS,JSON.stringify({
     ...current,
-    active:   state.active,
-    question: $('question').value,
-    nameA:    $('nameA').value,
-    nameB:    $('nameB').value,
-    timerEnd: state.timerEnd,
-    duration: state.duration,
+    active:state.active,
+    question:$('question').value,
+    nameA:$('nameA').value,nameB:$('nameB').value,
+    nameC:$('nameC').value,nameD:$('nameD').value,
+    numOpts:state.numOpts,
+    timerEnd:state.timerEnd,
   }));
 }
 
 function setLive(on){
-  state.active = on;
-  $('liveBar').style.display   = on ? 'flex'  : 'none';
-  $('stopBtn').style.display   = on ? 'block' : 'none';
-  $('startBtn').style.display  = on ? 'none'  : 'block';
-  $('votesSection').style.display = on ? 'block' : 'none';
+  state.active=on;
+  $('liveBar').style.display=on?'flex':'none';
+  $('stopBtn').style.display=on?'block':'none';
+  $('startBtn').style.display=on?'none':'block';
+  $('votesSection').style.display=on?'block':'none';
   if(on){
-    $('labelA').textContent = $('nameA').value.toUpperCase();
-    $('labelB').textContent = $('nameB').value.toUpperCase();
-    $('liveText').textContent = 'Encuesta activa — overlay visible en OBS';
+    $('liveText').textContent='Encuesta activa — overlay visible en OBS';
+    renderVoteRows();
   }
 }
 
-// cv() escribe directo en poll_state para que chat-reader lo respete
-function cv(side, d){
-  try {
-    const raw = localStorage.getItem(LS);
-    if(!raw) return;
-    const ps = JSON.parse(raw);
-    const key = 'v' + side;
-    ps[key] = Math.max(0, (ps[key] || 0) + d);
-    state.votes[side] = ps[key];
-    $('vc' + side).textContent = ps[key];
-    localStorage.setItem(LS, JSON.stringify(ps));
-  } catch(e) {}
+function cv(side,d){
+  try{
+    const raw=localStorage.getItem(LS);if(!raw)return;
+    const ps=JSON.parse(raw);
+    const key='v'+side;
+    ps[key]=Math.max(0,(ps[key]||0)+d);
+    state.votes[side]=ps[key];
+    // Actualizar delta también
+    const dRaw=localStorage.getItem('poll_vote_delta');
+    if(dRaw){
+      const delta=JSON.parse(dRaw);
+      delta['v'+side]=ps[key];
+      delta.ts=Date.now();
+      localStorage.setItem('poll_vote_delta',JSON.stringify(delta));
+    }
+    localStorage.setItem(LS,JSON.stringify(ps));
+    $('vc'+side).textContent=ps[key];
+  }catch(e){}
 }
 
 function resetVotes(){
-  state.votes = {A:0, B:0};
-  $('vcA').textContent = '0';
-  $('vcB').textContent = '0';
-  state.timerEnd = 0;
-  if(state.timerInterval) clearInterval(state.timerInterval);
-  updateTimerDisplay(state.duration*60);
-  $('liveText').textContent = 'Encuesta activa — overlay visible en OBS';
+  state.votes={A:0,B:0,C:0,D:0};
   localStorage.removeItem('poll_voters');
-  localStorage.setItem('poll_vote_delta', JSON.stringify({vA:0, vB:0, ts:Date.now()}));
-  lastDeltaTs = 0;
-  localStorage.setItem(LS, JSON.stringify({
-    active: true,
-    question: $('question').value,
-    nameA: $('nameA').value,
-    nameB: $('nameB').value,
-    vA: 0, vB: 0,
-    timerEnd: 0,
-    duration: state.duration,
+  localStorage.setItem('poll_vote_delta',JSON.stringify({vA:0,vB:0,vC:0,vD:0,ts:Date.now()}));
+  lastDeltaTs=0;
+  localStorage.setItem(LS,JSON.stringify({
+    active:true,
+    question:$('question').value,
+    nameA:$('nameA').value,nameB:$('nameB').value,
+    nameC:$('nameC').value,nameD:$('nameD').value,
+    numOpts:state.numOpts,
+    vA:0,vB:0,vC:0,vD:0,
+    timerEnd:0,
   }));
+  renderVoteRows();
+  $('liveText').textContent='Encuesta activa — overlay visible en OBS';
   startTimer();
 }
 
 function startPoll(){
-  const cs = JSON.parse(localStorage.getItem('chat_status')||'{}');
-  const now = Date.now();
-  const tsAge = cs.ts ? now - cs.ts : Infinity;
-  if(!cs.ytConnected || tsAge >= READER_ALIVE_MS){
-    setStatus('⚠️ Conecta el Chat Reader primero','err');
-    return;
+  const cs=JSON.parse(localStorage.getItem('chat_status')||'{}');
+  const age=cs.ts?Date.now()-cs.ts:Infinity;
+  if(!cs.ytConnected||age>=READER_ALIVE_MS){
+    setStatus('⚠️ Conecta el Chat Reader primero','err');return;
   }
-
-  $('startBtn').disabled = true;
-  state.votes = {A:0, B:0};
+  $('startBtn').disabled=true;
+  state.votes={A:0,B:0,C:0,D:0};
   setLive(true);
-
-  // Limpiar votantes y delta de la encuesta anterior
   localStorage.removeItem('poll_voters');
-  localStorage.setItem('poll_vote_delta', JSON.stringify({vA:0, vB:0, ts:Date.now()}));
-  lastDeltaTs = 0;
-
-  // Escribir estado inicial limpio — chat-reader empieza a contar desde aquí
-  localStorage.setItem(LS, JSON.stringify({
-    active: true,
-    question: $('question').value,
-    nameA: $('nameA').value,
-    nameB: $('nameB').value,
-    vA: 0, vB: 0,
-    timerEnd: 0,
-    duration: state.duration,
+  localStorage.setItem('poll_vote_delta',JSON.stringify({vA:0,vB:0,vC:0,vD:0,ts:Date.now()}));
+  lastDeltaTs=0;
+  localStorage.setItem(LS,JSON.stringify({
+    active:true,
+    question:$('question').value,
+    nameA:$('nameA').value,nameB:$('nameB').value,
+    nameC:$('nameC').value,nameD:$('nameD').value,
+    numOpts:state.numOpts,
+    vA:0,vB:0,vC:0,vD:0,timerEnd:0,
   }));
-
   startTimer();
-  setStatus('🟢 Encuesta activa — votos contados en tiempo real (YT + Kick + Twitch)','ok');
+  setStatus('🟢 Encuesta activa — 30s — votos en tiempo real','ok');
 }
 
 function startDemo(){
-  $('startBtn').disabled = true;
-  state.votes = {A:0, B:0};
+  $('startBtn').disabled=true;
+  state.votes={A:0,B:0,C:0,D:0};
   setLive(true);
   localStorage.removeItem('poll_voters');
-  localStorage.setItem(LS, JSON.stringify({ active:true, question:$('question').value, nameA:$('nameA').value, nameB:$('nameB').value, vA:0, vB:0, timerEnd:0, duration:state.duration }));
+  localStorage.setItem('poll_vote_delta',JSON.stringify({vA:0,vB:0,vC:0,vD:0,ts:Date.now()}));
+  lastDeltaTs=0;
+  localStorage.setItem(LS,JSON.stringify({
+    active:true,question:$('question').value,
+    nameA:$('nameA').value,nameB:$('nameB').value,
+    nameC:$('nameC').value,nameD:$('nameD').value,
+    numOpts:state.numOpts,vA:0,vB:0,vC:0,vD:0,timerEnd:0,
+  }));
   startTimer();
   setStatus('🧪 Modo prueba activo','ok');
-  let t = 0;
-  const dv = ['A','B','A','A','B','A','B','B','A','A','B','A','A','B','A','B'];
-  const di = setInterval(()=>{
-    if(t>=dv.length){clearInterval(di);return;}
+  const opts=['A','B','C','D'].slice(0,state.numOpts);
+  let t=0;
+  const di=setInterval(()=>{
+    if(t>=20){clearInterval(di);return;}
     if(state.timerEnd>0&&Date.now()>state.timerEnd){clearInterval(di);return;}
-    cv(dv[t++], 1);
-  }, 600);
+    cv(opts[t++%opts.length],1);
+  },400);
 }
 
 function stopPoll(){
   if(state.timerInterval) clearInterval(state.timerInterval);
-  state.active = false;
-  state.timerEnd = 0;
-  localStorage.setItem(LS, JSON.stringify({active:false}));
+  state.active=false;state.timerEnd=0;
+  localStorage.setItem(LS,JSON.stringify({active:false}));
   localStorage.removeItem('poll_voters');
   localStorage.removeItem('poll_vote_delta');
-  lastDeltaTs = 0;
-  setLive(false);
-  $('startBtn').disabled = false;
+  lastDeltaTs=0;
+  setLive(false);$('startBtn').disabled=false;
   setStatus('Encuesta detenida','');
 }
 
-function setStatus(msg,type){ const el=$('statusBar'); el.textContent=msg; el.className='status '+(type||''); }
+function setStatus(msg,type){const el=$('statusBar');el.textContent=msg;el.className='status '+(type||'');}
 
-updateTimerDisplay(2*60);
+// Init — mostrar fila C/D según estado inicial
+setNumOpts(2, document.querySelector('.opt-btn.active'));
+updateTimerDisplay(TIMER_SECS);
 </script>
 </body>
 </html>
