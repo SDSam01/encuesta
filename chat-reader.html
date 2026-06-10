@@ -83,6 +83,10 @@ input:focus{border-color:rgba(255,185,0,.4);}
     <div class="stat"><div class="stat-num" id="statUsers">0</div><div class="stat-lbl">Usuarios</div></div>
     <div class="stat"><div class="stat-num" id="statKey">1</div><div class="stat-lbl">API Key</div></div>
   </div>
+  <!-- Contador de votos de encuesta activa -->
+  <div id="voteStatBar" style="display:none;margin-top:8px;background:rgba(255,185,0,.06);border:1px solid rgba(255,185,0,.15);border-radius:8px;padding:6px 10px;font-size:10px;color:rgba(255,185,0,.7);font-weight:700;letter-spacing:.5px;">
+    🗳️ ENCUESTA: <span id="statVoteA">0</span>A — <span id="statVoteB">0</span>B — <span id="statVoteC" style="display:none">0</span><span id="labelC" style="display:none">C — </span><span id="statVoteD" style="display:none">0</span><span id="labelD" style="display:none">D — </span>Total: <span id="statVoteTotal">0</span>
+  </div>
   <div class="log" id="logEl"></div>
 </div>
 
@@ -215,7 +219,24 @@ function countVotesFromBatch(msgs) {
   } catch(e) {}
 }
 
-function addLog(username, text, src) {
+// ══ Deduplicación por ID de mensaje (no por timestamp) ══
+// El bug original: publishedAt <= lastMsgPublishedAt descartaba TODOS los mensajes
+// del mismo segundo. Con 1400 viewers votando "a" al mismo tiempo, solo 1 pasaba.
+// Ahora usamos el ID único de cada mensaje — correcto y sin pérdidas.
+const MAX_SEEN = 3000;
+let seenMsgIds = new Set();
+
+function isDuplicate(msgId) {
+  if(!msgId) return false;
+  if(seenMsgIds.has(msgId)) return true;
+  seenMsgIds.add(msgId);
+  // Limpiar cuando crece mucho — eliminar 500 más viejos
+  if(seenMsgIds.size > MAX_SEEN) {
+    const iter = seenMsgIds.values();
+    for(let i = 0; i < 500; i++) seenMsgIds.delete(iter.next().value);
+  }
+  return false;
+}
   const el = document.getElementById('logEl');
   const item = document.createElement('div');
   item.className = 'log-item';
@@ -320,8 +341,7 @@ async function pollYouTube() {
       }
       if(reason === 'liveChatNotFound' || reason === 'liveChatEnded') {
         localStorage.removeItem(LS_CHATID);
-        lastMsgPublishedAt = '';
-        ytChatId = null; connected = false;
+        seenMsgIds = new Set();
         setConnectedUI(false);
         setBigStatus('⏹ Stream terminado', 'err');
         setStatus('⏹ Stream terminado — chat ID inválido', 'err');
@@ -340,14 +360,13 @@ async function pollYouTube() {
 
     const batch = [];
     for(const item of (data.items || [])) {
+      const msgId    = item.id;
       const uid      = item.authorDetails?.channelId;
       const name     = item.authorDetails?.displayName || 'Usuario';
       const text     = item.snippet?.displayMessage || '';
       const isMember = !!(item.authorDetails?.isChatSponsor || item.authorDetails?.isChatModerator || item.authorDetails?.isChatOwner);
       if(!uid || !text) continue;
-      const publishedAt = item.snippet?.publishedAt || '';
-      if(publishedAt && publishedAt <= lastMsgPublishedAt) continue;
-      if(publishedAt > lastMsgPublishedAt) lastMsgPublishedAt = publishedAt;
+      if(isDuplicate(msgId)) continue;   // ← ID único, nunca pierde mensajes del mismo segundo
       batch.push({ userId:uid, username:name, text, src:'yt', isMember:!!isMember, ts:Date.now() });
     }
     if(batch.length) batchPushMessages(batch);
@@ -389,7 +408,7 @@ function lightReconnect() {
 
 function forceReconnect() {
   if(pollTimer) clearTimeout(pollTimer);
-  ytNextToken = ''; ytChatId = null; lastMsgPublishedAt = '';
+  ytNextToken = ''; ytChatId = null; seenMsgIds = new Set();
   localStorage.removeItem(LS_CHATID);
   connect();
 }
