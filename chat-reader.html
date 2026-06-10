@@ -175,41 +175,43 @@ function countVotesFromBatch(msgs) {
     let voters = {};
     try { voters = JSON.parse(localStorage.getItem('poll_voters') || '{}'); } catch(e) {}
 
-    // FIX 1: acepta "a", "aa", "aaa", "!a", "a!", "!a!", "A!!", etc.
-    // No cuenta palabras que empiecen con a/b como "antes", "bien"
+    // FIX 1: regex más amplio + soporte para opciones C y D
     const isVoteA = txt => /^!*a+!*$/i.test(txt);
     const isVoteB = txt => /^!*b+!*$/i.test(txt);
+    const isVoteC = txt => /^!*c+!*$/i.test(txt);
+    const isVoteD = txt => /^!*d+!*$/i.test(txt);
+    const numOpts = poll.numOpts || 2;
 
-    let dA = 0, dB = 0;
+    let dA=0, dB=0, dC=0, dD=0;
     for(const msg of msgs) {
       const txt = (msg.text || '').trim();
       const uid = msg.userId;
       if(!uid || voters[uid]) continue;
-      if(isVoteA(txt))      { voters[uid] = 'A'; dA++; }
-      else if(isVoteB(txt)) { voters[uid] = 'B'; dB++; }
+      if(isVoteA(txt))                        { voters[uid]='A'; dA++; }
+      else if(isVoteB(txt))                   { voters[uid]='B'; dB++; }
+      else if(numOpts>=3 && isVoteC(txt))     { voters[uid]='C'; dC++; }
+      else if(numOpts>=4 && isVoteD(txt))     { voters[uid]='D'; dD++; }
     }
 
-    if(dA === 0 && dB === 0) return;
+    if(dA===0 && dB===0 && dC===0 && dD===0) return;
 
     // FIX 2: escribir delta en clave separada para evitar race condition
-    // poll-control lee poll_vote_delta y lo suma a su estado interno
-    let delta = { vA: 0, vB: 0, ts: 0 };
-    try { delta = JSON.parse(localStorage.getItem('poll_vote_delta') || '{"vA":0,"vB":0,"ts":0}'); } catch(e) {}
-    delta.vA += dA;
-    delta.vB += dB;
-    delta.ts = Date.now();
+    let delta={vA:0,vB:0,vC:0,vD:0,ts:0};
+    try{ delta=JSON.parse(localStorage.getItem('poll_vote_delta')||'{"vA":0,"vB":0,"vC":0,"vD":0,"ts":0}'); }catch(e){}
+    delta.vA+=dA; delta.vB+=dB; delta.vC+=dC; delta.vD+=dD;
+    delta.ts=Date.now();
     localStorage.setItem('poll_vote_delta', JSON.stringify(delta));
     localStorage.setItem('poll_voters', JSON.stringify(voters));
 
-    // También actualizar poll_state directamente como respaldo
-    try {
-      const latest = JSON.parse(localStorage.getItem('poll_state') || '{}');
-      if(latest.active) {
-        latest.vA = (latest.vA || 0) + dA;
-        latest.vB = (latest.vB || 0) + dB;
-        localStorage.setItem('poll_state', JSON.stringify(latest));
+    // Respaldo en poll_state
+    try{
+      const latest=JSON.parse(localStorage.getItem('poll_state')||'{}');
+      if(latest.active){
+        latest.vA=(latest.vA||0)+dA; latest.vB=(latest.vB||0)+dB;
+        latest.vC=(latest.vC||0)+dC; latest.vD=(latest.vD||0)+dD;
+        localStorage.setItem('poll_state',JSON.stringify(latest));
       }
-    } catch(e) {}
+    }catch(e){}
   } catch(e) {}
 }
 
