@@ -237,7 +237,8 @@ function isDuplicate(msgId) {
   }
   return false;
 }
-  const el = document.getElementById('logEl');
+
+function addLog(username, text, src) {
   const item = document.createElement('div');
   item.className = 'log-item';
   item.innerHTML = `<span class="src-${src}">${src.toUpperCase()}</span> <b>${username}:</b> ${text.substring(0,40)}`;
