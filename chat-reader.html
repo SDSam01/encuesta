@@ -256,6 +256,45 @@ function saveStatus(ytOn) {
   }));
 }
 
+// ══ Diagnóstico — muestra votos detectados en tiempo real ══
+setInterval(()=>{
+  try{
+    const pollRaw = localStorage.getItem('poll_state');
+    const bar = document.getElementById('voteStatBar');
+    if(!pollRaw){ bar.style.display='none'; return; }
+    const poll = JSON.parse(pollRaw);
+    if(!poll.active){ bar.style.display='none'; return; }
+
+    bar.style.display='block';
+    const numOpts = poll.numOpts || 2;
+    let delta = {vA:0,vB:0,vC:0,vD:0};
+    try{ delta = JSON.parse(localStorage.getItem('poll_vote_delta')||'{}'); }catch(e){}
+
+    document.getElementById('statVoteA').textContent = delta.vA||0;
+    document.getElementById('statVoteB').textContent = delta.vB||0;
+
+    if(numOpts>=3){
+      document.getElementById('statVoteC').style.display='inline';
+      document.getElementById('labelC').style.display='inline';
+      document.getElementById('statVoteC').textContent = delta.vC||0;
+    } else {
+      document.getElementById('statVoteC').style.display='none';
+      document.getElementById('labelC').style.display='none';
+    }
+    if(numOpts>=4){
+      document.getElementById('statVoteD').style.display='inline';
+      document.getElementById('labelD').style.display='inline';
+      document.getElementById('statVoteD').textContent = delta.vD||0;
+    } else {
+      document.getElementById('statVoteD').style.display='none';
+      document.getElementById('labelD').style.display='none';
+    }
+
+    const total=(delta.vA||0)+(delta.vB||0)+(delta.vC||0)+(delta.vD||0);
+    document.getElementById('statVoteTotal').textContent = total;
+  }catch(e){}
+}, 500);
+
 async function findChatId(channelId) {
   let attempts = 0;
   while(attempts < API_KEYS.length) {
