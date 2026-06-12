@@ -151,7 +151,15 @@ setInterval(() => {
       const diff = amount - lastAmount;
       showDelta(diff);
       lastAmount = amount;
-      document.getElementById('boteAmount').textContent = formatNum(amount);
+      const amountEl = document.getElementById('boteAmount');
+      amountEl.textContent = formatNum(amount);
+      if(amount < 0) {
+        amountEl.style.color = '#FF4444';
+        amountEl.style.textShadow = '0 0 8px rgba(255,68,68,.5)';
+      } else {
+        amountEl.style.color = '#FFD000';
+        amountEl.style.textShadow = '0 0 8px rgba(255,208,0,.4)';
+      }
     }
   } catch(e) {}
 }, 300);
