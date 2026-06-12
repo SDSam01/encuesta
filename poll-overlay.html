@@ -346,7 +346,7 @@ function render(s){
   const box2=document.getElementById('wBox');
   const boxM=document.getElementById('wBoxMulti');
   if(numOpts===2){box2.style.display='';boxM.style.display='none';renderTwo(s,total,votes,names);}
-  else{box2.style.display='none';boxM.style.display='';renderMulti(votes,names,total,numOpts);}
+  else{box2.style.display='none';boxM.style.display='block';renderMulti(votes,names,total,numOpts);}
   const timerEl=document.getElementById('wTimer');
   if(s.timerEnd&&s.timerEnd>0){
     const rem=Math.max(0,Math.ceil((s.timerEnd-Date.now())/1000));
