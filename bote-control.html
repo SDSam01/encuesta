@@ -204,7 +204,7 @@ function saveShop(data) {
 
 function addBote(amount, label) {
   const data = getBote();
-  data.amount = Math.max(0, (data.amount||0) + amount);
+  data.amount = (data.amount||0) + amount;
   if(!data.history) data.history=[];
   data.history.push({ change:amount, label, ts:Date.now() });
   if(data.history.length > 50) data.history = data.history.slice(-50);
