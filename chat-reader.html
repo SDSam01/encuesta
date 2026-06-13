@@ -239,6 +239,7 @@ function isDuplicate(msgId) {
 }
 
 function addLog(username, text, src) {
+  const el = document.getElementById('logEl');
   const item = document.createElement('div');
   item.className = 'log-item';
   item.innerHTML = `<span class="src-${src}">${src.toUpperCase()}</span> <b>${username}:</b> ${text.substring(0,40)}`;
@@ -411,7 +412,17 @@ async function pollYouTube() {
     }
     if(batch.length) batchPushMessages(batch);
 
-    const interval = Math.max(3000, data.pollingIntervalMillis || 3000);
+    // ══ Polling adaptativo: más rápido durante encuestas activas ══
+    // Durante los 30s de una encuesta, los votos llegan en ráfaga.
+    // Bajamos el intervalo a ~1.5s para capturar más mensajes en menos tiempo.
+    // Fuera de encuestas, mantenemos el intervalo normal para ahorrar quota.
+    let interval = Math.max(3000, data.pollingIntervalMillis || 3000);
+    try {
+      const ps = JSON.parse(localStorage.getItem('poll_state') || '{}');
+      if(ps.active && ps.timerEnd && ps.timerEnd > Date.now()) {
+        interval = 1500;
+      }
+    } catch(e) {}
     pollTimer = setTimeout(pollYouTube, interval);
   } catch(e) {
     pollTimer = setTimeout(pollYouTube, 5000);
