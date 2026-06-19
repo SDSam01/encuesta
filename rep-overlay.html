@@ -411,13 +411,14 @@ function startAnimation(candidates,chosen){
   document.getElementById('shuffleZone').style.display='flex';
   stage.classList.add('show');
   startParticles(false);
+  playDrumRoll(); // ← drum roll mientras mezcla nombres
   let count=0;
   const si=setInterval(()=>{
     count++;
     ['sh0','sh1','sh2'].forEach(id=>{
       document.getElementById(id).textContent=pool[Math.floor(Math.random()*pool.length)];
     });
-    if(count>=40){clearInterval(si);revealChosen(chosen||pool[0]);}
+    if(count>=40){clearInterval(si);stopDrumRoll();revealChosen(chosen||pool[0]);}
   },80);
 }
 
@@ -426,6 +427,7 @@ function revealChosen(name){
   const el=document.getElementById('chosenName');
   el.textContent=name.toUpperCase(); el.style.display='block';
   void el.offsetWidth; el.classList.add('show');
+  playRevealFanfare(); // ← fanfarria al revelar el ganador
   setTimeout(()=>document.getElementById('sBadge').classList.add('show'),400);
   setTimeout(()=>{
     document.getElementById('bg').className='';
@@ -890,6 +892,118 @@ function playJackpotWin(){
 }
 
 window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
+
+// ══ SONIDOS ANIMACIÓN NORMAL (chat rep) ══
+
+let drumRollInterval = null;
+let drumRollCount = 0;
+
+function playDrumRoll(){
+  const ac = getAC(); if(!ac) return;
+  drumRollCount = 0;
+  const totalBeats = 40; // igual que count>=40 en startAnimation
+  let beatDelay = 140; // ms entre golpes, va acelerando
+
+  function beat(){
+    const t = ac.currentTime;
+    drumRollCount++;
+    // Golpe de caja — ruido corto con filtro
+    const bufLen = Math.floor(ac.sampleRate * 0.04);
+    const buf = ac.createBuffer(1, bufLen, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i = 0; i < bufLen; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/bufLen, 1.2);
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const filt = ac.createBiquadFilter(); filt.type = 'bandpass'; filt.frequency.value = 2000; filt.Q.value = 0.8;
+    const g = ac.createGain();
+    const vol = 0.15 + (drumRollCount/totalBeats)*0.35; // crece con la racha
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.05);
+    src.connect(filt); filt.connect(g); g.connect(ac.destination);
+    src.start(t);
+
+    // Sub-golpe que se intensifica
+    const sub = ac.createOscillator(); sub.type = 'sine';
+    sub.frequency.setValueAtTime(90 + drumRollCount*2, t);
+    sub.frequency.exponentialRampToValueAtTime(40, t+0.06);
+    const subG = ac.createGain();
+    subG.gain.setValueAtTime(0.25 + (drumRollCount/totalBeats)*0.5, t);
+    subG.gain.exponentialRampToValueAtTime(0.001, t+0.07);
+    sub.connect(subG); subG.connect(ac.destination);
+    sub.start(t); sub.stop(t+0.07);
+
+    // Acelerar progresivamente
+    beatDelay = Math.max(35, 140 - drumRollCount*3);
+    if(drumRollCount < totalBeats){
+      drumRollInterval = setTimeout(beat, beatDelay);
+    }
+  }
+  beat();
+}
+
+function stopDrumRoll(){
+  if(drumRollInterval){ clearTimeout(drumRollInterval); drumRollInterval = null; }
+}
+
+function playRevealFanfare(){
+  const ac = getAC(); if(!ac) return;
+  const t = ac.currentTime;
+
+  // Boom de impacto
+  const sub = ac.createOscillator(); sub.type = 'sine';
+  const subG = ac.createGain();
+  sub.frequency.setValueAtTime(100, t); sub.frequency.exponentialRampToValueAtTime(35, t+0.5);
+  subG.gain.setValueAtTime(1.0, t); subG.gain.exponentialRampToValueAtTime(0.001, t+0.55);
+  sub.connect(subG); subG.connect(ac.destination);
+  sub.start(t); sub.stop(t+0.55);
+
+  // Explosion noise
+  const expLen = Math.floor(ac.sampleRate * 0.25);
+  const expBuf = ac.createBuffer(1, expLen, ac.sampleRate);
+  const expD = expBuf.getChannelData(0);
+  for(let i=0;i<expLen;i++) expD[i]=(Math.random()*2-1)*Math.pow(1-i/expLen,0.7);
+  const exp = ac.createBufferSource(); exp.buffer = expBuf;
+  const expF = ac.createBiquadFilter(); expF.type = 'lowpass'; expF.frequency.value = 500;
+  const expG = ac.createGain();
+  expG.gain.setValueAtTime(0.7, t); expG.gain.exponentialRampToValueAtTime(0.001, t+0.3);
+  exp.connect(expF); expF.connect(expG); expG.connect(ac.destination);
+  exp.start(t);
+
+  // Fanfarria 5 notas ascendentes
+  const notes   = [523, 659, 784, 1047, 1319];
+  const offsets = [0.05, 0.12, 0.19, 0.26, 0.33];
+  notes.forEach((freq,i)=>{
+    const o = ac.createOscillator(); o.type = 'triangle';
+    const g = ac.createGain();
+    const st = t + offsets[i];
+    g.gain.setValueAtTime(0, st); g.gain.linearRampToValueAtTime(0.4, st+0.04);
+    g.gain.setValueAtTime(0.35, st+0.1); g.gain.exponentialRampToValueAtTime(0.001, st+0.28);
+    o.frequency.value = freq;
+    o.connect(g); g.connect(ac.destination);
+    o.start(st); o.stop(st+0.3);
+  });
+
+  // Acorde final sostenido
+  [523, 659, 784, 1047].forEach((freq,i)=>{
+    const o = ac.createOscillator(); o.type = 'sine';
+    const g = ac.createGain();
+    const st = t + 0.45 + i*0.02;
+    g.gain.setValueAtTime(0, st); g.gain.linearRampToValueAtTime(0.18, st+0.1);
+    g.gain.setValueAtTime(0.18, st+1.0); g.gain.exponentialRampToValueAtTime(0.001, st+2.0);
+    o.frequency.value = freq;
+    o.connect(g); g.connect(ac.destination);
+    o.start(st); o.stop(st+2.0);
+  });
+
+  // Campanitas de brillo
+  [2093, 2637, 3136, 4186].forEach((freq,i)=>{
+    const o = ac.createOscillator(); o.type = 'sine';
+    const g = ac.createGain();
+    const st = t + 0.5 + i*0.1;
+    g.gain.setValueAtTime(0.12, st); g.gain.exponentialRampToValueAtTime(0.001, st+0.7);
+    o.frequency.value = freq;
+    o.connect(g); g.connect(ac.destination);
+    o.start(st); o.stop(st+0.7);
+  });
+}
 </script>
 </body>
 </html>
