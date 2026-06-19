@@ -366,16 +366,8 @@ setInterval(()=>{
 },250);
 window._lastMsgTs=0;
 
-// ══ Voz única ══
-function voiceFingerprint(username,isSub){
-  let hash=0;
-  for(let i=0;i<username.length;i++){hash=((hash<<5)-hash)+username.charCodeAt(i);hash|=0;}
-  const n=Math.abs(hash);
-  const pitch=isSub?1.15+(n%20)/100:0.75+(n%50)/100;
-  const rate=isSub?1.0+(n%15)/100:0.9+(n%25)/100;
-  return{pitch,rate};
-}
-
+// ══ Voz basada en perfil del rep activo ══
+// La variación ya no es por username hash — se asigna al seleccionar el rep
 function speakMessage(username,text,isSub){
   if(!text||text.length>200) return;
   window.speechSynthesis.cancel();
@@ -386,12 +378,25 @@ function speakMessage(username,text,isSub){
   ttsEl.classList.add('show');
   if(msgTimeout) clearTimeout(msgTimeout);
   msgTimeout=setTimeout(()=>ttsEl.classList.remove('show'),5000);
-  const{pitch,rate}=voiceFingerprint(username,isSub);
-  const utt=new SpeechSynthesisUtterance(text);
-  utt.lang='es-MX'; utt.pitch=pitch; utt.rate=rate;
-  const voices=window.speechSynthesis.getVoices();
-  const esVoice=voices.find(v=>v.lang.startsWith('es'))||voices[0];
-  if(esVoice) utt.voice=esVoice;
+
+  const profile = currentVoiceProfile || VOICE_PROFILES[0];
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang  = 'es-MX';
+  utt.pitch  = profile.pitch;
+  utt.rate   = profile.rate;
+  utt.volume = 1.0;  // Volumen máximo
+
+  // Seleccionar mejor voz en español disponible
+  const voices = window.speechSynthesis.getVoices();
+  const esVoices = voices.filter(v => v.lang.startsWith('es'));
+  if(esVoices.length > 0){
+    // Usar la voz según el índice del perfil para más variedad si hay varias
+    const vIdx = VOICE_PROFILES.indexOf(profile) % esVoices.length;
+    utt.voice = esVoices[vIdx] || esVoices[0];
+  } else if(voices.length > 0){
+    utt.voice = voices[0];
+  }
+
   window.speechSynthesis.speak(utt);
 }
 
@@ -540,12 +545,40 @@ function revealJackpot(name){
   },4000);
 }
 
+// ══ PERFILES DE VOZ — varían mucho entre representantes ══
+// Se asigna uno nuevo al activar cada rep, se mantiene hasta que cambia
+const VOICE_PROFILES = [
+  { pitch:2.0,  rate:1.0,  label:'agudo normal'    },
+  { pitch:0.3,  rate:0.85, label:'muy grave lento'  },
+  { pitch:1.7,  rate:1.3,  label:'agudo rápido'     },
+  { pitch:0.5,  rate:1.1,  label:'grave rápido'     },
+  { pitch:1.9,  rate:0.75, label:'agudo muy lento'  },
+  { pitch:0.4,  rate:0.7,  label:'muy grave lento'  },
+  { pitch:1.4,  rate:1.5,  label:'medio muy rápido' },
+  { pitch:0.6,  rate:1.4,  label:'grave rápido'     },
+  { pitch:1.8,  rate:0.9,  label:'agudo pausado'    },
+  { pitch:0.8,  rate:1.2,  label:'ligeramente grave'},
+  { pitch:1.2,  rate:0.65, label:'medio muy lento'  },
+  { pitch:2.0,  rate:1.6,  label:'agudo veloz'      },
+];
+
+let currentVoiceProfile = null;
+
+function pickRandomVoiceProfile(){
+  const idx = Math.floor(Math.random() * VOICE_PROFILES.length);
+  currentVoiceProfile = VOICE_PROFILES[idx];
+  console.log(`[TTS] Nuevo rep → perfil: ${currentVoiceProfile.label}`);
+}
+
 function activateRep(isSub){
   if(!pendingRep) return;
   repUserId=pendingRep.userId;
   repUsername=pendingRep.username;
   repIsSubscriber=isSub;
   pendingRep=null;
+
+  // ← Asignar voz nueva al nuevo rep
+  pickRandomVoiceProfile();
 
   const hud=document.getElementById('repHud');
   const crown=document.getElementById('hudCrown');
