@@ -25,6 +25,8 @@ input:focus{border-color:rgba(255,185,0,.4);}
 .cb-yt{background:rgba(255,0,0,.12);color:#ff5555;border:1px solid rgba(255,85,85,.2);}
 .cb-kick{background:rgba(83,252,83,.07);color:#53fc53;border:1px solid rgba(83,252,83,.18);}
 .cb-twitch{background:rgba(145,70,255,.1);color:#9146FF;border:1px solid rgba(145,70,255,.25);}
+.cb-tiktok{background:rgba(0,0,0,.15);color:#fff;border:1px solid rgba(255,255,255,.15);}
+.cb-tiktok.on{background:rgba(255,0,80,.15);color:#ff0050;border-color:rgba(255,0,80,.4);}
 .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;}
 .stat{background:rgba(255,255,255,.04);border-radius:8px;padding:8px;text-align:center;}
 .stat-num{font-size:20px;font-weight:900;color:#FFD000;}
@@ -66,6 +68,7 @@ input:focus{border-color:rgba(255,185,0,.4);}
     <span class="cbadge cb-yt" id="dotYT">▶ YouTube</span>
     <span class="cbadge cb-kick" id="dotKick">⚡ Kick</span>
     <span class="cbadge cb-twitch" id="dotTwitch">🟣 Twitch</span>
+    <span class="cbadge cb-tiktok" id="dotTiktok">🎵 TikTok</span>
   </div>
   <button class="power-btn off" id="powerBtn" onclick="togglePower()">
     <span id="powerIcon">⏻</span>
@@ -536,6 +539,36 @@ function connectTwitch() {
     ws.onerror = () => { ws.close(); };
   } catch(e) { if(connected) twitchReconnectTimer=setTimeout(connectTwitch,8000); }
 }
+
+// ══ TikTok Bridge — lee mensajes del script local Node.js ══
+// Requiere tiktok-bridge.js corriendo en tu PC (node tiktok-bridge.js)
+const TIKTOK_BRIDGE_URL = 'http://localhost:3000/messages';
+let tiktokConnected = false;
+let tiktokRetryTimer = null;
+
+async function pollTikTok() {
+  try {
+    const res = await fetch(TIKTOK_BRIDGE_URL, { signal: AbortSignal.timeout(2000) });
+    if(!res.ok) throw new Error('status '+res.status);
+    const msgs = await res.json();
+    if(!tiktokConnected) {
+      tiktokConnected = true;
+      document.getElementById('dotTiktok').classList.add('on');
+      saveStatus(connected);
+    }
+    if(Array.isArray(msgs) && msgs.length > 0) {
+      batchPushMessages(msgs);
+    }
+  } catch(e) {
+    if(tiktokConnected) {
+      tiktokConnected = false;
+      document.getElementById('dotTiktok').classList.remove('on');
+      saveStatus(connected);
+    }
+  }
+  tiktokRetryTimer = setTimeout(pollTikTok, 2000);
+}
+pollTikTok(); // Empieza a intentar conectar, silencioso si no está corriendo
 
 function setBigStatus(msg, type) { const el=document.getElementById('bigStatus'); el.textContent=msg; el.className=type||''; }
 function setStatus(msg, type) { const el=document.getElementById('statusBar'); el.textContent=msg; el.className='status-bar '+(type||''); }
