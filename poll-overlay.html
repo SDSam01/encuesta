@@ -201,13 +201,13 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
         <div class="w-label">A</div>
         <div class="w-name" id="wNameA">HOMER</div>
         <div class="w-pct" id="wPctA">50%</div>
-        <div class="w-votes-txt"><span id="wVotesA">0</span> votos</div>
+        <div class="w-votes-txt" style="display:none"><span id="wVotesA">0</span> votos</div>
       </div>
       <div class="w-side w-side-b">
         <div class="w-label">B</div>
         <div class="w-name" id="wNameB">BART</div>
         <div class="w-pct" id="wPctB">50%</div>
-        <div class="w-votes-txt"><span id="wVotesB">0</span> votos</div>
+        <div class="w-votes-txt" style="display:none"><span id="wVotesB">0</span> votos</div>
       </div>
     </div>
 
@@ -227,7 +227,7 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
     </div>
   </div>
 
-  <div class="w-total" id="wTotal">0 votos totales</div>
+  <div class="w-total" id="wTotal" style="display:none">0 votos totales</div>
 
   <!-- Layout multi-opción (3-4 opciones) -->
   <div id="wBoxMulti">
@@ -403,7 +403,7 @@ function renderMulti(votes,names,total,numOpts){
   if(labels.children.length!==numOpts){
     labels.innerHTML='';
     pcts.forEach((p,i)=>{const isWin=p===maxPct&&total>0;const div=document.createElement('div');div.className='w-multi-label';
-      div.innerHTML=`<div class="w-multi-key">${keys[i]}</div><div class="w-multi-name">${(names[i]||keys[i]).toUpperCase()}</div><div class="w-multi-pct ${total===0?'':isWin?'win':'lose'}" id="mpct${i}">${p}%</div><div class="w-multi-votes" id="mvotes${i}">${votes[i]} votos</div>`;
+      div.innerHTML=`<div class="w-multi-key">${keys[i]}</div><div class="w-multi-name">${(names[i]||keys[i]).toUpperCase()}</div><div class="w-multi-pct ${total===0?'':isWin?'win':'lose'}" id="mpct${i}">${p}%</div><div class="w-multi-votes" id="mvotes${i}" style="display:none">${votes[i]} votos</div>`;
       labels.appendChild(div);});
   } else {pcts.forEach((p,i)=>{const isWin=p===maxPct&&total>0;
     const pe=document.getElementById('mpct'+i),ve=document.getElementById('mvotes'+i);
