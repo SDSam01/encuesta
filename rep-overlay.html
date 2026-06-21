@@ -257,6 +257,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 <div id="bg"></div>
 <canvas id="particles"></canvas>
 <div id="jpFlash"></div>
+<canvas id="jpCanvas" width="1920" height="1080" style="position:fixed;inset:0;z-index:22;display:none;pointer-events:none;background:transparent;"></canvas>
 
 <div id="stage">
   <div class="s-eyebrow">Seleccionando...</div>
@@ -482,116 +483,227 @@ function revealChosen(name){
 }
 
 // ══ FIX: JACKPOT MODE — pad pool para evitar undefined en reeles ══
-function showCorners(show){
-  ['TL','TR','BL','BR'].forEach(c=>{
-    const el=document.getElementById('jpCorner'+c);
-    if(el) el.className='jp-corner '+c.toLowerCase()+(show?' show':'');
-  });
-}
+// ══ JACKPOT — STICKMAN 3D CROWD SELECTION ══
+// Siluetas en perspectiva, el ganador se ilumina y camina al frente
 
-function animateProgress(duration,onComplete){
-  const fill=document.getElementById('jpProgressFill');
-  const label=document.getElementById('jpProgressLabel');
-  const start=performance.now();
-  function frame(now){
-    const pct=Math.min(100,Math.round((now-start)/duration*100));
-    if(fill) fill.style.width=pct+'%';
-    if(label) label.textContent='ANALYZING... '+pct+'%';
-    if(pct<100) requestAnimationFrame(frame);
-    else if(onComplete) onComplete();
+const STICKMAN_POSITIONS = [
+  // Fila trasera (pequeños, arriba)
+  {x:300, y:310, z:0.22},{x:520, y:300, z:0.22},{x:740, y:295, z:0.22},
+  {x:960, y:292, z:0.22},{x:1180, y:298, z:0.22},{x:1400, y:305, z:0.22},
+  // Fila media-trasera
+  {x:220, y:420, z:0.40},{x:490, y:410, z:0.40},{x:760, y:405, z:0.40},
+  {x:1030, y:408, z:0.40},{x:1300, y:413, z:0.40},{x:1560, y:418, z:0.40},
+  // Fila media-delantera
+  {x:320, y:560, z:0.60},{x:660, y:548, z:0.60},
+  {x:1000, y:552, z:0.60},{x:1340, y:558, z:0.60},
+  // Fila delantera (grandes, abajo)
+  {x:440, y:710, z:0.82},{x:960, y:700, z:0.82},{x:1480, y:706, z:0.82},
+];
+
+let jpAnimFrame = null;
+let jpFigures = [];
+
+function drawStickman(ctx, x, y, scale, brightness, label, isWinner){
+  const sz = 70 * scale;
+  const lw = Math.max(1, 2.5 * scale);
+  const alpha = Math.min(1, brightness/255);
+  ctx.save();
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.lineWidth = lw;
+
+  // Glow para iluminado
+  if(brightness > 80){
+    const glowIntensity = (brightness-80)/175;
+    ctx.shadowColor = isWinner ? `rgba(255,220,100,${glowIntensity})` : `rgba(255,255,255,${glowIntensity*0.6})`;
+    ctx.shadowBlur = isWinner ? 30*scale : 15*scale;
   }
-  requestAnimationFrame(frame);
+
+  const col = isWinner && brightness>150
+    ? `rgba(255,230,120,${alpha})`
+    : `rgba(${brightness},${brightness},${brightness},${alpha})`;
+  ctx.strokeStyle = col;
+  ctx.fillStyle = col;
+
+  // Cabeza
+  ctx.beginPath(); ctx.arc(x, y - sz*0.8, sz*0.16, 0, Math.PI*2); ctx.stroke();
+  // Cuerpo
+  ctx.beginPath(); ctx.moveTo(x, y-sz*0.63); ctx.lineTo(x, y-sz*0.12); ctx.stroke();
+  // Brazos
+  ctx.beginPath();
+  ctx.moveTo(x, y-sz*0.45); ctx.lineTo(x-sz*0.38, y-sz*0.22);
+  ctx.moveTo(x, y-sz*0.45); ctx.lineTo(x+sz*0.38, y-sz*0.22);
+  ctx.stroke();
+  // Piernas
+  ctx.beginPath();
+  ctx.moveTo(x, y-sz*0.12); ctx.lineTo(x-sz*0.28, y+sz*0.3);
+  ctx.moveTo(x, y-sz*0.12); ctx.lineTo(x+sz*0.28, y+sz*0.3);
+  ctx.stroke();
+
+  // Nombre — solo si suficientemente visible
+  if(brightness > 60 && label){
+    const fs = Math.max(9, 13*scale);
+    ctx.font = `bold ${fs}px 'Courier New', monospace`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowBlur = isWinner ? 12 : 6;
+    ctx.fillText(label.substring(0,12).toUpperCase(), x, y + sz*0.52);
+  }
+  ctx.restore();
 }
 
-function startJackpot(candidates,chosen){
-  let pool=candidates.length>0?[...candidates]:[chosen||'???'];
-  while(pool.length<6) pool=[...pool,...pool.slice(0,Math.max(1,6-pool.length))];
+function drawSpotlightCone(ctx, x, topY, groundY, radius, alpha){
+  const grad = ctx.createRadialGradient(x, groundY-20, 5, x, groundY-20, radius*1.2);
+  grad.addColorStop(0, `rgba(255,240,180,${alpha*0.35})`);
+  grad.addColorStop(0.4, `rgba(255,220,100,${alpha*0.15})`);
+  grad.addColorStop(1, 'transparent');
+  ctx.save();
+  ctx.fillStyle = grad;
+  ctx.fillRect(x-radius, topY, radius*2, groundY-topY+50);
+  ctx.restore();
+}
 
-  // Reset UI
+function startJackpot(candidates, chosen){
+  // Ocultar la slot machine vieja
+  document.getElementById('jackpotStage').style.display='none';
   document.getElementById('bg').className='jackpot show';
   document.getElementById('jpReveal').classList.remove('show');
   document.getElementById('jpSubBadge').classList.remove('show');
-  if(document.getElementById('jpProgressFill')) document.getElementById('jpProgressFill').style.width='0%';
-  if(document.getElementById('jpProgressLabel')) document.getElementById('jpProgressLabel').textContent='ANALYZING... 0%';
+  if(jpAnimFrame) cancelAnimationFrame(jpAnimFrame);
 
-  // Activar corners con delay para efecto de "power up"
-  showCorners(false);
-  setTimeout(()=>showCorners(true),200);
+  // Preparar canvas
+  const canvas = document.getElementById('jpCanvas');
+  canvas.style.display='block';
+  const ctx = canvas.getContext('2d');
 
-  document.getElementById('jackpotStage').classList.add('show');
-  startParticles(true);
+  // Asignar candidatos a posiciones
+  let pool = candidates.length>0 ? [...candidates] : [chosen||'???'];
+  // Shufflear posiciones y asignar
+  const positions = [...STICKMAN_POSITIONS].sort(()=>Math.random()-.5);
+  jpFigures = positions.slice(0, Math.min(positions.length, Math.max(pool.length, 8))).map((pos,i)=>({
+    ...pos,
+    name: pool[i % pool.length] || '???',
+    brightness: 0,
+    targetBrightness: 28,
+    isWinner: false,
+    x: pos.x, y: pos.y,
+    origX: pos.x, origY: pos.y,
+    origZ: pos.z,
+    currentZ: pos.z,
+  }));
+
+  // Marcar el ganador
+  const chosenName = (chosen||pool[0]||'???');
+  // Si el chosen ya está en las figuras, úsalo; si no, reemplaza la primera
+  let winnerFig = jpFigures.find(f=>f.name===chosenName);
+  if(!winnerFig){ jpFigures[0].name=chosenName; winnerFig=jpFigures[0]; }
+  winnerFig.isWinner=true;
+
   playJackpotSpin();
+  startParticles(false);
 
-  [0,1,2].forEach(i=>{
-    const inner=document.getElementById(`reel${i}inner`);
-    inner.innerHTML='';
-    const items=[...pool,...pool,...pool,...pool,chosen].sort(()=>Math.random()-.5);
-    items.forEach(name=>{
-      const div=document.createElement('div');
-      div.className='jp-reel-item';
-      div.textContent=(name||'???').substring(0,14).toUpperCase();
-      inner.appendChild(div);
-    });
-    inner.style.transition='none';
-    inner.style.transform=`translateY(-${Math.floor(Math.random()*items.length)*90}px)`;
-  });
+  // ── Fases de animación ──
+  const PHASE_APPEAR   = 1500;  // figuras aparecen
+  const PHASE_SCAN     = 3800;  // spotlight salta entre figuras
+  const PHASE_LOCK     = 5200;  // spotlight se queda en ganador
+  const PHASE_WALK     = 7200;  // ganador camina al frente
+  const PHASE_REVEAL   = 8600;  // reveal final
 
-  // Progress bar en paralelo con los reels
-  animateProgress(3800,null);
+  let scanTargetIdx = 0;
+  let scanTimer = 0;
+  let scanInterval = 120; // ms entre saltos del spotlight
+  let lastScanTime = 0;
 
-  spinReel(0,chosen,pool,()=>{
-    setTimeout(()=>spinReel(1,chosen,pool,()=>{
-      setTimeout(()=>spinReel(2,chosen,pool,()=>{
-        if(document.getElementById('jpProgressFill')) document.getElementById('jpProgressFill').style.width='100%';
-        if(document.getElementById('jpProgressLabel')) document.getElementById('jpProgressLabel').textContent='TARGET LOCKED — 100%';
-        setTimeout(()=>revealJackpot(chosen),600);
-      }),400);
-    }),400);
-  });
-}
-
-function spinReel(reelIdx,winner,pool,onStop){
-  const inner=document.getElementById(`reel${reelIdx}inner`);
-  const items=inner.querySelectorAll('.jp-reel-item');
-  const itemH=160;
-  const totalH=items.length*itemH;
-  const spinDuration=1200+reelIdx*350;
-  const start=performance.now();
-  let currentPos=0;
-  const velocity=30;
+  const t0 = performance.now();
 
   function animate(now){
-    const elapsed=now-start;
-    const progress=Math.min(elapsed/spinDuration,1);
-    const easedVel=velocity*Math.pow(1-progress,2);
-    currentPos=(currentPos+Math.max(easedVel,0.5))%totalH;
-    inner.style.transition='none';
-    inner.style.transform=`translateY(-${currentPos}px)`;
-    if(progress<1){
-      requestAnimationFrame(animate);
+    const elapsed = now - t0;
+    ctx.clearRect(0,0,1920,1080);
+
+    // Fondo oscuro con viñeta
+    ctx.fillStyle='rgba(0,0,0,1)';
+    ctx.fillRect(0,0,1920,1080);
+    const vig = ctx.createRadialGradient(960,540,200,960,540,900);
+    vig.addColorStop(0,'transparent');
+    vig.addColorStop(1,'rgba(0,0,0,.7)');
+    ctx.fillStyle=vig; ctx.fillRect(0,0,1920,1080);
+
+    // ── FASE 1: Aparecer ──
+    if(elapsed < PHASE_APPEAR){
+      const t = elapsed/PHASE_APPEAR;
+      jpFigures.forEach(f=>{ f.brightness = Math.round(28*Math.min(1,t*2)); });
+    }
+
+    // ── FASE 2: Scanning ──
+    if(elapsed >= PHASE_APPEAR && elapsed < PHASE_SCAN){
+      const phaseT = (elapsed-PHASE_APPEAR)/(PHASE_SCAN-PHASE_APPEAR);
+      // Acelerar al inicio, frenar al final
+      scanInterval = 80 + phaseT*200;
+      if(now - lastScanTime > scanInterval){
+        lastScanTime = now;
+        // Elegir próximo target (no ganador al principio, sí al final)
+        const nonWinners = jpFigures.filter(f=>!f.isWinner);
+        const pool2 = phaseT > 0.7 ? jpFigures : nonWinners;
+        scanTargetIdx = Math.floor(Math.random()*pool2.length);
+        const target = pool2[scanTargetIdx];
+        jpFigures.forEach(f=>{ f.targetBrightness = f===target ? 220 : 28; });
+      }
+      jpFigures.forEach(f=>{
+        const diff = f.targetBrightness - f.brightness;
+        f.brightness = Math.max(0,Math.min(255, f.brightness + diff*0.25));
+      });
+    }
+
+    // ── FASE 3: Lock en ganador ──
+    if(elapsed >= PHASE_SCAN && elapsed < PHASE_LOCK){
+      const t = (elapsed-PHASE_SCAN)/(PHASE_LOCK-PHASE_SCAN);
+      jpFigures.forEach(f=>{
+        if(f.isWinner) f.brightness = 200 + Math.sin(now/150)*30;
+        else f.brightness = Math.max(5, f.brightness - 4);
+      });
+      // Spotlight cone sobre el ganador
+      drawSpotlightCone(ctx, winnerFig.x, 0, winnerFig.y, 180, Math.min(1,t*2));
+    }
+
+    // ── FASE 4: Caminar al frente ──
+    if(elapsed >= PHASE_LOCK && elapsed < PHASE_WALK){
+      const t = (elapsed-PHASE_LOCK)/(PHASE_WALK-PHASE_LOCK);
+      const ease = 1-Math.pow(1-t,3);
+      winnerFig.x = winnerFig.origX + (960-winnerFig.origX)*ease;
+      winnerFig.y = winnerFig.origY + (660-winnerFig.origY)*ease;
+      winnerFig.currentZ = winnerFig.origZ + (1.4-winnerFig.origZ)*ease;
+      winnerFig.brightness = 245;
+      jpFigures.forEach(f=>{ if(!f.isWinner) f.brightness = Math.max(3, f.brightness-3); });
+      drawSpotlightCone(ctx, winnerFig.x, 0, winnerFig.y, 250+t*100, 0.6+t*0.3);
+    }
+
+    // ── FASE 5: Reveal ──
+    if(elapsed >= PHASE_WALK && elapsed < PHASE_REVEAL){
+      winnerFig.x=960; winnerFig.y=660; winnerFig.currentZ=1.4;
+      winnerFig.brightness=255;
+      jpFigures.forEach(f=>{ if(!f.isWinner) f.brightness=Math.max(0,f.brightness-5); });
+      drawSpotlightCone(ctx,960,0,700,400,0.9);
+    }
+
+    // ── DIBUJAR FIGURAS (ordenadas por profundidad, las más lejanas primero) ──
+    [...jpFigures].sort((a,b)=>a.currentZ-b.currentZ).forEach(f=>{
+      if(f.brightness < 2) return;
+      drawStickman(ctx, f.x, f.y, f.currentZ, f.brightness, f.name, f.isWinner);
+    });
+
+    if(elapsed < PHASE_REVEAL){
+      jpAnimFrame = requestAnimationFrame(animate);
     } else {
-      let winnerIdx=0;
-      const winnerText=(winner||'???').substring(0,14).toUpperCase();
-      Array.from(items).forEach((el,i)=>{ if(el.textContent===winnerText) winnerIdx=i; });
-      const targetPos=winnerIdx*itemH;
-      inner.style.transition='transform .25s ease-in';
-      inner.style.transform=`translateY(-${targetPos+15}px)`;
-      setTimeout(()=>{
-        inner.style.transition='transform .35s cubic-bezier(.34,1.56,.64,1)';
-        inner.style.transform=`translateY(-${targetPos}px)`;
-        items[winnerIdx].classList.add('winner');
-        playReelStop(reelIdx);
-        setTimeout(onStop,400);
-      },260);
+      // Limpiar y mostrar reveal
+      ctx.clearRect(0,0,1920,1080);
+      canvas.style.display='none';
+      document.getElementById('jackpotStage').style.display='';
+      revealJackpot(chosenName);
     }
   }
-  requestAnimationFrame(animate);
+  jpAnimFrame = requestAnimationFrame(animate);
 }
 
 function revealJackpot(name){
-  showCorners(false);
   const flash=document.getElementById('jpFlash');
-  // Triple flash cyan
   flash.classList.add('show');
   setTimeout(()=>{
     flash.classList.remove('show');
@@ -610,7 +722,6 @@ function revealJackpot(name){
   void reveal.offsetWidth;
   reveal.classList.add('show');
 
-  // Glitch effect en el nombre
   setTimeout(()=>{
     nameEl.classList.add('glitching');
     setTimeout(()=>nameEl.classList.remove('glitching'),1100);
