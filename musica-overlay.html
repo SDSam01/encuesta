@@ -3,228 +3,327 @@
 <head>
 <meta charset="UTF-8">
 <title>Música Overlay</title>
-<style>
-*{margin:0;padding:0;}
-body{background:transparent;width:1px;height:1px;overflow:hidden;}
-</style>
+<style>*{margin:0;padding:0;}body{background:transparent;width:1px;height:1px;overflow:hidden;}</style>
 </head>
 <body>
 <script>
 // ══ SDSAM01 — Adaptive Music Overlay ══
-// Browser source transparente — solo audio, sin visual
-// Música generada por Web Audio API (0% copyright)
-// Lee: poll_state → música de encuesta (auto)
-//      music_state.manual → música 1vs1 (manual desde rep-control)
+// 100% Web Audio API — sin copyright
+// ENCUESTA: Hip-hop chill con sax simulado, energía constante
+// 1VS1:     Música de pelea intensa, tipo luchador
 
-let ac = null;
-let masterGain = null;
-let pollNodes = [];
-let vsNodes = [];
-let currentMode = 'idle'; // idle | poll | vs
-let lastPollActive = false;
-let lastManual = false;
-let lastVolume = 0.6;
-let fadeTimer = null;
+let ac = null, masterGain = null;
+let pollNodes = [], vsNodes = [];
+let currentMode = 'idle';
+let lastPollActive = false, lastManual = false, lastVolume = 0.6;
+let pollLoopTimer = null;
 
 function getAC(){
-  if(!ac){
-    try{ ac=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
-  }
+  if(!ac){try{ac=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}}
   if(ac.state!=='running') ac.resume().catch(()=>{});
   return ac;
 }
 
-// Warm up AudioContext on first user gesture or timeout
-const _wu = setInterval(()=>{
+const _wu=setInterval(()=>{
   const a=getAC();
-  if(a&&a.state==='running'){ masterGain=a.createGain(); masterGain.connect(a.destination); masterGain.gain.value=lastVolume; clearInterval(_wu); }
-}, 500);
+  if(a&&a.state==='running'){
+    masterGain=a.createGain(); masterGain.connect(a.destination);
+    masterGain.gain.value=lastVolume; clearInterval(_wu);
+  }
+},500);
 
-// ══ MÚSICA ENCUESTA — 30 segundos que construye tensión ══
-function startPollMusic(timerEnd){
+// ══════════════════════════════════════════════
+// ENCUESTA: Hip-Hop Chill con Sax — energía CONSTANTE
+// BPM: 90 — no escala, solo fade in/out
+// ══════════════════════════════════════════════
+function startPollMusic(){
   if(currentMode==='poll') return;
-  stopAll(false);
-  currentMode='poll';
+  stopAll(false); currentMode='poll';
   const a=getAC(); if(!a||!masterGain) return;
   pollNodes=[];
-  const t=a.currentTime;
-  const secsLeft=Math.max(1,(timerEnd-Date.now())/1000);
 
-  // Capa 1: Drone base que sube en pitch con el tiempo
-  const drone=a.createOscillator(); drone.type='sine';
-  drone.frequency.setValueAtTime(55,t);
-  drone.frequency.linearRampToValueAtTime(110,t+secsLeft);
-  const droneG=a.createGain();
-  droneG.gain.setValueAtTime(0,t);
-  droneG.gain.linearRampToValueAtTime(0.18,t+1);
-  droneG.gain.linearRampToValueAtTime(0.35,t+secsLeft);
-  drone.connect(droneG); droneG.connect(masterGain);
-  drone.start(t); drone.stop(t+secsLeft+1);
-  pollNodes.push(drone,droneG);
+  // Fade in suave
+  masterGain.gain.cancelScheduledValues(a.currentTime);
+  masterGain.gain.setValueAtTime(0, a.currentTime);
+  masterGain.gain.linearRampToValueAtTime(lastVolume, a.currentTime+1.5);
 
-  // Capa 2: Pulso rítmico que se acelera
-  schedulePulse(a,masterGain,t,secsLeft,pollNodes);
-
-  // Capa 3: Pad armónico que entra a mitad
-  const pad1=a.createOscillator(); pad1.type='triangle'; pad1.frequency.value=220;
-  const pad2=a.createOscillator(); pad2.type='triangle'; pad2.frequency.value=277;
-  const pad3=a.createOscillator(); pad3.type='triangle'; pad3.frequency.value=330;
-  const padG=a.createGain();
-  padG.gain.setValueAtTime(0,t); padG.gain.linearRampToValueAtTime(0,t+secsLeft*0.4);
-  padG.gain.linearRampToValueAtTime(0.08,t+secsLeft*0.6);
-  padG.gain.linearRampToValueAtTime(0.18,t+secsLeft);
-  [pad1,pad2,pad3].forEach(p=>{ p.connect(padG); p.start(t); p.stop(t+secsLeft+1); pollNodes.push(p); });
-  padG.connect(masterGain); pollNodes.push(padG);
-
-  // Capa 4: Zumbido de tensión los últimos 10s
-  const zing=a.createOscillator(); zing.type='sawtooth'; zing.frequency.value=880;
-  const zingF=a.createBiquadFilter(); zingF.type='lowpass'; zingF.frequency.value=400;
-  const zingG=a.createGain();
-  const zingStart=Math.max(t,t+secsLeft-10);
-  zingG.gain.setValueAtTime(0,t); zingG.gain.setValueAtTime(0,zingStart);
-  zingG.gain.linearRampToValueAtTime(0.06,zingStart+2);
-  zingG.gain.linearRampToValueAtTime(0.12,t+secsLeft);
-  zing.connect(zingF); zingF.connect(zingG); zingG.connect(masterGain);
-  zing.start(t); zing.stop(t+secsLeft+1);
-  pollNodes.push(zing,zingF,zingG);
-
-  // Para automáticamente cuando expire el timer
-  setTimeout(()=>{ if(currentMode==='poll'){ stopAll(true); currentMode='idle'; } }, (secsLeft+1.5)*1000);
+  schedulePollLoop(a);
 }
 
-function schedulePulse(a, dest, startT, total, nodes){
-  // Genera golpes de percusión que van acelerando
-  const totalBeats=Math.floor(total*1.5);
-  for(let i=0;i<totalBeats;i++){
-    const progress=i/totalBeats;
-    // Tempo va de 1.0s entre golpes a 0.25s
-    const bpm=60+progress*140;
-    const interval=60/bpm;
-    // Acumular delay
-    let delay=0;
-    for(let j=0;j<i;j++){
-      const p2=j/totalBeats;
-      delay+=60/(60+p2*140);
-    }
-    const t=startT+delay;
-    if(t>startT+total+0.5) break;
+function schedulePollLoop(a){
+  const BPM=90, beat=60/BPM, bar=beat*4;
+  let t=a.currentTime+0.1;
+  const BARS=8; // 8 compases y repite
 
-    // Noise burst (hi-hat/snare)
-    const bufLen=Math.floor(a.sampleRate*0.08);
-    const buf=a.createBuffer(1,bufLen,a.sampleRate);
-    const d=buf.getChannelData(0);
-    for(let k=0;k<bufLen;k++) d[k]=(Math.random()*2-1)*Math.pow(1-k/bufLen,2);
-    const src=a.createBufferSource(); src.buffer=buf;
-    const filt=a.createBiquadFilter(); filt.type='highpass'; filt.frequency.value=2000;
-    const g=a.createGain();
-    const vol=0.06+progress*0.14;
-    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.08);
-    src.connect(filt); filt.connect(g); g.connect(dest);
-    src.start(t);
-    nodes.push(src,filt,g);
+  function oneLoop(){
+    if(currentMode!=='poll') return;
+    playHipHopLoop(a, t, BARS, bar, beat, pollNodes);
+    t+=BARS*bar;
+    pollLoopTimer=setTimeout(oneLoop,(BARS*bar-0.1)*1000);
+  }
+  oneLoop();
+}
 
-    // Sub-kick en tiempos fuertes
-    if(i%4===0){
-      const sub=a.createOscillator(); sub.type='sine';
-      sub.frequency.setValueAtTime(80+progress*40,t);
-      sub.frequency.exponentialRampToValueAtTime(30,t+0.12);
-      const subG=a.createGain();
-      subG.gain.setValueAtTime(0.2+progress*0.3,t);
-      subG.gain.exponentialRampToValueAtTime(0.001,t+0.15);
-      sub.connect(subG); subG.connect(dest);
-      sub.start(t); sub.stop(t+0.16);
-      nodes.push(sub,subG);
+function playHipHopLoop(a, start, bars, bar, beat, nodes){
+  const t=start;
+  const beats=bars*4;
+
+  for(let i=0;i<beats;i++){
+    const bt=t+i*beat;
+
+    // KICK — tiempos 1 y 3 (+ variaciones)
+    if(i%4===0 || i%4===2){
+      const kick=a.createOscillator(); kick.type='sine';
+      kick.frequency.setValueAtTime(80,bt); kick.frequency.exponentialRampToValueAtTime(30,bt+0.15);
+      const kg=a.createGain();
+      kg.gain.setValueAtTime(0.5,bt); kg.gain.exponentialRampToValueAtTime(0.001,bt+0.2);
+      kick.connect(kg); kg.connect(masterGain);
+      kick.start(bt); kick.stop(bt+0.22); nodes.push(kick,kg);
+      // Clic extra del kick
+      const buf=a.createBuffer(1,Math.floor(a.sampleRate*0.03),a.sampleRate);
+      const d=buf.getChannelData(0);
+      for(let k=0;k<d.length;k++) d[k]=(Math.random()*2-1)*Math.pow(1-k/d.length,3);
+      const ns=a.createBufferSource(); ns.buffer=buf;
+      const ng=a.createGain(); ng.gain.setValueAtTime(0.2,bt);
+      ns.connect(ng); ng.connect(masterGain); ns.start(bt); nodes.push(ns,ng);
     }
+
+    // SNARE — tiempos 2 y 4
+    if(i%4===1 || i%4===3){
+      const sbuf=a.createBuffer(1,Math.floor(a.sampleRate*0.12),a.sampleRate);
+      const sd=sbuf.getChannelData(0);
+      for(let k=0;k<sd.length;k++) sd[k]=(Math.random()*2-1)*Math.pow(1-k/sd.length,1.8);
+      const ss=a.createBufferSource(); ss.buffer=sbuf;
+      const sf=a.createBiquadFilter(); sf.type='bandpass'; sf.frequency.value=800; sf.Q.value=0.8;
+      const sg=a.createGain(); sg.gain.setValueAtTime(0.25,bt); sg.gain.exponentialRampToValueAtTime(0.001,bt+0.12);
+      ss.connect(sf); sf.connect(sg); sg.connect(masterGain); ss.start(bt);
+      nodes.push(ss,sf,sg);
+    }
+
+    // HI-HAT — cada 8vo (cada medio beat)
+    for(let h=0;h<2;h++){
+      const ht=bt+h*(beat/2);
+      const hbuf=a.createBuffer(1,Math.floor(a.sampleRate*0.04),a.sampleRate);
+      const hd=hbuf.getChannelData(0);
+      for(let k=0;k<hd.length;k++) hd[k]=(Math.random()*2-1)*Math.pow(1-k/hd.length,2.5);
+      const hs=a.createBufferSource(); hs.buffer=hbuf;
+      const hf=a.createBiquadFilter(); hf.type='highpass'; hf.frequency.value=8000;
+      const hg=a.createGain(); const vol=h===0?0.12:0.06;
+      hg.gain.setValueAtTime(vol,ht); hg.gain.exponentialRampToValueAtTime(0.001,ht+0.04);
+      hs.connect(hf); hf.connect(hg); hg.connect(masterGain); hs.start(ht);
+      nodes.push(hs,hf,hg);
+    }
+  }
+
+  // BAJO — línea de 2 compases en loop
+  const bassNotes=[55,55,49,55, 55,55,52,49]; // A A E A / A A Ab E
+  bassNotes.forEach((freq,i)=>{
+    const bt2=t+i*(bar/2);
+    const bass=a.createOscillator(); bass.type='triangle'; bass.frequency.value=freq;
+    const lfo=a.createOscillator(); lfo.type='sine'; lfo.frequency.value=4;
+    const lfoG=a.createGain(); lfoG.gain.value=2;
+    lfo.connect(lfoG); lfoG.connect(bass.frequency);
+    const bfilt=a.createBiquadFilter(); bfilt.type='lowpass'; bfilt.frequency.value=200;
+    const bg=a.createGain();
+    bg.gain.setValueAtTime(0,bt2); bg.gain.linearRampToValueAtTime(0.3,bt2+0.02);
+    bg.gain.setValueAtTime(0.28,bt2+bar/2-0.08); bg.gain.linearRampToValueAtTime(0,bt2+bar/2);
+    bass.connect(bfilt); bfilt.connect(bg); bg.connect(masterGain);
+    bass.start(bt2); bass.stop(bt2+bar/2+0.05); lfo.start(bt2); lfo.stop(bt2+bar/2+0.05);
+    nodes.push(bass,bfilt,bg,lfo,lfoG);
+  });
+
+  // SAXOFÓN — melodía pentatónica menor en loop de 2 bars
+  // A menor pentatónica: A3=220, C4=261.6, D4=293.7, E4=329.6, G4=392
+  const saxMelody=[
+    {f:220,  d:0.4, o:0},
+    {f:261.6,d:0.2, o:0.5},
+    {f:293.7,d:0.3, o:0.75},
+    {f:329.6,d:0.4, o:1.1},
+    {f:261.6,d:0.3, o:1.6},
+    {f:220,  d:0.5, o:2.0},
+    {f:196,  d:0.3, o:2.6},
+    {f:220,  d:0.4, o:3.0},
+    // barra 2
+    {f:293.7,d:0.3, o:3.5},
+    {f:329.6,d:0.4, o:3.9},
+    {f:392,  d:0.3, o:4.4},
+    {f:329.6,d:0.2, o:4.8},
+    {f:293.7,d:0.5, o:5.1},
+    {f:261.6,d:0.3, o:5.7},
+    {f:220,  d:0.6, o:6.1},
+  ];
+
+  for(let rep=0;rep<Math.ceil(bars/2);rep++){
+    const repT=t+rep*bar*2;
+    if(repT+bar*2 > t+bars*bar+0.1) break;
+    saxMelody.forEach(note=>{
+      const nt=repT+note.o*beat;
+      if(nt>t+bars*bar) return;
+      // Sax = sawtooth + bandpass (timbre de lengüeta)
+      const sax=a.createOscillator(); sax.type='sawtooth';
+      sax.frequency.value=note.f;
+      // Vibrato sutil
+      const vib=a.createOscillator(); vib.type='sine'; vib.frequency.value=5.5;
+      const vibG=a.createGain(); vibG.gain.value=3;
+      vib.connect(vibG); vibG.connect(sax.frequency);
+      // Filtro de sax
+      const f1=a.createBiquadFilter(); f1.type='bandpass'; f1.frequency.value=1800; f1.Q.value=3;
+      const f2=a.createBiquadFilter(); f2.type='peaking'; f2.frequency.value=900; f2.Q.value=2; f2.gain.value=8;
+      const sg=a.createGain();
+      sg.gain.setValueAtTime(0,nt);
+      sg.gain.linearRampToValueAtTime(0.14,nt+0.04);
+      sg.gain.setValueAtTime(0.12,nt+note.d*beat-0.05);
+      sg.gain.linearRampToValueAtTime(0,nt+note.d*beat);
+      sax.connect(f1); f1.connect(f2); f2.connect(sg); sg.connect(masterGain);
+      sax.start(nt); sax.stop(nt+note.d*beat+0.05);
+      vib.start(nt); vib.stop(nt+note.d*beat+0.05);
+      nodes.push(sax,f1,f2,sg,vib,vibG);
+    });
   }
 }
 
-// ══ MÚSICA 1VS1 — tensión ambiental ══
+// ══════════════════════════════════════════════
+// 1VS1: Batalla intensa — tipo pelea/combate
+// BPM: 120 — agresivo, con impacto
+// ══════════════════════════════════════════════
 function startVsMusic(){
   if(currentMode==='vs') return;
-  stopAll(false);
-  currentMode='vs';
+  stopAll(false); currentMode='vs';
   const a=getAC(); if(!a||!masterGain) return;
   vsNodes=[];
-  const t=a.currentTime;
 
-  // Drone muy grave
-  const sub=a.createOscillator(); sub.type='sine'; sub.frequency.value=42;
-  const subG=a.createGain();
-  subG.gain.setValueAtTime(0,t); subG.gain.linearRampToValueAtTime(0.22,t+1.5);
-  sub.connect(subG); subG.connect(masterGain);
-  sub.start(t); vsNodes.push(sub,subG);
+  masterGain.gain.cancelScheduledValues(a.currentTime);
+  masterGain.gain.setValueAtTime(0,a.currentTime);
+  masterGain.gain.linearRampToValueAtTime(lastVolume,a.currentTime+0.8);
 
-  // Cuerdas tensas (2 osciladores desafinados levemente)
-  [164.8, 165.6].forEach(freq=>{
-    const o=a.createOscillator(); o.type='sawtooth'; o.frequency.value=freq;
-    const f=a.createBiquadFilter(); f.type='lowpass'; f.frequency.value=300;
-    const g=a.createGain();
-    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.07,t+2);
-    o.connect(f); f.connect(g); g.connect(masterGain);
-    o.start(t); vsNodes.push(o,f,g);
-  });
-
-  // Latido — pulso periódico grave
-  scheduleHeartbeat(a,masterGain,t,vsNodes);
-
-  // LFO que modula el sub (crea sensación de respiración)
-  const lfo=a.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.4;
-  const lfoG=a.createGain(); lfoG.gain.value=0.06;
-  lfo.connect(lfoG); lfoG.connect(subG.gain);
-  lfo.start(t); vsNodes.push(lfo,lfoG);
+  scheduleVsLoop(a);
 }
 
-function scheduleHeartbeat(a,dest,startT,nodes){
-  // 80bpm heartbeat
-  let t=startT+0.5;
-  for(let i=0;i<300;i++){
-    // Doble golpe (lub-dub)
-    [0,0.12].forEach(offset=>{
-      const sub=a.createOscillator(); sub.type='sine';
-      sub.frequency.setValueAtTime(60,t+offset);
-      sub.frequency.exponentialRampToValueAtTime(30,t+offset+0.1);
-      const g=a.createGain();
-      g.gain.setValueAtTime(0.18,t+offset);
-      g.gain.exponentialRampToValueAtTime(0.001,t+offset+0.12);
-      sub.connect(g); g.connect(dest);
-      sub.start(t+offset); sub.stop(t+offset+0.13);
-      nodes.push(sub,g);
-    });
-    t+=0.75; // ~80bpm
+function scheduleVsLoop(a){
+  const BPM=115, beat=60/BPM, bar=beat*4;
+  let t=a.currentTime+0.1;
+  const BARS=4;
+
+  function loop(){
+    if(currentMode!=='vs') return;
+    playVsLoop(a,t,BARS,bar,beat,vsNodes);
+    t+=BARS*bar;
+    // Usar setTimeout para el siguiente loop
+    const loopDuration=(BARS*bar-0.1)*1000;
+    pollLoopTimer=setTimeout(loop, loopDuration);
+  }
+  loop();
+}
+
+function playVsLoop(a,start,bars,bar,beat,nodes){
+  const t=start;
+  const beats=bars*4;
+
+  for(let i=0;i<beats;i++){
+    const bt=t+i*beat;
+
+    // KICK DURO en cada beat
+    const kick=a.createOscillator(); kick.type='sine';
+    kick.frequency.setValueAtTime(100+(i%4===0?20:0),bt);
+    kick.frequency.exponentialRampToValueAtTime(30,bt+0.2);
+    const kg=a.createGain();
+    const kickVol=i%4===0?0.8:i%4===2?0.5:0.25;
+    kg.gain.setValueAtTime(kickVol,bt); kg.gain.exponentialRampToValueAtTime(0.001,bt+0.25);
+    kick.connect(kg); kg.connect(masterGain);
+    kick.start(bt); kick.stop(bt+0.28); nodes.push(kick,kg);
+
+    // SNARE marcial — tiempos 2 y 4
+    if(i%4===1||i%4===3){
+      const sbuf=a.createBuffer(1,Math.floor(a.sampleRate*0.15),a.sampleRate);
+      const sd=sbuf.getChannelData(0);
+      for(let k=0;k<sd.length;k++) sd[k]=(Math.random()*2-1)*Math.pow(1-k/sd.length,1.5);
+      const ss=a.createBufferSource(); ss.buffer=sbuf;
+      const sf=a.createBiquadFilter(); sf.type='bandpass'; sf.frequency.value=600; sf.Q.value=0.5;
+      const sg=a.createGain(); sg.gain.setValueAtTime(0.45,bt); sg.gain.exponentialRampToValueAtTime(0.001,bt+0.15);
+      ss.connect(sf); sf.connect(sg); sg.connect(masterGain); ss.start(bt);
+      nodes.push(ss,sf,sg);
+    }
+  }
+
+  // BAJO AGRESIVO — potente
+  const bass2Notes=[55,55,58,55, 55,49,52,49];
+  bass2Notes.forEach((freq,i)=>{
+    const bt2=t+i*(bar/2);
+    const bass=a.createOscillator(); bass.type='sawtooth'; bass.frequency.value=freq;
+    const dist=a.createWaveShaper();
+    const k=30;
+    const curve=new Float32Array(256);
+    for(let ci=0;ci<256;ci++){const x=ci*2/256-1; curve[ci]=(Math.PI+k)*x/(Math.PI+k*Math.abs(x));}
+    dist.curve=curve;
+    const bf=a.createBiquadFilter(); bf.type='lowpass'; bf.frequency.value=150;
+    const bg=a.createGain();
+    bg.gain.setValueAtTime(0,bt2); bg.gain.linearRampToValueAtTime(0.35,bt2+0.01);
+    bg.gain.setValueAtTime(0.3,bt2+bar/2-0.05); bg.gain.linearRampToValueAtTime(0,bt2+bar/2);
+    bass.connect(dist); dist.connect(bf); bf.connect(bg); bg.connect(masterGain);
+    bass.start(bt2); bass.stop(bt2+bar/2+0.05); nodes.push(bass,dist,bf,bg);
+  });
+
+  // CUERDAS OSCURAS — acorde tenso de batalla
+  const chordFreqs=[110,130.8,164.8]; // A2, C3, E3 menor
+  chordFreqs.forEach(freq=>{
+    const o=a.createOscillator(); o.type='sawtooth'; o.frequency.value=freq;
+    const f=a.createBiquadFilter(); f.type='lowpass'; f.frequency.value=400;
+    const g=a.createGain();
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.1,t+0.3);
+    g.gain.setValueAtTime(0.1,t+bars*bar-0.3); g.gain.linearRampToValueAtTime(0,t+bars*bar);
+    o.connect(f); f.connect(g); g.connect(masterGain);
+    o.start(t); o.stop(t+bars*bar+0.1); nodes.push(o,f,g);
+  });
+
+  // IMPACTOS dramáticos en tiempos fuertes (cada 2 compases)
+  for(let bar2=0;bar2<bars;bar2+=2){
+    const it=t+bar2*bar;
+    const imp=a.createOscillator(); imp.type='sine';
+    imp.frequency.setValueAtTime(150,it); imp.frequency.exponentialRampToValueAtTime(40,it+0.5);
+    const ig=a.createGain();
+    ig.gain.setValueAtTime(0.5,it); ig.gain.exponentialRampToValueAtTime(0.001,it+0.55);
+    imp.connect(ig); ig.connect(masterGain);
+    imp.start(it); imp.stop(it+0.6); nodes.push(imp,ig);
   }
 }
 
 // ══ Stop & Fade ══
 function stopAll(fade){
   currentMode='idle';
+  if(pollLoopTimer){clearTimeout(pollLoopTimer);pollLoopTimer=null;}
   if(!ac||!masterGain) return;
   if(fade){
-    const t=ac.currentTime;
-    masterGain.gain.setValueAtTime(masterGain.gain.value,t);
-    masterGain.gain.linearRampToValueAtTime(0,t+1.2);
+    const tv=ac.currentTime;
+    masterGain.gain.cancelScheduledValues(tv);
+    masterGain.gain.setValueAtTime(masterGain.gain.value,tv);
+    masterGain.gain.linearRampToValueAtTime(0,tv+1.5);
     setTimeout(()=>{
-      masterGain.gain.setValueAtTime(lastVolume,ac.currentTime);
-      pollNodes.forEach(n=>{ try{n.stop&&n.stop();}catch(e){} });
-      vsNodes.forEach(n=>{ try{n.stop&&n.stop();}catch(e){} });
+      pollNodes.forEach(n=>{try{n.stop&&n.stop(0);}catch(e){}});
+      vsNodes.forEach(n=>{try{n.stop&&n.stop(0);}catch(e){}});
       pollNodes=[]; vsNodes=[];
-    },1300);
+      masterGain.gain.cancelScheduledValues(ac.currentTime);
+      masterGain.gain.setValueAtTime(lastVolume,ac.currentTime);
+    },1600);
   } else {
-    pollNodes.forEach(n=>{ try{n.stop&&n.stop();}catch(e){} });
-    vsNodes.forEach(n=>{ try{n.stop&&n.stop();}catch(e){} });
+    pollNodes.forEach(n=>{try{n.stop&&n.stop(0);}catch(e){}});
+    vsNodes.forEach(n=>{try{n.stop&&n.stop(0);}catch(e){}});
     pollNodes=[]; vsNodes=[];
   }
 }
 
-// ══ Loop principal ══
+// ══ Loop principal de control ══
 setInterval(()=>{
   if(!ac||!masterGain) return;
   try{
-    // Volumen
     const ms=JSON.parse(localStorage.getItem('music_state')||'{}');
     const vol=ms.volume!==undefined?ms.volume:0.6;
-    if(vol!==lastVolume){ lastVolume=vol; masterGain.gain.setTargetAtTime(vol,ac.currentTime,0.3); }
-
-    // Modo 1vs1 manual (tiene prioridad)
+    if(vol!==lastVolume){
+      lastVolume=vol;
+      if(currentMode!=='idle'){
+        masterGain.gain.cancelScheduledValues(ac.currentTime);
+        masterGain.gain.setTargetAtTime(vol,ac.currentTime,0.2);
+      }
+    }
     const manual=!!ms.manual;
     if(manual!==lastManual){
       lastManual=manual;
@@ -232,14 +331,12 @@ setInterval(()=>{
       else stopAll(true);
       return;
     }
-    if(manual) return; // si está en 1vs1 no revisar encuesta
-
-    // Encuesta automática
+    if(manual) return;
     const ps=JSON.parse(localStorage.getItem('poll_state')||'{}');
     const pollActive=!!(ps.active&&ps.timerEnd&&ps.timerEnd>Date.now());
     if(pollActive!==lastPollActive){
       lastPollActive=pollActive;
-      if(pollActive) startPollMusic(ps.timerEnd);
+      if(pollActive) startPollMusic();
       else stopAll(true);
     }
   }catch(e){}
