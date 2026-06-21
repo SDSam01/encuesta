@@ -28,26 +28,45 @@ input:focus,textarea:focus{border-color:rgba(255,255,255,.25);}
 .btn-reset{width:100%;padding:7px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.3);margin-top:4px;}
 .status{font-size:11px;text-align:center;padding:6px;min-height:20px;color:rgba(255,255,255,.35);}
 .status.ok{color:#4ade80;}.status.err{color:#f87171;}
+/* Tabs */
+.tabs{display:flex;gap:6px;margin-bottom:10px;}
+.tab{flex:1;padding:9px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.4);transition:.15s;text-align:center;}
+.tab.active-sam{background:rgba(68,136,255,.18);border-color:rgba(68,136,255,.45);color:#4488ff;}
+.tab.active-chat{background:rgba(248,113,113,.18);border-color:rgba(248,113,113,.45);color:#f87171;}
+.tab-content{display:none;}.tab-content.active{display:block;}
+.btn-ocultar{width:100%;padding:9px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;background:rgba(255,100,0,.1);border:1px solid rgba(255,100,0,.3);color:rgba(255,140,0,.7);margin-bottom:6px;transition:.15s;}
+.btn-ocultar:hover{background:rgba(255,100,0,.2);}
 </style>
 </head>
 <body>
 <h1>🎰 Castigos Control</h1>
 <div class="sub">3 castigos para Sam — 3 para el Chat — Maléfica los leerá</div>
 
-<!-- SAM -->
-<div class="section">
-  <div class="sec-title sam">⚔️ Castigos de Sam</div>
-  <div id="samForm"></div>
-  <button class="btn-girar sam" onclick="girar('sam')">🎰 Girar tómbola de Sam</button>
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active-sam" id="tabSam" onclick="switchTab('sam')">⚔️ Sam</button>
+  <button class="tab" id="tabChat" onclick="switchTab('chat')">💬 Chat</button>
 </div>
 
-<!-- CHAT -->
-<div class="section">
-  <div class="sec-title chat">💬 Castigos del Chat</div>
-  <div id="chatForm"></div>
-  <button class="btn-girar chat" onclick="girar('chat')">🎰 Girar tómbola del Chat</button>
+<!-- Pestaña Sam -->
+<div class="tab-content active" id="tabContentSam">
+  <div class="section">
+    <div class="sec-title sam">⚔️ Castigos de Sam</div>
+    <div id="samForm"></div>
+    <button class="btn-girar sam" onclick="girar('sam')">🎰 Girar tómbola de Sam</button>
+  </div>
 </div>
 
+<!-- Pestaña Chat -->
+<div class="tab-content" id="tabContentChat">
+  <div class="section">
+    <div class="sec-title chat">💬 Castigos del Chat</div>
+    <div id="chatForm"></div>
+    <button class="btn-girar chat" onclick="girar('chat')">🎰 Girar tómbola del Chat</button>
+  </div>
+</div>
+
+<button class="btn-ocultar" onclick="ocultarOverlay()">🙈 Ocultar tómbola del overlay</button>
 <button class="btn-reset" onclick="resetTodo()">🔄 Reset completo</button>
 <div class="status" id="statusBar"></div>
 
@@ -123,6 +142,20 @@ function resetTodo(){
 function setStatus(msg,type){
   const el=document.getElementById('statusBar');
   el.textContent=msg; el.className='status '+(type||'');
+}
+
+function switchTab(side){
+  document.getElementById('tabContentSam').className='tab-content'+(side==='sam'?' active':'');
+  document.getElementById('tabContentChat').className='tab-content'+(side==='chat'?' active':'');
+  document.getElementById('tabSam').className='tab'+(side==='sam'?' active-sam':'');
+  document.getElementById('tabChat').className='tab'+(side==='chat'?' active-chat':'');
+}
+
+function ocultarOverlay(){
+  const cur=JSON.parse(localStorage.getItem(LS)||'{}');
+  localStorage.setItem(LS,JSON.stringify({...cur,spinning:false,hide:true,hideTs:Date.now()}));
+  setStatus('Tómbola ocultada','ok');
+  setTimeout(()=>setStatus('',''),2000);
 }
 
 load(); renderForm('sam'); renderForm('chat');
