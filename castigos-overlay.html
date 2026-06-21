@@ -237,7 +237,7 @@ function showCard(castigos,winnerIdx){
   document.getElementById('revDesc').textContent=c.descripcion||c.titulo||'';
   cardVisible=true;
   startParticles();
-  setTimeout(()=>speakMaleficent(c.descripcion||c.titulo||''),500);
+  setTimeout(()=>speakMaleficent(c.titulo||'', c.descripcion||''),500);
 }
 
 function hideAll(){
@@ -251,12 +251,13 @@ function hideAll(){
 }
 
 // ══ MALÉFICA ══
-function speakMaleficent(text){
-  if(!text) return;
+function speakMaleficent(titulo, desc){
   window.speechSynthesis.cancel();
+  const fullText = (titulo ? titulo + '... ' : '') + (desc || '');
+  if(!fullText.trim()) return;
   const utt=new SpeechSynthesisUtterance();
   utt.lang='es-MX'; utt.pitch=0.25; utt.rate=0.58; utt.volume=1.0;
-  utt.text=text.replace(/\./g,'...').replace(/,/g,',,');
+  utt.text=fullText.replace(/\./g,'...').replace(/,/g,',,');
   const voices=window.speechSynthesis.getVoices();
   const esV=voices.find(v=>v.lang.startsWith('es'))||voices[0];
   if(esV) utt.voice=esV;
@@ -344,11 +345,20 @@ function playRevealSound(){
 }
 
 // ══ POLLING ══
+let lastHideTs=0;
+
 setInterval(()=>{
   try{
     const raw=localStorage.getItem(LS);
     if(!raw) return;
     const s=JSON.parse(raw);
+
+    // Ocultar manualmente desde control
+    if(s.hide && s.hideTs && s.hideTs!==lastHideTs){
+      lastHideTs=s.hideTs;
+      hideAll(); return;
+    }
+
     if(!s.spinning||s.ts===lastTs) return;
     if(isSpinning) return;
     if(cardVisible){hideAll();return;}
