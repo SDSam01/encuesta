@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Música Overlay</title>
+<style>
+*{margin:0;padding:0;}
+body{background:transparent;width:1px;height:1px;overflow:hidden;}
+</style>
+</head>
+<body>
+<script>
+// ══ SDSAM01 — Adaptive Music Overlay ══
+// Browser source transparente — solo audio, sin visual
+// Música generada por Web Audio API (0% copyright)
+// Lee: poll_state → música de encuesta (auto)
+//      music_state.manual → música 1vs1 (manual desde rep-control)
+
+let ac = null;
+let masterGain = null;
+let pollNodes = [];
+let vsNodes = [];
+let currentMode = 'idle'; // idle | poll | vs
+let lastPollActive = false;
+let lastManual = false;
+let lastVolume = 0.6;
+let fadeTimer = null;
+
+function getAC(){
+  if(!ac){
+    try{ ac=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  }
+  if(ac.state!=='running') ac.resume().catch(()=>{});
+  return ac;
+}
+
+// Warm up AudioContext on first user gesture or timeout
+const _wu = setInterval(()=>{
+  const a=getAC();
+  if(a&&a.state==='running'){ masterGain=a.createGain(); masterGain.connect(a.destination); masterGain.gain.value=lastVolume; clearInterval(_wu); }
+}, 500);
+
+// ══ MÚSICA ENCUESTA — 30 segundos que construye tensión ══
+function startPollMusic(timerEnd){
+  if(currentMode==='poll') return;
+  stopAll(false);
+  currentMode='poll';
+  const a=getAC(); if(!a||!masterGain) return;
+  pollNodes=[];
+  const t=a.currentTime;
+  const secsLeft=Math.max(1,(timerEnd-Date.now())/1000);
+
+  // Capa 1: Drone base que sube en pitch con el tiempo
+  const drone=a.createOscillator(); drone.type='sine';
+  drone.frequency.setValueAtTime(55,t);
+  drone.frequency.linearRampToValueAtTime(110,t+secsLeft);
+  const droneG=a.createGain();
+  droneG.gain.setValueAtTime(0,t);
+  droneG.gain.linearRampToValueAtTime(0.18,t+1);
+  droneG.gain.linearRampToValueAtTime(0.35,t+secsLeft);
+  drone.connect(droneG); droneG.connect(masterGain);
+  drone.start(t); drone.stop(t+secsLeft+1);
+  pollNodes.push(drone,droneG);
+
+  // Capa 2: Pulso rítmico que se acelera
+  schedulePulse(a,masterGain,t,secsLeft,pollNodes);
+
+  // Capa 3: Pad armónico que entra a mitad
+  const pad1=a.createOscillator(); pad1.type='triangle'; pad1.frequency.value=220;
+  const pad2=a.createOscillator(); pad2.type='triangle'; pad2.frequency.value=277;
+  const pad3=a.createOscillator(); pad3.type='triangle'; pad3.frequency.value=330;
+  const padG=a.createGain();
+  padG.gain.setValueAtTime(0,t); padG.gain.linearRampToValueAtTime(0,t+secsLeft*0.4);
+  padG.gain.linearRampToValueAtTime(0.08,t+secsLeft*0.6);
+  padG.gain.linearRampToValueAtTime(0.18,t+secsLeft);
+  [pad1,pad2,pad3].forEach(p=>{ p.connect(padG); p.start(t); p.stop(t+secsLeft+1); pollNodes.push(p); });
+  padG.connect(masterGain); pollNodes.push(padG);
+
+  // Capa 4: Zumbido de tensión los últimos 10s
+  const zing=a.createOscillator(); zing.type='sawtooth'; zing.frequency.value=880;
+  const zingF=a.createBiquadFilter(); zingF.type='lowpass'; zingF.frequency.value=400;
+  const zingG=a.createGain();
+  const zingStart=Math.max(t,t+secsLeft-10);
+  zingG.gain.setValueAtTime(0,t); zingG.gain.setValueAtTime(0,zingStart);
+  zingG.gain.linearRampToValueAtTime(0.06,zingStart+2);
+  zingG.gain.linearRampToValueAtTime(0.12,t+secsLeft);
+  zing.connect(zingF); zingF.connect(zingG); zingG.connect(masterGain);
+  zing.start(t); zing.stop(t+secsLeft+1);
+  pollNodes.push(zing,zingF,zingG);
+
+  // Para automáticamente cuando expire el timer
+  setTimeout(()=>{ if(currentMode==='poll'){ stopAll(true); currentMode='idle'; } }, (secsLeft+1.5)*1000);
+}
+
+function schedulePulse(a, dest, startT, total, nodes){
+  // Genera golpes de percusión que van acelerando
+  const totalBeats=Math.floor(total*1.5);
+  for(let i=0;i<totalBeats;i++){
+    const progress=i/totalBeats;
+    // Tempo va de 1.0s entre golpes a 0.25s
+    const bpm=60+progress*140;
+    const interval=60/bpm;
+    // Acumular delay
+    let delay=0;
+    for(let j=0;j<i;j++){
+      const p2=j/totalBeats;
+      delay+=60/(60+p2*140);
+    }
+    const t=startT+delay;
+    if(t>startT+total+0.5) break;
+
+    // Noise burst (hi-hat/snare)
+    const bufLen=Math.floor(a.sampleRate*0.08);
+    const buf=a.createBuffer(1,bufLen,a.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let k=0;k<bufLen;k++) d[k]=(Math.random()*2-1)*Math.pow(1-k/bufLen,2);
+    const src=a.createBufferSource(); src.buffer=buf;
+    const filt=a.createBiquadFilter(); filt.type='highpass'; filt.frequency.value=2000;
+    const g=a.createGain();
+    const vol=0.06+progress*0.14;
+    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+    src.connect(filt); filt.connect(g); g.connect(dest);
+    src.start(t);
+    nodes.push(src,filt,g);
+
+    // Sub-kick en tiempos fuertes
+    if(i%4===0){
+      const sub=a.createOscillator(); sub.type='sine';
+      sub.frequency.setValueAtTime(80+progress*40,t);
+      sub.frequency.exponentialRampToValueAtTime(30,t+0.12);
+      const subG=a.createGain();
+      subG.gain.setValueAtTime(0.2+progress*0.3,t);
+      subG.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+      sub.connect(subG); subG.connect(dest);
+      sub.start(t); sub.stop(t+0.16);
+      nodes.push(sub,subG);
+    }
+  }
+}
+
+// ══ MÚSICA 1VS1 — tensión ambiental ══
+function startVsMusic(){
+  if(currentMode==='vs') return;
+  stopAll(false);
+  currentMode='vs';
+  const a=getAC(); if(!a||!masterGain) return;
+  vsNodes=[];
+  const t=a.currentTime;
+
+  // Drone muy grave
+  const sub=a.createOscillator(); sub.type='sine'; sub.frequency.value=42;
+  const subG=a.createGain();
+  subG.gain.setValueAtTime(0,t); subG.gain.linearRampToValueAtTime(0.22,t+1.5);
+  sub.connect(subG); subG.connect(masterGain);
+  sub.start(t); vsNodes.push(sub,subG);
+
+  // Cuerdas tensas (2 osciladores desafinados levemente)
+  [164.8, 165.6].forEach(freq=>{
+    const o=a.createOscillator(); o.type='sawtooth'; o.frequency.value=freq;
+    const f=a.createBiquadFilter(); f.type='lowpass'; f.frequency.value=300;
+    const g=a.createGain();
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.07,t+2);
+    o.connect(f); f.connect(g); g.connect(masterGain);
+    o.start(t); vsNodes.push(o,f,g);
+  });
+
+  // Latido — pulso periódico grave
+  scheduleHeartbeat(a,masterGain,t,vsNodes);
+
+  // LFO que modula el sub (crea sensación de respiración)
+  const lfo=a.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.4;
+  const lfoG=a.createGain(); lfoG.gain.value=0.06;
+  lfo.connect(lfoG); lfoG.connect(subG.gain);
+  lfo.start(t); vsNodes.push(lfo,lfoG);
+}
+
+function scheduleHeartbeat(a,dest,startT,nodes){
+  // 80bpm heartbeat
+  let t=startT+0.5;
+  for(let i=0;i<300;i++){
+    // Doble golpe (lub-dub)
+    [0,0.12].forEach(offset=>{
+      const sub=a.createOscillator(); sub.type='sine';
+      sub.frequency.setValueAtTime(60,t+offset);
+      sub.frequency.exponentialRampToValueAtTime(30,t+offset+0.1);
+      const g=a.createGain();
+      g.gain.setValueAtTime(0.18,t+offset);
+      g.gain.exponentialRampToValueAtTime(0.001,t+offset+0.12);
+      sub.connect(g); g.connect(dest);
+      sub.start(t+offset); sub.stop(t+offset+0.13);
+      nodes.push(sub,g);
+    });
+    t+=0.75; // ~80bpm
+  }
+}
+
+// ══ Stop & Fade ══
+function stopAll(fade){
+  currentMode='idle';
+  if(!ac||!masterGain) return;
+  if(fade){
+    const t=ac.currentTime;
+    masterGain.gain.setValueAtTime(masterGain.gain.value,t);
+    masterGain.gain.linearRampToValueAtTime(0,t+1.2);
+    setTimeout(()=>{
+      masterGain.gain.setValueAtTime(lastVolume,ac.currentTime);
+      pollNodes.forEach(n=>{ try{n.stop&&n.stop();}catch(e){} });
+      vsNodes.forEach(n=>{ try{n.stop&&n.stop();}catch(e){} });
+      pollNodes=[]; vsNodes=[];
+    },1300);
+  } else {
+    pollNodes.forEach(n=>{ try{n.stop&&n.stop();}catch(e){} });
+    vsNodes.forEach(n=>{ try{n.stop&&n.stop();}catch(e){} });
+    pollNodes=[]; vsNodes=[];
+  }
+}
+
+// ══ Loop principal ══
+setInterval(()=>{
+  if(!ac||!masterGain) return;
+  try{
+    // Volumen
+    const ms=JSON.parse(localStorage.getItem('music_state')||'{}');
+    const vol=ms.volume!==undefined?ms.volume:0.6;
+    if(vol!==lastVolume){ lastVolume=vol; masterGain.gain.setTargetAtTime(vol,ac.currentTime,0.3); }
+
+    // Modo 1vs1 manual (tiene prioridad)
+    const manual=!!ms.manual;
+    if(manual!==lastManual){
+      lastManual=manual;
+      if(manual) startVsMusic();
+      else stopAll(true);
+      return;
+    }
+    if(manual) return; // si está en 1vs1 no revisar encuesta
+
+    // Encuesta automática
+    const ps=JSON.parse(localStorage.getItem('poll_state')||'{}');
+    const pollActive=!!(ps.active&&ps.timerEnd&&ps.timerEnd>Date.now());
+    if(pollActive!==lastPollActive){
+      lastPollActive=pollActive;
+      if(pollActive) startPollMusic(ps.timerEnd);
+      else stopAll(true);
+    }
+  }catch(e){}
+},600);
+</script>
+</body>
+</html>

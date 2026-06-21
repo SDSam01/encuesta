@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Castigos Control</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0a0f;font-family:'Inter',sans-serif;color:#fff;padding:14px;max-width:480px;margin:0 auto;}
+h1{font-size:14px;font-weight:700;margin-bottom:2px;}
+.sub{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:14px;}
+.section{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:10px;}
+.sec-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:10px;}
+label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.3);display:block;margin-bottom:3px;margin-top:8px;}
+label:first-of-type{margin-top:0;}
+input[type=text],textarea{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 10px;color:#fff;font-size:12px;font-family:'Inter',sans-serif;outline:none;resize:vertical;}
+input[type=text]:focus,textarea:focus{border-color:rgba(255,0,80,.4);}
+textarea{min-height:50px;line-height:1.4;}
+.castigo-card{background:rgba(255,0,80,.05);border:1px solid rgba(255,0,80,.15);border-radius:10px;padding:10px;margin-bottom:8px;}
+.castigo-num{font-size:10px;font-weight:700;color:rgba(255,0,80,.6);letter-spacing:2px;margin-bottom:6px;}
+.castigo-para{display:flex;gap:6px;margin-bottom:6px;}
+.para-btn{flex:1;padding:5px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.4);transition:.15s;}
+.para-btn.active-sam{background:rgba(68,136,255,.15);border-color:rgba(68,136,255,.4);color:#4488ff;}
+.para-btn.active-chat{background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.4);color:#f87171;}
+.btn-girar{width:100%;padding:14px;border-radius:11px;font-size:16px;font-weight:900;cursor:pointer;font-family:'Inter',sans-serif;background:linear-gradient(135deg,rgba(255,0,80,.2),rgba(180,0,60,.3));border:1px solid rgba(255,0,80,.5);color:#ff0050;letter-spacing:1px;transition:.15s;margin-top:4px;}
+.btn-girar:hover{background:linear-gradient(135deg,rgba(255,0,80,.35),rgba(180,0,60,.45));}
+.btn-reset-c{width:100%;padding:8px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35);margin-top:6px;}
+.status{font-size:11px;text-align:center;color:rgba(255,255,255,.35);margin-top:8px;min-height:14px;}
+.status.ok{color:#4ade80;}.status.err{color:#f87171;}
+</style>
+</head>
+<body>
+<h1>🎰 Castigos Control</h1>
+<div class="sub">5 castigos por stream — tómbola revela con voz de Maléfica</div>
+
+<div class="section">
+  <div class="sec-title">Castigos del Stream</div>
+  <div id="castigosForm"></div>
+</div>
+
+<button class="btn-girar" onclick="girarTombola()">🎰 GIRAR TÓMBOLA</button>
+<button class="btn-reset-c" onclick="resetCastigos()">🔄 Reset castigos</button>
+<div class="status" id="statusBar"></div>
+
+<script>
+const CASTIGOS_COUNT = 5;
+const LS = 'castigos_state';
+
+// Datos de castigos
+let castigos = Array.from({length: CASTIGOS_COUNT}, (_,i) => ({
+  titulo: '',
+  descripcion: '',
+  para: 'sam' // 'sam' o 'chat'
+}));
+
+function loadCastigos(){
+  try{
+    const raw = localStorage.getItem(LS);
+    if(raw){
+      const s = JSON.parse(raw);
+      if(s.castigos) castigos = s.castigos;
+    }
+  }catch(e){}
+}
+
+function save(){
+  localStorage.setItem(LS, JSON.stringify({
+    castigos,
+    spinning: false,
+    winner: null
+  }));
+}
+
+function renderForm(){
+  const container = document.getElementById('castigosForm');
+  container.innerHTML = '';
+  castigos.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'castigo-card';
+    div.innerHTML = `
+      <div class="castigo-num">CASTIGO ${i+1}</div>
+      <div class="castigo-para">
+        <button class="para-btn ${c.para==='sam'?'active-sam':''}" onclick="setPara(${i},'sam',this)">👤 Para Sam</button>
+        <button class="para-btn ${c.para==='chat'?'active-chat':''}" onclick="setPara(${i},'chat',this)">💬 Para el Chat</button>
+      </div>
+      <label>Título corto</label>
+      <input type="text" placeholder="Ej: Bailar el trend del momento..." value="${c.titulo}" oninput="updateCastigo(${i},'titulo',this.value)">
+      <label>Descripción completa (Maléfica la leerá)</label>
+      <textarea placeholder="Ej: Tendrás que grabar un TikTok bailando el trend más viral del momento con el filtro más ridículo que encuentres..." oninput="updateCastigo(${i},'descripcion',this.value)">${c.descripcion}</textarea>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function setPara(idx, para, btn){
+  castigos[idx].para = para;
+  const card = btn.closest('.castigo-card');
+  card.querySelectorAll('.para-btn').forEach(b => {
+    b.className = 'para-btn';
+  });
+  btn.className = `para-btn active-${para}`;
+  save();
+}
+
+function updateCastigo(idx, field, val){
+  castigos[idx][field] = val;
+  save();
+}
+
+function girarTombola(){
+  // Verificar que haya al menos 1 castigo con título
+  const valid = castigos.filter(c => c.titulo.trim());
+  if(!valid.length){ setStatus('⚠️ Ingresa al menos 1 castigo','err'); return; }
+
+  // Elegir ganador aleatorio entre los válidos
+  const winner = valid[Math.floor(Math.random() * valid.length)];
+  const winnerIdx = castigos.indexOf(winner);
+
+  // Escribir en localStorage para que castigos-overlay lo detecte
+  localStorage.setItem(LS, JSON.stringify({
+    castigos,
+    spinning: true,
+    winner: winnerIdx,
+    ts: Date.now()
+  }));
+
+  setStatus(`🎰 Girando... castigo ${winnerIdx+1} seleccionado`, 'ok');
+  setTimeout(() => setStatus('', ''), 5000);
+}
+
+function resetCastigos(){
+  castigos = Array.from({length: CASTIGOS_COUNT}, () => ({titulo:'',descripcion:'',para:'sam'}));
+  localStorage.setItem(LS, JSON.stringify({castigos, spinning:false, winner:null}));
+  renderForm();
+  setStatus('Reset completo','');
+}
+
+function setStatus(msg, type){
+  const el = document.getElementById('statusBar');
+  el.textContent = msg;
+  el.className = 'status '+(type||'');
+}
+
+// Init
+loadCastigos();
+renderForm();
+</script>
+</body>
+</html>

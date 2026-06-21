@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Castigos Overlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@700;900&family=Inter:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
+
+/* ══ Overlay principal ══ */
+#overlay{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0);
+  pointer-events:none;z-index:10;
+  transition:background 1s;
+}
+#overlay.show{background:rgba(0,0,0,.88);}
+
+/* ══ Tómbola ══ */
+#tombola{
+  position:relative;width:520px;height:520px;
+  opacity:0;transform:scale(.6);
+  transition:opacity .5s, transform .5s cubic-bezier(.34,1.56,.64,1);
+}
+#tombola.show{opacity:1;transform:scale(1);}
+
+#wheel{
+  width:100%;height:100%;
+  position:relative;
+  will-change:transform;
+}
+
+/* ══ Segmentos de la rueda ══ */
+.seg{
+  position:absolute;width:0;height:0;
+  left:50%;top:50%;
+  transform-origin:0 0;
+}
+
+/* ══ Números centrales ══ */
+#wheelCenter{
+  position:absolute;width:110px;height:110px;
+  border-radius:50%;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(circle,#1a0010,#0a0006);
+  border:3px solid rgba(255,0,80,.6);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 30px rgba(255,0,80,.5),0 0 60px rgba(255,0,80,.2);
+  z-index:5;
+}
+.center-skull{font-size:42px;line-height:1;}
+
+/* Flecha indicadora */
+#arrow{
+  position:absolute;top:-28px;left:50%;
+  transform:translateX(-50%);
+  font-size:36px;
+  filter:drop-shadow(0 0 10px rgba(255,0,80,.8));
+  z-index:6;
+  animation:arrowBounce 0.6s ease-in-out infinite;
+}
+@keyframes arrowBounce{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-6px);}}
+
+/* ══ Carta revelación ══ */
+#revCard{
+  position:fixed;
+  left:50%;top:50%;
+  transform:translate(-50%,-50%) scale(0);
+  width:860px;
+  background:linear-gradient(160deg,#1a0010,#0d0008,#1a0010);
+  border:2px solid rgba(255,0,80,.4);
+  border-radius:20px;
+  padding:40px 50px;
+  opacity:0;
+  transition:transform .6s cubic-bezier(.34,1.56,.64,1), opacity .4s;
+  box-shadow:0 0 80px rgba(255,0,80,.3), 0 0 160px rgba(100,0,40,.4), inset 0 0 60px rgba(0,0,0,.5);
+  z-index:20;
+}
+#revCard.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+
+.rev-para{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;letter-spacing:4px;
+  color:rgba(255,0,80,.6);margin-bottom:12px;
+}
+.rev-title{
+  font-family:'Cinzel',serif;
+  font-size:38px;font-weight:900;
+  color:#fff;
+  text-shadow:0 0 30px rgba(255,0,80,.8);
+  margin-bottom:20px;
+  line-height:1.1;
+}
+.rev-divider{
+  width:100%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,0,80,.5),transparent);
+  margin-bottom:20px;
+}
+.rev-desc{
+  font-family:'Inter',sans-serif;
+  font-size:18px;font-weight:700;
+  color:rgba(255,255,255,.8);
+  line-height:1.6;
+  font-style:italic;
+}
+.rev-close{
+  margin-top:28px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;letter-spacing:3px;
+  color:rgba(255,0,80,.4);
+  text-align:center;
+}
+
+/* ══ Partículas de fuego ══ */
+#particles{position:fixed;inset:0;pointer-events:none;z-index:15;}
+
+/* ══ Flash de pantalla ══ */
+#flash{
+  position:fixed;inset:0;
+  background:rgba(255,0,80,.6);
+  opacity:0;pointer-events:none;z-index:25;
+  transition:opacity .1s;
+}
+</style>
+</head>
+<body>
+
+<div id="overlay">
+  <div id="tombola">
+    <div id="arrow">🔻</div>
+    <canvas id="wheel" width="520" height="520"></canvas>
+    <div id="wheelCenter"><span class="center-skull">💀</span></div>
+  </div>
+</div>
+
+<div id="revCard">
+  <div class="rev-para" id="revPara">CASTIGO PARA SAM</div>
+  <div class="rev-title" id="revTitle">Título del castigo</div>
+  <div class="rev-divider"></div>
+  <div class="rev-desc" id="revDesc">Descripción del castigo que Maléfica leerá en voz alta...</div>
+  <div class="rev-close">— Pulse el botón de girar nuevamente para cerrar —</div>
+</div>
+
+<div id="flash"></div>
+<canvas id="particles" width="1920" height="1080"></canvas>
+
+<script>
+const LS = 'castigos_state';
+const COLORS = ['#ff0050','#cc003d','#99002e','#ff3370','#e6004a'];
+const NAMES = ['I','II','III','IV','V'];
+const AC = new(window.AudioContext||window.webkitAudioContext)();
+
+let lastTs = 0;
+let isSpinning = false;
+let cardVisible = false;
+
+// ══ Dibujar rueda ══
+function drawWheel(angle, castigos, winnerIdx, phase){
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const cx=260, cy=260, r=250;
+  ctx.clearRect(0,0,520,520);
+
+  const count = Math.min(5, castigos.filter(c=>c.titulo).length) || 5;
+  const segAngle = (Math.PI*2)/count;
+
+  for(let i=0;i<count;i++){
+    const startA = angle + i*segAngle - Math.PI/2;
+    const endA   = startA + segAngle;
+    const isWin  = (i===winnerIdx) && (phase==='reveal');
+
+    // Segmento
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,startA,endA);
+    ctx.closePath();
+    const grad = ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+    grad.addColorStop(0, isWin ? 'rgba(255,200,200,0.3)' : 'rgba(20,0,10,0.8)');
+    grad.addColorStop(1, COLORS[i%COLORS.length]+(isWin?'ff':'88'));
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = isWin ? '#fff' : 'rgba(255,0,80,.3)';
+    ctx.lineWidth = isWin ? 3 : 1;
+    ctx.stroke();
+
+    // Texto
+    ctx.save();
+    const midA = startA + segAngle/2;
+    const textR = r*0.65;
+    ctx.translate(cx + Math.cos(midA)*textR, cy + Math.sin(midA)*textR);
+    ctx.rotate(midA + Math.PI/2);
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillStyle = isWin ? '#fff' : 'rgba(255,255,255,0.9)';
+    ctx.font = `bold 28px 'Bebas Neue', sans-serif`;
+    const label = castigos[i]?.titulo?.substring(0,12) || NAMES[i];
+    ctx.fillText(label.toUpperCase(), 0, 0);
+    ctx.restore();
+
+    // Borde exterior con glow en ganador
+    if(isWin){
+      ctx.beginPath();
+      ctx.arc(cx,cy,r,startA,endA);
+      ctx.strokeStyle='rgba(255,200,200,0.6)';
+      ctx.lineWidth=6;
+      ctx.stroke();
+    }
+  }
+
+  // Borde de la rueda
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,0,80,.5)';
+  ctx.lineWidth=4;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx,cy,r+4,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,0,80,.15)';
+  ctx.lineWidth=8;
+  ctx.stroke();
+}
+
+// ══ Animación de spin ══
+function spinWheel(castigos, winnerIdx){
+  isSpinning = true;
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('tombola').classList.add('show');
+
+  const count = Math.min(5, castigos.filter(c=>c.titulo).length) || 5;
+  const segAngle = (Math.PI*2)/count;
+
+  // Ángulo final: el ganador queda arriba (apuntado por la flecha)
+  const targetSeg = winnerIdx % count;
+  const baseRotations = 5 + Math.floor(Math.random()*3); // 5-7 vueltas completas
+  const finalAngle = baseRotations * Math.PI*2 + (segAngle * (count - targetSeg));
+
+  const duration = 4500; // ms
+  const startTime = performance.now();
+  let currentAngle = 0;
+
+  // Sonido de spin
+  playSpinSound();
+
+  function frame(now){
+    const elapsed = now - startTime;
+    const t = Math.min(1, elapsed/duration);
+    // Easing: fast start, dramatic slow end
+    const ease = t<0.7 ? t*1.43 : 1 - Math.pow(1-t,4)*0.3;
+    const adjusted = 1 - Math.pow(1-t, 3);
+    currentAngle = finalAngle * adjusted;
+
+    drawWheel(currentAngle, castigos, -1, 'spin');
+
+    if(t<1){
+      requestAnimationFrame(frame);
+    } else {
+      // Llegamos — dibujar con ganador resaltado
+      drawWheel(finalAngle, castigos, winnerIdx, 'reveal');
+      flashScreen();
+      playRevealSound();
+      setTimeout(()=>showCard(castigos, winnerIdx), 800);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function showCard(castigos, winnerIdx){
+  const c = castigos[winnerIdx];
+  document.getElementById('revPara').textContent = c.para==='sam' ? '⚔️ CASTIGO PARA SAM' : '💬 CASTIGO PARA EL CHAT';
+  document.getElementById('revTitle').textContent = c.titulo.toUpperCase();
+  document.getElementById('revDesc').textContent = c.descripcion || c.titulo;
+  document.getElementById('revCard').classList.add('show');
+  cardVisible = true;
+  startParticles();
+  // Maléfica habla
+  setTimeout(()=>speakMaleficent(c.descripcion||c.titulo), 600);
+}
+
+function hideAll(){
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('tombola').classList.remove('show');
+  document.getElementById('revCard').classList.remove('show');
+  cardVisible = false;
+  isSpinning = false;
+  stopParticles();
+  window.speechSynthesis.cancel();
+}
+
+// ══ VOZ DE MALÉFICA ══
+function speakMaleficent(text){
+  if(!text) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang   = 'es-MX';
+  utt.pitch  = 0.25;   // muy grave, oscuro
+  utt.rate   = 0.58;   // lento y dramático
+  utt.volume = 1.0;
+  // Agregar pausas dramáticas
+  const dramatic = text
+    .replace(/\./g, '...')
+    .replace(/,/g, ',,');
+  utt.text = dramatic;
+  const voices = window.speechSynthesis.getVoices();
+  const esVoice = voices.find(v=>v.lang.startsWith('es')) || voices[0];
+  if(esVoice) utt.voice = esVoice;
+  window.speechSynthesis.speak(utt);
+}
+window.speechSynthesis.onvoiceschanged = ()=>window.speechSynthesis.getVoices();
+
+// ══ Flash de pantalla ══
+function flashScreen(){
+  const f=document.getElementById('flash');
+  f.style.opacity='1';
+  setTimeout(()=>f.style.opacity='0',150);
+  setTimeout(()=>{f.style.opacity='.6';setTimeout(()=>f.style.opacity='0',100);},300);
+}
+
+// ══ Partículas de fuego ══
+let particleInterval = null;
+const pCanvas = document.getElementById('particles');
+const pCtx = pCanvas.getContext('2d');
+const particles = [];
+
+function startParticles(){
+  if(particleInterval) return;
+  particleInterval = setInterval(()=>{
+    for(let i=0;i<8;i++){
+      particles.push({
+        x:Math.random()*1920, y:1080,
+        vx:(Math.random()-.5)*3,
+        vy:-(Math.random()*4+3),
+        size:Math.random()*12+4,
+        life:1,
+        color:`hsl(${Math.random()*30},100%,${40+Math.random()*30}%)`
+      });
+    }
+  },50);
+  animParticles();
+}
+function stopParticles(){
+  if(particleInterval){ clearInterval(particleInterval); particleInterval=null; }
+}
+function animParticles(){
+  pCtx.clearRect(0,0,1920,1080);
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.05; p.life-=0.012; p.size*=0.995;
+    if(p.life<=0||p.y<-50){ particles.splice(i,1); continue; }
+    pCtx.save();
+    pCtx.globalAlpha=p.life;
+    pCtx.fillStyle=p.color;
+    pCtx.shadowColor=p.color; pCtx.shadowBlur=10;
+    pCtx.beginPath(); pCtx.arc(p.x,p.y,p.size,0,Math.PI*2); pCtx.fill();
+    pCtx.restore();
+  }
+  if(particles.length>0||particleInterval) requestAnimationFrame(animParticles);
+  else pCtx.clearRect(0,0,1920,1080);
+}
+
+// ══ Sonidos ══
+function playSpinSound(){
+  AC.resume();
+  const t=AC.currentTime;
+  // Ruido de ruleta girando
+  const osc=AC.createOscillator(); osc.type='sawtooth';
+  osc.frequency.setValueAtTime(200,t); osc.frequency.linearRampToValueAtTime(80,t+4);
+  const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=300;
+  const g=AC.createGain();
+  g.gain.setValueAtTime(0.15,t); g.gain.setValueAtTime(0.15,t+3);
+  g.gain.linearRampToValueAtTime(0.001,t+4.5);
+  osc.connect(f); f.connect(g); g.connect(AC.destination);
+  osc.start(t); osc.stop(t+4.5);
+  // Clics de ruleta
+  for(let i=0;i<60;i++){
+    const delay=Math.pow(i/60,2)*4;
+    const click=AC.createOscillator(); click.type='sine'; click.frequency.value=800;
+    const cg=AC.createGain();
+    cg.gain.setValueAtTime(0.1,t+delay); cg.gain.exponentialRampToValueAtTime(0.001,t+delay+0.04);
+    click.connect(cg); cg.connect(AC.destination);
+    click.start(t+delay); click.stop(t+delay+0.05);
+  }
+}
+
+function playRevealSound(){
+  AC.resume();
+  const t=AC.currentTime;
+  // BOOM dramático
+  const sub=AC.createOscillator(); sub.type='sine';
+  sub.frequency.setValueAtTime(80,t); sub.frequency.exponentialRampToValueAtTime(25,t+0.8);
+  const sg=AC.createGain();
+  sg.gain.setValueAtTime(1.0,t); sg.gain.exponentialRampToValueAtTime(0.001,t+0.9);
+  sub.connect(sg); sg.connect(AC.destination);
+  sub.start(t); sub.stop(t+0.9);
+  // Notas dramáticas descendentes (tipo organismo de Maléfica)
+  [523,440,370,294,247].forEach((freq,i)=>{
+    const o=AC.createOscillator(); o.type='sawtooth';
+    const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=freq*2;
+    const g=AC.createGain();
+    const st=t+0.1+i*0.15;
+    g.gain.setValueAtTime(0,st); g.gain.linearRampToValueAtTime(0.3,st+0.05);
+    g.gain.exponentialRampToValueAtTime(0.001,st+0.4);
+    o.frequency.value=freq; o.connect(f); f.connect(g); g.connect(AC.destination);
+    o.start(st); o.stop(st+0.45);
+  });
+}
+
+// ══ Polling ══
+setInterval(()=>{
+  try{
+    const raw = localStorage.getItem(LS);
+    if(!raw) return;
+    const s = JSON.parse(raw);
+    if(!s.spinning || s.ts === lastTs) return;
+    if(isSpinning) return; // ya está girando
+    lastTs = s.ts;
+    const valid = s.castigos.filter(c=>c.titulo);
+    if(!valid.length) return;
+    // Si había carta visible → cerrar y volver a idle
+    if(cardVisible){ hideAll(); return; }
+    spinWheel(s.castigos, s.winner);
+  }catch(e){}
+},300);
+
+// Draw inicial
+drawWheel(0, Array.from({length:5},(_,i)=>({titulo:String(i+1)})), -1, 'spin');
+</script>
+</body>
+</html>
