@@ -159,32 +159,41 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 
 .jp-jackpot-text{
   font-family:'Bebas Neue',sans-serif;
-  font-size:80px;letter-spacing:14px;line-height:1;
-  background:linear-gradient(180deg,#FFEE22,#FFD700,#FF9500);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  filter:drop-shadow(0 0 30px rgba(255,200,0,.9));
-  animation:jpIn .6s cubic-bezier(.34,1.56,.64,1) forwards, jpPulse 1.5s .6s infinite alternate;
-  opacity:0;
+  font-size:26px;letter-spacing:18px;line-height:1;
+  color:rgba(255,215,0,.7);
+  text-shadow:0 0 20px rgba(255,200,0,.5);
+  animation:eyeIn .3s ease forwards;opacity:0;
+  margin-bottom:6px;
 }
-@keyframes jpIn{0%{opacity:0;transform:scale(.4) translateY(-30px);}70%{opacity:1;transform:scale(1.06);}100%{opacity:1;transform:scale(1);}}
-@keyframes jpPulse{from{filter:drop-shadow(0 0 20px rgba(255,200,0,.7));}to{filter:drop-shadow(0 0 50px rgba(255,200,0,1)) drop-shadow(0 0 90px rgba(255,130,0,.6));}}
+@keyframes eyeIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+
+/* Línea decorativa */
+.jp-reveal-line{
+  width:0;height:2px;
+  background:linear-gradient(90deg,transparent,#FFD700,transparent);
+  animation:lineExpand .4s ease .25s forwards;
+  box-shadow:0 0 12px rgba(255,215,0,.6);
+}
+@keyframes lineExpand{from{width:0;}to{width:700px;}}
 
 .jp-winner-name{
   font-family:'Bebas Neue',sans-serif;
-  font-size:120px;letter-spacing:8px;color:#fff;line-height:1;margin-top:10px;
-  text-shadow:0 0 30px rgba(255,255,255,.9),0 0 60px rgba(255,215,0,.7);
-  animation:nameIn .8s cubic-bezier(.34,1.56,.64,1) .4s forwards, namePulse 2s 1.2s infinite alternate;
-  opacity:0;
+  font-size:160px;letter-spacing:6px;color:#fff;line-height:.95;margin-top:14px;
+  text-shadow:0 0 40px rgba(255,255,255,.9),0 0 80px rgba(255,215,0,.6),0 0 140px rgba(255,150,0,.3);
+  animation:nameBlast .5s cubic-bezier(.22,1.2,.36,1) .3s forwards;opacity:0;
 }
-@keyframes nameIn{0%{opacity:0;transform:scale(.2) translateY(50px);}60%{opacity:1;transform:scale(1.08);}100%{opacity:1;transform:scale(1);}}
-@keyframes namePulse{from{text-shadow:0 0 20px rgba(255,255,255,.7),0 0 40px rgba(255,215,0,.5);}to{text-shadow:0 0 40px rgba(255,255,255,1),0 0 80px rgba(255,215,0,.9);}}
-
+@keyframes nameBlast{
+  0%{opacity:0;transform:scale(1.8);filter:blur(12px);}
+  60%{opacity:1;filter:blur(0);}
+  80%{transform:scale(.97);}
+  100%{opacity:1;transform:scale(1);filter:blur(0);}
+}
 .jp-sub-badge{
   font-family:'Bebas Neue',sans-serif;
-  font-size:24px;letter-spacing:8px;color:rgba(255,215,0,.95);margin-top:20px;
-  text-shadow:0 0 14px rgba(255,215,0,.8);
-  opacity:0;transform:translateY(20px);
-  transition:opacity .6s, transform .6s cubic-bezier(.34,1.56,.64,1);
+  font-size:18px;letter-spacing:10px;color:rgba(255,215,0,.8);margin-top:16px;
+  text-shadow:0 0 12px rgba(255,215,0,.6);
+  opacity:0;transform:translateY(14px);
+  transition:opacity .4s, transform .4s cubic-bezier(.34,1.56,.64,1);
 }
 .jp-sub-badge.show{opacity:1;transform:translateY(0);}
 
@@ -262,6 +271,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 
 <div id="jpReveal">
   <div class="jp-jackpot-text">👑 MIEMBRO VIP 👑</div>
+  <div class="jp-reveal-line"></div>
   <div class="jp-winner-name" id="jpWinnerName">USUARIO</div>
   <div class="jp-sub-badge" id="jpSubBadge">⭐ REPRESENTANTE OFICIAL ⭐</div>
 </div>
@@ -494,13 +504,13 @@ function startJackpot(candidates, chosen){
     inner.style.transform=`translateY(-${Math.floor(Math.random()*items.length)*200}px)`;
   });
 
-  // Paradas escalonadas: reel0 para primero, reel2 es el más dramático
-  spinReelPremium(0, chosen, 2200, 0, ()=>{
-    setTimeout(()=> spinReelPremium(1, chosen, 2800, 1, ()=>{
-      setTimeout(()=> spinReelPremium(2, chosen, 3800, 2, ()=>{
-        setTimeout(()=> revealJackpot(chosen), 600);
-      }), 350);
-    }), 350);
+  // Paradas rápidas y escalonadas — total ~3.5 segundos
+  spinReelPremium(0, chosen, 1100, 0, ()=>{
+    setTimeout(()=> spinReelPremium(1, chosen, 1500, 1, ()=>{
+      setTimeout(()=> spinReelPremium(2, chosen, 2000, 1, ()=>{
+        setTimeout(()=> revealJackpot(chosen), 400);
+      }), 200);
+    }), 200);
   });
 }
 
@@ -547,11 +557,10 @@ function spinReelPremium(reelIdx, winner, duration, teaseCount, onStop){
     }
 
     else if(phase === 'teasing'){
-      // El reel va a casi-parar y luego acelera de nuevo (tease dramático)
-      const tp = Math.min(1, (now - teaseStartTime) / 700);
-      // Ease out then ease in (lento, casi para, vuelve a ir)
-      const slowDown = Math.sin(tp * Math.PI); // 0→1→0
-      const vel = 0.3 + slowDown * 6;
+      // Tease rápido — casi para y vuelve
+      const tp = Math.min(1, (now - teaseStartTime) / 350);
+      const slowDown = Math.sin(tp * Math.PI);
+      const vel = 0.5 + slowDown * 8;
       pos = (pos + vel) % totalH;
       inner.style.transition='none';
       inner.style.transform=`translateY(-${pos}px)`;
@@ -564,24 +573,21 @@ function spinReelPremium(reelIdx, winner, duration, teaseCount, onStop){
     }
 
     else if(phase === 'stopping'){
-      // Decelerar hacia el ganador con física de resorte
-      // Primero: moverse hacia el ganador con fricción
       const diff = winnerTargetPos - pos;
       const adjustedDiff = ((diff % totalH) + totalH) % totalH;
       const shortDiff = adjustedDiff > totalH/2 ? adjustedDiff - totalH : adjustedDiff;
 
-      if(Math.abs(shortDiff) < 1.5){
-        // Snap final
-        inner.style.transition='transform .2s cubic-bezier(.34,1.56,.64,1)';
+      if(Math.abs(shortDiff) < 2){
+        inner.style.transition='transform .18s cubic-bezier(.34,1.56,.64,1)';
         inner.style.transform=`translateY(-${winnerTargetPos}px)`;
         reel.classList.remove('spinning');
         reel.classList.add('stopped');
         items[winnerItemIdx].classList.add('winner');
         playReelStop(reelIdx);
-        setTimeout(onStop, 350);
+        setTimeout(onStop, 250);
         return;
       } else {
-        const speed = Math.min(12, Math.abs(shortDiff)*0.18 + 1.2);
+        const speed = Math.min(14, Math.abs(shortDiff)*0.22 + 1.5);
         pos = (pos + Math.sign(shortDiff)*speed + totalH) % totalH;
         inner.style.transition='none';
         inner.style.transform=`translateY(-${pos}px)`;
