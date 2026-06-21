@@ -8,424 +8,361 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 
-/* ══ Overlay principal ══ */
 #overlay{
   position:fixed;inset:0;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:rgba(0,0,0,0);
-  pointer-events:none;z-index:10;
+  background:rgba(0,0,0,0);pointer-events:none;z-index:10;
   transition:background 1s;
 }
-#overlay.show{background:rgba(0,0,0,.88);}
+#overlay.show{background:rgba(0,0,0,.9);}
 
-/* ══ Tómbola ══ */
+/* Header de quién pierde */
+#loserBanner{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:22px;letter-spacing:6px;
+  margin-bottom:20px;
+  opacity:0;transform:translateY(-20px);
+  transition:opacity .5s, transform .5s;
+}
+#loserBanner.show{opacity:1;transform:translateY(0);}
+#loserBanner.sam{color:#4488ff;text-shadow:0 0 20px rgba(68,136,255,.6);}
+#loserBanner.chat{color:#f87171;text-shadow:0 0 20px rgba(248,113,113,.6);}
+
+/* Tómbola */
 #tombola{
-  position:relative;width:520px;height:520px;
-  opacity:0;transform:scale(.6);
-  transition:opacity .5s, transform .5s cubic-bezier(.34,1.56,.64,1);
+  position:relative;width:480px;height:480px;
+  opacity:0;transform:scale(.5);
+  transition:opacity .6s, transform .6s cubic-bezier(.34,1.56,.64,1);
 }
 #tombola.show{opacity:1;transform:scale(1);}
+#arrow{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-size:32px;z-index:6;animation:ab .6s infinite ease-in-out;}
+@keyframes ab{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-6px);}}
 
-#wheel{
-  width:100%;height:100%;
-  position:relative;
-  will-change:transform;
-}
-
-/* ══ Segmentos de la rueda ══ */
-.seg{
-  position:absolute;width:0;height:0;
-  left:50%;top:50%;
-  transform-origin:0 0;
-}
-
-/* ══ Números centrales ══ */
 #wheelCenter{
-  position:absolute;width:110px;height:110px;
-  border-radius:50%;
-  top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  background:radial-gradient(circle,#1a0010,#0a0006);
-  border:3px solid rgba(255,0,80,.6);
+  position:absolute;width:100px;height:100px;border-radius:50%;
+  top:50%;left:50%;transform:translate(-50%,-50%);
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 0 30px rgba(255,0,80,.5),0 0 60px rgba(255,0,80,.2);
-  z-index:5;
+  border:3px solid rgba(255,255,255,.2);z-index:5;
+  font-size:38px;
+  background:radial-gradient(circle,#111,#000);
 }
-.center-skull{font-size:42px;line-height:1;}
 
-/* Flecha indicadora */
-#arrow{
-  position:absolute;top:-28px;left:50%;
-  transform:translateX(-50%);
-  font-size:36px;
-  filter:drop-shadow(0 0 10px rgba(255,0,80,.8));
-  z-index:6;
-  animation:arrowBounce 0.6s ease-in-out infinite;
+/* Animación de entrada de bolas */
+.ball-intro{
+  position:absolute;width:60px;height:60px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;font-size:20px;color:#fff;
+  font-weight:700;pointer-events:none;z-index:20;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
 }
-@keyframes arrowBounce{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-6px);}}
 
-/* ══ Carta revelación ══ */
+/* Carta revelación */
 #revCard{
-  position:fixed;
-  left:50%;top:50%;
+  position:fixed;left:50%;top:50%;
   transform:translate(-50%,-50%) scale(0);
-  width:860px;
-  background:linear-gradient(160deg,#1a0010,#0d0008,#1a0010);
-  border:2px solid rgba(255,0,80,.4);
-  border-radius:20px;
-  padding:40px 50px;
-  opacity:0;
+  width:820px;
+  background:linear-gradient(160deg,#0d0d1a,#060610);
+  border-radius:20px;padding:40px 50px;opacity:0;
   transition:transform .6s cubic-bezier(.34,1.56,.64,1), opacity .4s;
-  box-shadow:0 0 80px rgba(255,0,80,.3), 0 0 160px rgba(100,0,40,.4), inset 0 0 60px rgba(0,0,0,.5);
   z-index:20;
 }
 #revCard.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+#revCard.sam{border:2px solid rgba(68,136,255,.5);box-shadow:0 0 80px rgba(68,136,255,.25);}
+#revCard.chat{border:2px solid rgba(248,113,113,.5);box-shadow:0 0 80px rgba(248,113,113,.25);}
 
-.rev-para{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:13px;letter-spacing:4px;
-  color:rgba(255,0,80,.6);margin-bottom:12px;
-}
-.rev-title{
-  font-family:'Cinzel',serif;
-  font-size:38px;font-weight:900;
-  color:#fff;
-  text-shadow:0 0 30px rgba(255,0,80,.8);
-  margin-bottom:20px;
-  line-height:1.1;
-}
-.rev-divider{
-  width:100%;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,0,80,.5),transparent);
-  margin-bottom:20px;
-}
-.rev-desc{
-  font-family:'Inter',sans-serif;
-  font-size:18px;font-weight:700;
-  color:rgba(255,255,255,.8);
-  line-height:1.6;
-  font-style:italic;
-}
-.rev-close{
-  margin-top:28px;
-  font-family:'Bebas Neue',sans-serif;
-  font-size:13px;letter-spacing:3px;
-  color:rgba(255,0,80,.4);
-  text-align:center;
-}
+.rev-para{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:4px;margin-bottom:12px;}
+.rev-para.sam{color:rgba(68,136,255,.7);}
+.rev-para.chat{color:rgba(248,113,113,.7);}
+.rev-title{font-family:'Cinzel',serif;font-size:36px;font-weight:900;color:#fff;margin-bottom:18px;line-height:1.1;}
+.rev-divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);margin-bottom:18px;}
+.rev-desc{font-family:'Inter',sans-serif;font-size:17px;font-weight:700;color:rgba(255,255,255,.8);line-height:1.6;font-style:italic;}
+.rev-hint{margin-top:24px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:3px;color:rgba(255,255,255,.2);text-align:center;}
 
-/* ══ Partículas de fuego ══ */
+#flash{position:fixed;inset:0;opacity:0;pointer-events:none;z-index:25;transition:opacity .1s;}
 #particles{position:fixed;inset:0;pointer-events:none;z-index:15;}
-
-/* ══ Flash de pantalla ══ */
-#flash{
-  position:fixed;inset:0;
-  background:rgba(255,0,80,.6);
-  opacity:0;pointer-events:none;z-index:25;
-  transition:opacity .1s;
-}
 </style>
 </head>
 <body>
-
 <div id="overlay">
+  <div id="loserBanner">⚔️ CASTIGO PARA SAM</div>
   <div id="tombola">
     <div id="arrow">🔻</div>
-    <canvas id="wheel" width="520" height="520"></canvas>
-    <div id="wheelCenter"><span class="center-skull">💀</span></div>
+    <canvas id="wheelCanvas" width="480" height="480"></canvas>
+    <div id="wheelCenter">💀</div>
   </div>
 </div>
 
 <div id="revCard">
-  <div class="rev-para" id="revPara">CASTIGO PARA SAM</div>
-  <div class="rev-title" id="revTitle">Título del castigo</div>
+  <div class="rev-para sam" id="revPara">CASTIGO PARA SAM</div>
+  <div class="rev-title" id="revTitle"></div>
   <div class="rev-divider"></div>
-  <div class="rev-desc" id="revDesc">Descripción del castigo que Maléfica leerá en voz alta...</div>
-  <div class="rev-close">— Pulse el botón de girar nuevamente para cerrar —</div>
+  <div class="rev-desc" id="revDesc"></div>
+  <div class="rev-hint">— Presiona girar nuevamente para cerrar —</div>
 </div>
 
 <div id="flash"></div>
 <canvas id="particles" width="1920" height="1080"></canvas>
 
 <script>
-const LS = 'castigos_state';
-const COLORS = ['#ff0050','#cc003d','#99002e','#ff3370','#e6004a'];
-const NAMES = ['I','II','III','IV','V'];
-const AC = new(window.AudioContext||window.webkitAudioContext)();
+const LS='castigos_state';
+const COLORS_SAM=['#4488ff','#2266dd','#1144bb','#3377ee','#5599ff'];
+const COLORS_CHAT=['#f87171','#dc4545','#c03030','#e85555','#ff8888'];
 
-let lastTs = 0;
-let isSpinning = false;
-let cardVisible = false;
+const AC=new(window.AudioContext||window.webkitAudioContext)();
+let lastTs=0, isSpinning=false, cardVisible=false;
+let currentTarget='sam';
 
-// ══ Dibujar rueda ══
-function drawWheel(angle, castigos, winnerIdx, phase){
-  const canvas = document.getElementById('wheel');
-  const ctx = canvas.getContext('2d');
-  const cx=260, cy=260, r=250;
-  ctx.clearRect(0,0,520,520);
+// ══ CANVAS WHEEL ══
+const canvas=document.getElementById('wheelCanvas');
+const ctx=canvas.getContext('2d');
 
-  const count = Math.min(5, castigos.filter(c=>c.titulo).length) || 5;
-  const segAngle = (Math.PI*2)/count;
+function drawWheel(angle,castigos,winnerIdx,phase){
+  ctx.clearRect(0,0,480,480);
+  const cx=240,cy=240,r=232;
+  const count=castigos.filter(c=>c.titulo).length||3;
+  const seg=(Math.PI*2)/count;
+  const colors=currentTarget==='sam'?COLORS_SAM:COLORS_CHAT;
 
   for(let i=0;i<count;i++){
-    const startA = angle + i*segAngle - Math.PI/2;
-    const endA   = startA + segAngle;
-    const isWin  = (i===winnerIdx) && (phase==='reveal');
-
-    // Segmento
-    ctx.beginPath();
-    ctx.moveTo(cx,cy);
-    ctx.arc(cx,cy,r,startA,endA);
-    ctx.closePath();
-    const grad = ctx.createRadialGradient(cx,cy,0,cx,cy,r);
-    grad.addColorStop(0, isWin ? 'rgba(255,200,200,0.3)' : 'rgba(20,0,10,0.8)');
-    grad.addColorStop(1, COLORS[i%COLORS.length]+(isWin?'ff':'88'));
-    ctx.fillStyle = grad;
-    ctx.fill();
-    ctx.strokeStyle = isWin ? '#fff' : 'rgba(255,0,80,.3)';
-    ctx.lineWidth = isWin ? 3 : 1;
-    ctx.stroke();
+    const sA=angle+i*seg-Math.PI/2, eA=sA+seg;
+    const isWin=i===winnerIdx&&phase==='reveal';
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,sA,eA); ctx.closePath();
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+    g.addColorStop(0,'rgba(10,10,20,.9)');
+    g.addColorStop(1,colors[i%colors.length]+(isWin?'ff':'99'));
+    ctx.fillStyle=g; ctx.fill();
+    ctx.strokeStyle=isWin?'#fff':'rgba(255,255,255,.15)';
+    ctx.lineWidth=isWin?3:1; ctx.stroke();
+    if(isWin){ctx.beginPath();ctx.arc(cx,cy,r,sA,eA);ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=6;ctx.stroke();}
 
     // Texto
+    const mA=sA+seg/2, tR=r*0.65;
     ctx.save();
-    const midA = startA + segAngle/2;
-    const textR = r*0.65;
-    ctx.translate(cx + Math.cos(midA)*textR, cy + Math.sin(midA)*textR);
-    ctx.rotate(midA + Math.PI/2);
-    ctx.textAlign='center';
-    ctx.textBaseline='middle';
-    ctx.fillStyle = isWin ? '#fff' : 'rgba(255,255,255,0.9)';
-    ctx.font = `bold 28px 'Bebas Neue', sans-serif`;
-    const label = castigos[i]?.titulo?.substring(0,12) || NAMES[i];
-    ctx.fillText(label.toUpperCase(), 0, 0);
+    ctx.translate(cx+Math.cos(mA)*tR,cy+Math.sin(mA)*tR);
+    ctx.rotate(mA+Math.PI/2);
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle=isWin?'#fff':'rgba(255,255,255,.9)';
+    ctx.font=`bold 22px 'Bebas Neue',sans-serif`;
+    const label=(castigos[i]?.titulo||'').substring(0,14).toUpperCase();
+    ctx.fillText(label,0,0);
     ctx.restore();
-
-    // Borde exterior con glow en ganador
-    if(isWin){
-      ctx.beginPath();
-      ctx.arc(cx,cy,r,startA,endA);
-      ctx.strokeStyle='rgba(255,200,200,0.6)';
-      ctx.lineWidth=6;
-      ctx.stroke();
-    }
   }
 
-  // Borde de la rueda
-  ctx.beginPath();
-  ctx.arc(cx,cy,r,0,Math.PI*2);
-  ctx.strokeStyle='rgba(255,0,80,.5)';
-  ctx.lineWidth=4;
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(cx,cy,r+4,0,Math.PI*2);
-  ctx.strokeStyle='rgba(255,0,80,.15)';
-  ctx.lineWidth=8;
-  ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle=currentTarget==='sam'?'rgba(68,136,255,.5)':'rgba(248,113,113,.5)';
+  ctx.lineWidth=4;ctx.stroke();
 }
 
-// ══ Animación de spin ══
-function spinWheel(castigos, winnerIdx){
-  isSpinning = true;
+// ══ ANIMACIÓN DE ENTRADA DE BOLAS ══
+function animateBallsEntry(castigos, callback){
+  const valid=castigos.filter(c=>c.titulo);
+  const colors=currentTarget==='sam'?COLORS_SAM:COLORS_CHAT;
+  let done=0;
+  valid.forEach((c,i)=>{
+    setTimeout(()=>{
+      playBallSound(i);
+      // Crear bola que vuela hacia el centro
+      const ball=document.createElement('div');
+      ball.className='ball-intro';
+      ball.style.background=colors[i%colors.length];
+      ball.style.left='0px'; ball.style.top='0px';
+      ball.textContent=(i+1)+'';
+      // Posición inicial aleatoria fuera de pantalla
+      const startX=Math.random()<0.5?-100:2020;
+      const startY=100+Math.random()*880;
+      ball.style.position='fixed';
+      ball.style.left=startX+'px'; ball.style.top=startY+'px';
+      ball.style.transition=`left ${0.6}s cubic-bezier(.25,.46,.45,.94), top ${0.6}s cubic-bezier(.25,.46,.45,.94), opacity .3s`;
+      document.body.appendChild(ball);
+      setTimeout(()=>{
+        ball.style.left='930px'; ball.style.top='490px';
+      },50);
+      setTimeout(()=>{
+        ball.style.opacity='0';
+        setTimeout(()=>ball.remove(),300);
+        done++;
+        if(done===valid.length) setTimeout(callback,200);
+      },700);
+    },i*300);
+  });
+}
+
+// ══ SPIN ══
+function spinWheel(castigos,winnerIdx){
+  isSpinning=true;
   document.getElementById('overlay').classList.add('show');
   document.getElementById('tombola').classList.add('show');
+  const banner=document.getElementById('loserBanner');
+  banner.className='loserBanner show '+currentTarget;
+  banner.classList.add('show');
+  banner.textContent=currentTarget==='sam'?'⚔️ CASTIGO PARA SAM':'💬 CASTIGO PARA EL CHAT';
 
-  const count = Math.min(5, castigos.filter(c=>c.titulo).length) || 5;
-  const segAngle = (Math.PI*2)/count;
+  // Dibujar rueda estática primero
+  drawWheel(0,castigos,-1,'spin');
 
-  // Ángulo final: el ganador queda arriba (apuntado por la flecha)
-  const targetSeg = winnerIdx % count;
-  const baseRotations = 5 + Math.floor(Math.random()*3); // 5-7 vueltas completas
-  const finalAngle = baseRotations * Math.PI*2 + (segAngle * (count - targetSeg));
+  // Animar entrada de bolas
+  animateBallsEntry(castigos,()=>{
+    // Empezar spin
+    playSpinSound();
+    const count=castigos.filter(c=>c.titulo).length||3;
+    const seg=(Math.PI*2)/count;
+    const rotations=5+Math.floor(Math.random()*3);
+    const finalAngle=rotations*Math.PI*2+(seg*(count-winnerIdx));
+    const duration=4000;
+    const startTime=performance.now();
 
-  const duration = 4500; // ms
-  const startTime = performance.now();
-  let currentAngle = 0;
-
-  // Sonido de spin
-  playSpinSound();
-
-  function frame(now){
-    const elapsed = now - startTime;
-    const t = Math.min(1, elapsed/duration);
-    // Easing: fast start, dramatic slow end
-    const ease = t<0.7 ? t*1.43 : 1 - Math.pow(1-t,4)*0.3;
-    const adjusted = 1 - Math.pow(1-t, 3);
-    currentAngle = finalAngle * adjusted;
-
-    drawWheel(currentAngle, castigos, -1, 'spin');
-
-    if(t<1){
-      requestAnimationFrame(frame);
-    } else {
-      // Llegamos — dibujar con ganador resaltado
-      drawWheel(finalAngle, castigos, winnerIdx, 'reveal');
-      flashScreen();
-      playRevealSound();
-      setTimeout(()=>showCard(castigos, winnerIdx), 800);
+    function frame(now){
+      const t=Math.min(1,(now-startTime)/duration);
+      const ease=1-Math.pow(1-t,3);
+      drawWheel(finalAngle*ease,castigos,-1,'spin');
+      if(t<1) requestAnimationFrame(frame);
+      else{
+        drawWheel(finalAngle,castigos,winnerIdx,'reveal');
+        flashScreen();
+        playRevealSound();
+        setTimeout(()=>showCard(castigos,winnerIdx),700);
+      }
     }
-  }
-  requestAnimationFrame(frame);
+    requestAnimationFrame(frame);
+  });
 }
 
-function showCard(castigos, winnerIdx){
-  const c = castigos[winnerIdx];
-  document.getElementById('revPara').textContent = c.para==='sam' ? '⚔️ CASTIGO PARA SAM' : '💬 CASTIGO PARA EL CHAT';
-  document.getElementById('revTitle').textContent = c.titulo.toUpperCase();
-  document.getElementById('revDesc').textContent = c.descripcion || c.titulo;
-  document.getElementById('revCard').classList.add('show');
-  cardVisible = true;
+function showCard(castigos,winnerIdx){
+  const c=castigos[winnerIdx];
+  const card=document.getElementById('revCard');
+  card.className='show '+currentTarget;
+  document.getElementById('revPara').className='rev-para '+currentTarget;
+  document.getElementById('revPara').textContent=currentTarget==='sam'?'⚔️ CASTIGO PARA SAM':'💬 CASTIGO PARA EL CHAT';
+  document.getElementById('revTitle').textContent=(c.titulo||'').toUpperCase();
+  document.getElementById('revDesc').textContent=c.descripcion||c.titulo||'';
+  cardVisible=true;
   startParticles();
-  // Maléfica habla
-  setTimeout(()=>speakMaleficent(c.descripcion||c.titulo), 600);
+  setTimeout(()=>speakMaleficent(c.descripcion||c.titulo||''),500);
 }
 
 function hideAll(){
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('tombola').classList.remove('show');
-  document.getElementById('revCard').classList.remove('show');
-  cardVisible = false;
-  isSpinning = false;
+  document.getElementById('loserBanner').classList.remove('show');
+  document.getElementById('revCard').className='';
+  cardVisible=false;isSpinning=false;
   stopParticles();
   window.speechSynthesis.cancel();
 }
 
-// ══ VOZ DE MALÉFICA ══
+// ══ MALÉFICA ══
 function speakMaleficent(text){
   if(!text) return;
   window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang   = 'es-MX';
-  utt.pitch  = 0.25;   // muy grave, oscuro
-  utt.rate   = 0.58;   // lento y dramático
-  utt.volume = 1.0;
-  // Agregar pausas dramáticas
-  const dramatic = text
-    .replace(/\./g, '...')
-    .replace(/,/g, ',,');
-  utt.text = dramatic;
-  const voices = window.speechSynthesis.getVoices();
-  const esVoice = voices.find(v=>v.lang.startsWith('es')) || voices[0];
-  if(esVoice) utt.voice = esVoice;
+  const utt=new SpeechSynthesisUtterance();
+  utt.lang='es-MX'; utt.pitch=0.25; utt.rate=0.58; utt.volume=1.0;
+  utt.text=text.replace(/\./g,'...').replace(/,/g,',,');
+  const voices=window.speechSynthesis.getVoices();
+  const esV=voices.find(v=>v.lang.startsWith('es'))||voices[0];
+  if(esV) utt.voice=esV;
   window.speechSynthesis.speak(utt);
 }
-window.speechSynthesis.onvoiceschanged = ()=>window.speechSynthesis.getVoices();
+window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
 
-// ══ Flash de pantalla ══
+// ══ FLASH ══
 function flashScreen(){
   const f=document.getElementById('flash');
-  f.style.opacity='1';
+  const color=currentTarget==='sam'?'rgba(68,136,255,.5)':'rgba(248,113,113,.5)';
+  f.style.background=color; f.style.opacity='1';
   setTimeout(()=>f.style.opacity='0',150);
-  setTimeout(()=>{f.style.opacity='.6';setTimeout(()=>f.style.opacity='0',100);},300);
+  setTimeout(()=>{f.style.opacity='.5';setTimeout(()=>f.style.opacity='0',100);},300);
 }
 
-// ══ Partículas de fuego ══
-let particleInterval = null;
-const pCanvas = document.getElementById('particles');
-const pCtx = pCanvas.getContext('2d');
-const particles = [];
+// ══ PARTÍCULAS ══
+let pInterval=null;
+const pCanvas=document.getElementById('particles');
+const pCtx=pCanvas.getContext('2d');
+const particles=[];
 
 function startParticles(){
-  if(particleInterval) return;
-  particleInterval = setInterval(()=>{
-    for(let i=0;i<8;i++){
-      particles.push({
-        x:Math.random()*1920, y:1080,
-        vx:(Math.random()-.5)*3,
-        vy:-(Math.random()*4+3),
-        size:Math.random()*12+4,
-        life:1,
-        color:`hsl(${Math.random()*30},100%,${40+Math.random()*30}%)`
-      });
+  if(pInterval) return;
+  pInterval=setInterval(()=>{
+    const colors=currentTarget==='sam'?['#4488ff','#88aaff','#2255cc']:['#f87171','#ff9999','#cc4444'];
+    for(let i=0;i<6;i++){
+      particles.push({x:Math.random()*1920,y:1080,vx:(Math.random()-.5)*3,vy:-(Math.random()*4+2),size:Math.random()*10+4,life:1,color:colors[Math.floor(Math.random()*colors.length)]});
     }
-  },50);
-  animParticles();
+  },60);
+  animP();
 }
-function stopParticles(){
-  if(particleInterval){ clearInterval(particleInterval); particleInterval=null; }
-}
-function animParticles(){
+function stopParticles(){if(pInterval){clearInterval(pInterval);pInterval=null;}}
+function animP(){
   pCtx.clearRect(0,0,1920,1080);
   for(let i=particles.length-1;i>=0;i--){
     const p=particles[i];
-    p.x+=p.vx; p.y+=p.vy; p.vy+=0.05; p.life-=0.012; p.size*=0.995;
-    if(p.life<=0||p.y<-50){ particles.splice(i,1); continue; }
-    pCtx.save();
-    pCtx.globalAlpha=p.life;
-    pCtx.fillStyle=p.color;
-    pCtx.shadowColor=p.color; pCtx.shadowBlur=10;
-    pCtx.beginPath(); pCtx.arc(p.x,p.y,p.size,0,Math.PI*2); pCtx.fill();
-    pCtx.restore();
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.06;p.life-=0.012;
+    if(p.life<=0){particles.splice(i,1);continue;}
+    pCtx.save();pCtx.globalAlpha=p.life;pCtx.fillStyle=p.color;pCtx.shadowColor=p.color;pCtx.shadowBlur=8;
+    pCtx.beginPath();pCtx.arc(p.x,p.y,p.size,0,Math.PI*2);pCtx.fill();pCtx.restore();
   }
-  if(particles.length>0||particleInterval) requestAnimationFrame(animParticles);
-  else pCtx.clearRect(0,0,1920,1080);
+  if(particles.length||pInterval) requestAnimationFrame(animP);
 }
 
-// ══ Sonidos ══
-function playSpinSound(){
+// ══ SONIDOS ══
+function playBallSound(idx){
   AC.resume();
   const t=AC.currentTime;
-  // Ruido de ruleta girando
-  const osc=AC.createOscillator(); osc.type='sawtooth';
-  osc.frequency.setValueAtTime(200,t); osc.frequency.linearRampToValueAtTime(80,t+4);
+  const o=AC.createOscillator(); o.type='sine'; o.frequency.value=440+idx*80;
+  const g=AC.createGain(); g.gain.setValueAtTime(0.2,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+  o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+0.16);
+}
+
+function playSpinSound(){
+  AC.resume(); const t=AC.currentTime;
+  const o=AC.createOscillator(); o.type='sawtooth';
+  o.frequency.setValueAtTime(200,t); o.frequency.linearRampToValueAtTime(60,t+4);
   const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=300;
-  const g=AC.createGain();
-  g.gain.setValueAtTime(0.15,t); g.gain.setValueAtTime(0.15,t+3);
-  g.gain.linearRampToValueAtTime(0.001,t+4.5);
-  osc.connect(f); f.connect(g); g.connect(AC.destination);
-  osc.start(t); osc.stop(t+4.5);
-  // Clics de ruleta
-  for(let i=0;i<60;i++){
-    const delay=Math.pow(i/60,2)*4;
-    const click=AC.createOscillator(); click.type='sine'; click.frequency.value=800;
-    const cg=AC.createGain();
-    cg.gain.setValueAtTime(0.1,t+delay); cg.gain.exponentialRampToValueAtTime(0.001,t+delay+0.04);
-    click.connect(cg); cg.connect(AC.destination);
-    click.start(t+delay); click.stop(t+delay+0.05);
+  const g=AC.createGain(); g.gain.setValueAtTime(0.12,t); g.gain.linearRampToValueAtTime(0.001,t+4.5);
+  o.connect(f); f.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+4.6);
+  for(let i=0;i<55;i++){
+    const delay=Math.pow(i/55,2)*4;
+    const c=AC.createOscillator(); c.type='sine'; c.frequency.value=900;
+    const cg=AC.createGain(); cg.gain.setValueAtTime(0.08,t+delay); cg.gain.exponentialRampToValueAtTime(0.001,t+delay+0.04);
+    c.connect(cg); cg.connect(AC.destination); c.start(t+delay); c.stop(t+delay+0.05);
   }
 }
 
 function playRevealSound(){
-  AC.resume();
-  const t=AC.currentTime;
-  // BOOM dramático
+  AC.resume(); const t=AC.currentTime;
   const sub=AC.createOscillator(); sub.type='sine';
   sub.frequency.setValueAtTime(80,t); sub.frequency.exponentialRampToValueAtTime(25,t+0.8);
-  const sg=AC.createGain();
-  sg.gain.setValueAtTime(1.0,t); sg.gain.exponentialRampToValueAtTime(0.001,t+0.9);
-  sub.connect(sg); sg.connect(AC.destination);
-  sub.start(t); sub.stop(t+0.9);
-  // Notas dramáticas descendentes (tipo organismo de Maléfica)
+  const sg=AC.createGain(); sg.gain.setValueAtTime(1.0,t); sg.gain.exponentialRampToValueAtTime(0.001,t+0.9);
+  sub.connect(sg); sg.connect(AC.destination); sub.start(t); sub.stop(t+0.9);
   [523,440,370,294,247].forEach((freq,i)=>{
     const o=AC.createOscillator(); o.type='sawtooth';
     const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=freq*2;
-    const g=AC.createGain();
-    const st=t+0.1+i*0.15;
-    g.gain.setValueAtTime(0,st); g.gain.linearRampToValueAtTime(0.3,st+0.05);
+    const g=AC.createGain(); const st=t+0.1+i*0.15;
+    g.gain.setValueAtTime(0,st); g.gain.linearRampToValueAtTime(0.28,st+0.05);
     g.gain.exponentialRampToValueAtTime(0.001,st+0.4);
     o.frequency.value=freq; o.connect(f); f.connect(g); g.connect(AC.destination);
     o.start(st); o.stop(st+0.45);
   });
 }
 
-// ══ Polling ══
+// ══ POLLING ══
 setInterval(()=>{
   try{
-    const raw = localStorage.getItem(LS);
+    const raw=localStorage.getItem(LS);
     if(!raw) return;
-    const s = JSON.parse(raw);
-    if(!s.spinning || s.ts === lastTs) return;
-    if(isSpinning) return; // ya está girando
-    lastTs = s.ts;
-    const valid = s.castigos.filter(c=>c.titulo);
+    const s=JSON.parse(raw);
+    if(!s.spinning||s.ts===lastTs) return;
+    if(isSpinning) return;
+    if(cardVisible){hideAll();return;}
+    lastTs=s.ts;
+    currentTarget=s.target||'sam';
+    const castigos=s[currentTarget]||[];
+    const valid=castigos.filter(c=>c.titulo);
     if(!valid.length) return;
-    // Si había carta visible → cerrar y volver a idle
-    if(cardVisible){ hideAll(); return; }
-    spinWheel(s.castigos, s.winner);
+    spinWheel(castigos,s.winner);
   }catch(e){}
 },300);
 
-// Draw inicial
-drawWheel(0, Array.from({length:5},(_,i)=>({titulo:String(i+1)})), -1, 'spin');
+// Dibujo inicial
+drawWheel(0,Array.from({length:3},(_,i)=>({titulo:String(i+1)})),-1,'spin');
 </script>
 </body>
 </html>
