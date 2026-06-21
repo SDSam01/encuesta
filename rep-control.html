@@ -131,6 +131,18 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
   <input type="text" id="ttsTestInput" placeholder="Escribe un mensaje de prueba..." />
   <button class="btn-tts" onclick="testTTS()">🔊 Probar voz</button>
 </div>
+
+<!-- ══ Control de Música 1vs1 ══ -->
+<div class="section" style="margin-top:10px;">
+  <div class="section-title">🎵 Música 1vs1</div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+    <span style="font-size:11px;color:rgba(255,255,255,.4);font-weight:600;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;">Volumen</span>
+    <input type="range" id="musicVol" min="0" max="100" value="60" style="flex:1;accent-color:#FFD000;" oninput="updateMusicVol(this.value)">
+    <span id="musicVolNum" style="font-size:12px;font-weight:700;color:#FFD000;min-width:36px;text-align:right;">60%</span>
+  </div>
+  <button id="musicBtn" onclick="toggleMusic()" style="width:100%;padding:10px;border-radius:9px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;border:1px solid rgba(255,208,0,.3);background:rgba(255,208,0,.1);color:#FFD000;transition:.15s;">▶ Activar música 1vs1</button>
+</div>
+
 <div class="status" id="statusBar">Abre el Chat Reader primero</div>
 
 <script>
@@ -433,6 +445,34 @@ function modoDemo(){
 function setStatus(msg,type){
   const el=document.getElementById('statusBar');
   el.textContent=msg; el.className='status '+(type||'');
+}
+
+// ══ Música 1vs1 ══
+let musicActive = false;
+function updateMusicVol(v){
+  document.getElementById('musicVolNum').textContent=v+'%';
+  const s=JSON.parse(localStorage.getItem('music_state')||'{}');
+  s.volume=parseInt(v)/100;
+  localStorage.setItem('music_state',JSON.stringify(s));
+}
+function toggleMusic(){
+  musicActive=!musicActive;
+  const btn=document.getElementById('musicBtn');
+  const s=JSON.parse(localStorage.getItem('music_state')||'{}');
+  s.manual=musicActive;
+  s.volume=parseInt(document.getElementById('musicVol').value)/100;
+  localStorage.setItem('music_state',JSON.stringify(s));
+  if(musicActive){
+    btn.textContent='■ Detener música 1vs1';
+    btn.style.background='rgba(248,113,113,.12)';
+    btn.style.borderColor='rgba(248,113,113,.35)';
+    btn.style.color='#f87171';
+  } else {
+    btn.textContent='▶ Activar música 1vs1';
+    btn.style.background='rgba(255,208,0,.1)';
+    btn.style.borderColor='rgba(255,208,0,.3)';
+    btn.style.color='#FFD000';
+  }
 }
 </script>
 </body>
