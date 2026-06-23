@@ -504,14 +504,13 @@ function startJackpot(candidates, chosen){
     inner.style.transform=`translateY(-${Math.floor(Math.random()*items.length)*200}px)`;
   });
 
-  // Paradas rápidas y escalonadas — total ~3.5 segundos
-  spinReelPremium(0, chosen, 1100, 0, ()=>{
-    setTimeout(()=> spinReelPremium(1, chosen, 1500, 1, ()=>{
-      setTimeout(()=> spinReelPremium(2, chosen, 2000, 1, ()=>{
-        setTimeout(()=> revealJackpot(chosen), 400);
-      }), 200);
-    }), 200);
-  });
+  // Los 3 reeles arrancan juntos — paran en cascada rápida
+  // Reel 0 para primero, luego 1, luego 2 con 300ms entre cada uno
+  spinReelPremium(0, chosen, 1200, 0, ()=>{});
+  setTimeout(()=> spinReelPremium(1, chosen, 1200, 0, ()=>{}), 300);
+  setTimeout(()=> spinReelPremium(2, chosen, 1200, 1, ()=>{
+    setTimeout(()=> revealJackpot(chosen), 200);
+  }), 600);
 }
 
 function spinReelPremium(reelIdx, winner, duration, teaseCount, onStop){
@@ -540,8 +539,8 @@ function spinReelPremium(reelIdx, winner, duration, teaseCount, onStop){
     const t = Math.min(1, elapsed/duration);
 
     if(phase === 'spin'){
-      // Velocidad alta al inicio, desacelera suavemente
-      const velocity = 35 * Math.pow(1-t, 1.2) + 0.8;
+  // Velocidad alta al inicio, desacelera suavemente
+      const velocity = 55 * Math.pow(1-t, 1.0) + 1.5;
       pos = (pos + velocity) % totalH;
       inner.style.transition='none';
       inner.style.transform=`translateY(-${pos}px)`;
@@ -558,13 +557,12 @@ function spinReelPremium(reelIdx, winner, duration, teaseCount, onStop){
 
     else if(phase === 'teasing'){
       // Tease rápido — casi para y vuelve
-      const tp = Math.min(1, (now - teaseStartTime) / 350);
+      const tp = Math.min(1, (now - teaseStartTime) / 200);
       const slowDown = Math.sin(tp * Math.PI);
-      const vel = 0.5 + slowDown * 8;
+      const vel = 0.8 + slowDown * 10;
       pos = (pos + vel) % totalH;
       inner.style.transition='none';
       inner.style.transform=`translateY(-${pos}px)`;
-
       if(tp >= 1){
         teasesDone++;
         if(teasesDone >= teaseCount) phase='stopping';
@@ -576,18 +574,17 @@ function spinReelPremium(reelIdx, winner, duration, teaseCount, onStop){
       const diff = winnerTargetPos - pos;
       const adjustedDiff = ((diff % totalH) + totalH) % totalH;
       const shortDiff = adjustedDiff > totalH/2 ? adjustedDiff - totalH : adjustedDiff;
-
       if(Math.abs(shortDiff) < 2){
-        inner.style.transition='transform .18s cubic-bezier(.34,1.56,.64,1)';
+        inner.style.transition='transform .15s cubic-bezier(.34,1.56,.64,1)';
         inner.style.transform=`translateY(-${winnerTargetPos}px)`;
         reel.classList.remove('spinning');
         reel.classList.add('stopped');
         items[winnerItemIdx].classList.add('winner');
         playReelStop(reelIdx);
-        setTimeout(onStop, 250);
+        setTimeout(onStop, 180);
         return;
       } else {
-        const speed = Math.min(14, Math.abs(shortDiff)*0.22 + 1.5);
+        const speed = Math.min(18, Math.abs(shortDiff)*0.28 + 2);
         pos = (pos + Math.sign(shortDiff)*speed + totalH) % totalH;
         inner.style.transition='none';
         inner.style.transform=`translateY(-${pos}px)`;
