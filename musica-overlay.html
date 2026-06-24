@@ -183,109 +183,125 @@ function playHipHopLoop(a, start, bars, bar, beat, nodes){
 }
 
 // ══════════════════════════════════════════════
-// 1VS1: Batalla intensa — tipo pelea/combate
-// BPM: 120 — agresivo, con impacto
+// 1VS1: TRAP / 808 — hype LATAM, bass pesado
+// BPM: 140 — hi-hats rápidos, 808 boom
 // ══════════════════════════════════════════════
 function startVsMusic(){
   if(currentMode==='vs') return;
   stopAll(false); currentMode='vs';
   const a=getAC(); if(!a||!masterGain) return;
   vsNodes=[];
-
   masterGain.gain.cancelScheduledValues(a.currentTime);
   masterGain.gain.setValueAtTime(0,a.currentTime);
-  masterGain.gain.linearRampToValueAtTime(lastVolume,a.currentTime+0.8);
-
+  masterGain.gain.linearRampToValueAtTime(lastVolume,a.currentTime+0.3);
   scheduleVsLoop(a);
 }
 
 function scheduleVsLoop(a){
-  const BPM=115, beat=60/BPM, bar=beat*4;
-  let t=a.currentTime+0.1;
+  const BPM=140, beat=60/BPM, bar=beat*4;
+  let t=a.currentTime+0.05;
   const BARS=4;
-
   function loop(){
     if(currentMode!=='vs') return;
-    playVsLoop(a,t,BARS,bar,beat,vsNodes);
+    playTrapLoop(a,t,BARS,bar,beat,vsNodes);
     t+=BARS*bar;
-    // Usar setTimeout para el siguiente loop
-    const loopDuration=(BARS*bar-0.1)*1000;
-    pollLoopTimer=setTimeout(loop, loopDuration);
+    pollLoopTimer=setTimeout(loop,(BARS*bar-0.08)*1000);
   }
   loop();
 }
 
-function playVsLoop(a,start,bars,bar,beat,nodes){
+function playTrapLoop(a,start,bars,bar,beat,nodes){
   const t=start;
-  const beats=bars*4;
+  const sixteenth=beat/4;
+  const totalBeats=bars*4;
 
-  for(let i=0;i<beats;i++){
+  for(let i=0;i<totalBeats;i++){
     const bt=t+i*beat;
-
-    // KICK DURO en cada beat
-    const kick=a.createOscillator(); kick.type='sine';
-    kick.frequency.setValueAtTime(100+(i%4===0?20:0),bt);
-    kick.frequency.exponentialRampToValueAtTime(30,bt+0.2);
-    const kg=a.createGain();
-    const kickVol=i%4===0?0.8:i%4===2?0.5:0.25;
-    kg.gain.setValueAtTime(kickVol,bt); kg.gain.exponentialRampToValueAtTime(0.001,bt+0.25);
-    kick.connect(kg); kg.connect(masterGain);
-    kick.start(bt); kick.stop(bt+0.28); nodes.push(kick,kg);
-
-    // SNARE marcial — tiempos 2 y 4
+    // 808 KICK — beats 1 y 3
+    if(i%4===0||i%4===2){
+      const sub=a.createOscillator(); sub.type='sine';
+      sub.frequency.setValueAtTime(160,bt);
+      sub.frequency.exponentialRampToValueAtTime(i%4===0?35:45,bt+0.35);
+      const sg=a.createGain();
+      sg.gain.setValueAtTime(i%4===0?0.9:0.6,bt);
+      sg.gain.exponentialRampToValueAtTime(0.001,bt+0.4);
+      sub.connect(sg); sg.connect(masterGain);
+      sub.start(bt); sub.stop(bt+0.42); nodes.push(sub,sg);
+      // Click
+      const buf=a.createBuffer(1,Math.floor(a.sampleRate*0.018),a.sampleRate);
+      const d=buf.getChannelData(0);
+      for(let k=0;k<d.length;k++) d[k]=(Math.random()*2-1)*Math.pow(1-k/d.length,4);
+      const ns=a.createBufferSource(); ns.buffer=buf;
+      const ng=a.createGain(); ng.gain.setValueAtTime(0.25,bt);
+      ns.connect(ng); ng.connect(masterGain); ns.start(bt); nodes.push(ns,ng);
+    }
+    // SNARE trap — beats 2 y 4
     if(i%4===1||i%4===3){
-      const sbuf=a.createBuffer(1,Math.floor(a.sampleRate*0.15),a.sampleRate);
+      const sbuf=a.createBuffer(1,Math.floor(a.sampleRate*0.18),a.sampleRate);
       const sd=sbuf.getChannelData(0);
-      for(let k=0;k<sd.length;k++) sd[k]=(Math.random()*2-1)*Math.pow(1-k/sd.length,1.5);
+      for(let k=0;k<sd.length;k++) sd[k]=(Math.random()*2-1)*Math.pow(1-k/sd.length,1.6);
       const ss=a.createBufferSource(); ss.buffer=sbuf;
-      const sf=a.createBiquadFilter(); sf.type='bandpass'; sf.frequency.value=600; sf.Q.value=0.5;
-      const sg=a.createGain(); sg.gain.setValueAtTime(0.45,bt); sg.gain.exponentialRampToValueAtTime(0.001,bt+0.15);
-      ss.connect(sf); sf.connect(sg); sg.connect(masterGain); ss.start(bt);
-      nodes.push(ss,sf,sg);
+      const sf=a.createBiquadFilter(); sf.type='bandpass'; sf.frequency.value=700; sf.Q.value=0.7;
+      const sg2=a.createGain(); sg2.gain.setValueAtTime(0.4,bt); sg2.gain.exponentialRampToValueAtTime(0.001,bt+0.18);
+      ss.connect(sf); sf.connect(sg2); sg2.connect(masterGain); ss.start(bt);
+      nodes.push(ss,sf,sg2);
     }
   }
 
-  // BAJO AGRESIVO — potente
-  const bass2Notes=[55,55,58,55, 55,49,52,49];
-  bass2Notes.forEach((freq,i)=>{
+  // HI-HATS TRAP — patrón 16avos con rolls
+  const hatPattern=[1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,1];
+  for(let b=0;b<bars;b++){
+    hatPattern.forEach((on,idx)=>{
+      if(!on) return;
+      const ht=t+b*bar+idx*sixteenth;
+      const hbuf=a.createBuffer(1,Math.floor(a.sampleRate*0.032),a.sampleRate);
+      const hd=hbuf.getChannelData(0);
+      for(let k=0;k<hd.length;k++) hd[k]=(Math.random()*2-1)*Math.pow(1-k/hd.length,3);
+      const hs=a.createBufferSource(); hs.buffer=hbuf;
+      const hf=a.createBiquadFilter(); hf.type='highpass'; hf.frequency.value=9000;
+      const hg=a.createGain(); hg.gain.setValueAtTime(idx%2===0?0.12:0.06,ht); hg.gain.exponentialRampToValueAtTime(0.001,ht+0.032);
+      hs.connect(hf); hf.connect(hg); hg.connect(masterGain); hs.start(ht); nodes.push(hs,hf,hg);
+    });
+  }
+
+  // BAJO 808 slide
+  const bassP=[{f:55,d:0.8},{f:55,d:0.3},{f:49,d:0.5},{f:52,d:0.8},{f:55,d:0.5},{f:41,d:1.0},{f:44,d:0.5},{f:49,d:0.5}];
+  bassP.forEach((note,i)=>{
     const bt2=t+i*(bar/2);
-    const bass=a.createOscillator(); bass.type='sawtooth'; bass.frequency.value=freq;
-    const dist=a.createWaveShaper();
-    const k=30;
-    const curve=new Float32Array(256);
-    for(let ci=0;ci<256;ci++){const x=ci*2/256-1; curve[ci]=(Math.PI+k)*x/(Math.PI+k*Math.abs(x));}
-    dist.curve=curve;
-    const bf=a.createBiquadFilter(); bf.type='lowpass'; bf.frequency.value=150;
+    if(bt2>t+bars*bar) return;
+    const bass=a.createOscillator(); bass.type='sawtooth';
+    bass.frequency.setValueAtTime(note.f,bt2);
+    if(i<bassP.length-1) bass.frequency.linearRampToValueAtTime(bassP[(i+1)%bassP.length].f*0.98,bt2+bar/2-0.05);
+    const bf=a.createBiquadFilter(); bf.type='lowpass'; bf.frequency.value=180;
     const bg=a.createGain();
-    bg.gain.setValueAtTime(0,bt2); bg.gain.linearRampToValueAtTime(0.35,bt2+0.01);
-    bg.gain.setValueAtTime(0.3,bt2+bar/2-0.05); bg.gain.linearRampToValueAtTime(0,bt2+bar/2);
-    bass.connect(dist); dist.connect(bf); bf.connect(bg); bg.connect(masterGain);
-    bass.start(bt2); bass.stop(bt2+bar/2+0.05); nodes.push(bass,dist,bf,bg);
+    bg.gain.setValueAtTime(0,bt2); bg.gain.linearRampToValueAtTime(0.28,bt2+0.02);
+    bg.gain.setValueAtTime(0.25,bt2+bar/2-0.06); bg.gain.linearRampToValueAtTime(0,bt2+bar/2);
+    bass.connect(bf); bf.connect(bg); bg.connect(masterGain);
+    bass.start(bt2); bass.stop(bt2+bar/2+0.05); nodes.push(bass,bf,bg);
   });
 
-  // CUERDAS OSCURAS — acorde tenso de batalla
-  const chordFreqs=[110,130.8,164.8]; // A2, C3, E3 menor
-  chordFreqs.forEach(freq=>{
-    const o=a.createOscillator(); o.type='sawtooth'; o.frequency.value=freq;
-    const f=a.createBiquadFilter(); f.type='lowpass'; f.frequency.value=400;
-    const g=a.createGain();
-    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.1,t+0.3);
-    g.gain.setValueAtTime(0.1,t+bars*bar-0.3); g.gain.linearRampToValueAtTime(0,t+bars*bar);
-    o.connect(f); f.connect(g); g.connect(masterGain);
-    o.start(t); o.stop(t+bars*bar+0.1); nodes.push(o,f,g);
-  });
-
-  // IMPACTOS dramáticos en tiempos fuertes (cada 2 compases)
-  for(let bar2=0;bar2<bars;bar2+=2){
-    const it=t+bar2*bar;
-    const imp=a.createOscillator(); imp.type='sine';
-    imp.frequency.setValueAtTime(150,it); imp.frequency.exponentialRampToValueAtTime(40,it+0.5);
-    const ig=a.createGain();
-    ig.gain.setValueAtTime(0.5,it); ig.gain.exponentialRampToValueAtTime(0.001,it+0.55);
-    imp.connect(ig); ig.connect(masterGain);
-    imp.start(it); imp.stop(it+0.6); nodes.push(imp,ig);
+  // MELODÍA TRAP synth — pentatónica menor
+  const mel=[
+    {f:440,d:0.15,o:0},{f:523,d:0.1,o:0.25},{f:440,d:0.2,o:0.5},
+    {f:392,d:0.15,o:1.0},{f:349,d:0.3,o:1.25},
+    {f:440,d:0.15,o:2.0},{f:523,d:0.1,o:2.25},{f:587,d:0.15,o:2.5},{f:523,d:0.15,o:2.75},
+    {f:440,d:0.3,o:3.0},{f:392,d:0.2,o:3.5},{f:349,d:0.4,o:3.75},
+  ];
+  for(let rep=0;rep<bars;rep++){
+    mel.forEach(note=>{
+      const nt=t+rep*bar+note.o*beat;
+      if(nt>t+bars*bar) return;
+      const o=a.createOscillator(); o.type='square'; o.frequency.value=note.f;
+      const f=a.createBiquadFilter(); f.type='lowpass'; f.frequency.value=note.f*2.5; f.Q.value=1;
+      const g=a.createGain();
+      g.gain.setValueAtTime(0,nt); g.gain.linearRampToValueAtTime(0.055,nt+0.01);
+      g.gain.setValueAtTime(0.05,nt+note.d*beat-0.03); g.gain.linearRampToValueAtTime(0,nt+note.d*beat);
+      o.connect(f); f.connect(g); g.connect(masterGain);
+      o.start(nt); o.stop(nt+note.d*beat+0.02); nodes.push(o,f,g);
+    });
   }
 }
+
 
 // ══ Stop & Fade ══
 function stopAll(fade){
