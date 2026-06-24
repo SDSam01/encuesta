@@ -177,13 +177,13 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 <script>
 // ══ Items de la tienda ══
 const ITEMS = [
-  { id:'halfchat',  icon:'💛', name:'+½ Vida Chat',      priceCoins:650,  priceMXN:50,   priceUSD:2.50,  priceBits:250,  color:'#FFD000', side:'chat',  amount:.5 },
-  { id:'halfsam',   icon:'🤍', name:'+½ Vida Sam',       priceCoins:650,  priceMXN:50,   priceUSD:2.50,  priceBits:250,  color:'#ffffff', side:'sam',   amount:.5 },
-  { id:'onechat',   icon:'❤️',  name:'+1 Vida Chat',      priceCoins:1200, priceMXN:90,   priceUSD:4.50,  priceBits:450,  color:'#ff4444', side:'chat',  amount:1  },
-  { id:'onesam',    icon:'💙', name:'+1 Vida Sam',       priceCoins:1200, priceMXN:90,   priceUSD:4.50,  priceBits:450,  color:'#4488ff', side:'sam',   amount:1  },
-  { id:'fillchat',  icon:'💖', name:'Rellenar Chat',     priceCoins:2200, priceMXN:200,  priceUSD:10.00, priceBits:1000, color:'#ff4444', side:'chat',  amount:'full' },
-  { id:'fillsam',   icon:'🔷', name:'Rellenar Sam',      priceCoins:2200, priceMXN:200,  priceUSD:10.00, priceBits:1000, color:'#4488ff', side:'sam',   amount:'full' },
-  { id:'fillall',   icon:'👑', name:'Rellenar TODAS',    priceCoins:0,    priceMXN:370,  priceUSD:18.50, priceBits:1850, color:'#FFD000', side:'all',   amount:'full', realOnly:true },
+  { id:'halfchat',  icon:'💛', name:'+½ Vida Chat',   priceCoins:650,  color:'#FFD000', side:'chat', amount:.5 },
+  { id:'halfsam',   icon:'🤍', name:'+½ Vida Sam',    priceCoins:650,  color:'#ffffff', side:'sam',  amount:.5 },
+  { id:'onechat',   icon:'❤️',  name:'+1 Vida Chat',   priceCoins:1200, color:'#ff4444', side:'chat', amount:1  },
+  { id:'onesam',    icon:'💙', name:'+1 Vida Sam',    priceCoins:1200, color:'#4488ff', side:'sam',  amount:1  },
+  { id:'fillchat',  icon:'💖', name:'Rellenar Chat',  priceCoins:2200, color:'#ff4444', side:'chat', amount:'full' },
+  { id:'fillsam',   icon:'🔷', name:'Rellenar Sam',   priceCoins:2200, color:'#4488ff', side:'sam',  amount:'full' },
+  { id:'fillall',   icon:'👑', name:'Rellenar TODAS', priceCoins:3500, color:'#FFD000', side:'all',  amount:'full' },
 ];
 
 let shopState = {};
@@ -200,12 +200,7 @@ function renderItems(state) {
       <span class="item-icon">${item.icon}</span>
       <div class="item-info">
         <div class="item-name">${item.name}</div>
-        <div class="item-price">
-          ${item.realOnly ? '' : `🪙 ${item.priceCoins.toLocaleString()} coins`}
-        </div>
-        <div class="item-price" style="margin-top:2px;">
-          ▶ $${item.priceUSD} USD / $${item.priceMXN} MXN  •  🟣 ${item.priceBits.toLocaleString()} bits
-        </div>
+        <div class="item-price">🪙 ${item.priceCoins.toLocaleString()} coins</div>
       </div>
     `;
     list.appendChild(div);
