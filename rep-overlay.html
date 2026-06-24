@@ -465,135 +465,147 @@ function revealChosen(name){
 // ══ JACKPOT — Slot Machine Premium ══
 // Física real con tease, blur en movimiento y paradas dramáticas
 
-let jpAnimFrame = null;
+// ── frame independiente por reel + timeout de seguridad ──
+const jpFrames = [null, null, null];
+const jpSafetyTimers = [null, null, null];
 
 function startJackpot(candidates, chosen){
-  let pool = candidates.length>0 ? [...candidates] : [chosen||'???'];
+  let pool = candidates.length > 0 ? [...candidates] : [chosen||'???'];
   while(pool.length < 8) pool = [...pool, ...pool];
+
+  // Cancelar animaciones previas
+  jpFrames.forEach((f,i)=>{ if(f) cancelAnimationFrame(f); jpFrames[i]=null; });
+  jpSafetyTimers.forEach((t,i)=>{ if(t) clearTimeout(t); jpSafetyTimers[i]=null; });
 
   document.getElementById('bg').className='jackpot show';
   document.getElementById('jpReveal').classList.remove('show');
   document.getElementById('jpSubBadge').classList.remove('show');
   document.getElementById('jackpotStage').classList.add('show');
-
-  // Quitar canvas de stickman si existe
   const cv = document.getElementById('jpCanvas');
   if(cv) cv.style.display='none';
 
   startParticles(true);
   playJackpotSpin();
 
-  // Llenar reeles con nombres
+  // Llenar reeles
   [0,1,2].forEach(i=>{
     const reel = document.getElementById(`reel${i}`);
     const inner = document.getElementById(`reel${i}inner`);
     reel.classList.remove('stopped','spinning');
     reel.classList.add('spinning');
     inner.innerHTML='';
-    // Llenar con pool mezclado + ganador garantizado al final
-    const items = [...pool,...pool,...pool,chosen].sort(()=>Math.random()-.5);
-    // Asegurar que chosen está en la lista
-    if(!items.includes(chosen)) items.push(chosen);
-    items.forEach(name=>{
+    // Pool mezclado con ganador garantizado múltiples veces
+    const shuffled = [...pool,...pool,...pool].sort(()=>Math.random()-.5);
+    // Insertar el ganador en varias posiciones para asegurar que se encuentre
+    shuffled.push(chosen, chosen);
+    shuffled.forEach(name=>{
       const div=document.createElement('div');
       div.className='jp-reel-item';
       div.textContent=(name||'???').substring(0,13).toUpperCase();
       inner.appendChild(div);
     });
     inner.style.transition='none';
-    inner.style.transform=`translateY(-${Math.floor(Math.random()*items.length)*200}px)`;
+    inner.style.transform=`translateY(-${Math.floor(Math.random()*shuffled.length)*200}px)`;
   });
 
-  // Los 3 reeles arrancan juntos — paran en cascada rápida
-  // Reel 0 para primero, luego 1, luego 2 con 300ms entre cada uno
-  spinReelPremium(0, chosen, 1200, 0, ()=>{});
-  setTimeout(()=> spinReelPremium(1, chosen, 1200, 0, ()=>{}), 300);
-  setTimeout(()=> spinReelPremium(2, chosen, 1200, 1, ()=>{
+  // Los 3 arrancan juntos, paran en cascada
+  spinReelPremium(0, chosen, 1000, 0, ()=>{});
+  setTimeout(()=> spinReelPremium(1, chosen, 1000, 0, ()=>{}), 300);
+  setTimeout(()=> spinReelPremium(2, chosen, 1000, 1, ()=>{
     setTimeout(()=> revealJackpot(chosen), 200);
   }), 600);
 }
 
 function spinReelPremium(reelIdx, winner, duration, teaseCount, onStop){
-  const reel   = document.getElementById(`reel${reelIdx}`);
-  const inner  = document.getElementById(`reel${reelIdx}inner`);
-  const items  = inner.querySelectorAll('.jp-reel-item');
+  // Cancelar animación previa de este reel
+  if(jpFrames[reelIdx]) cancelAnimationFrame(jpFrames[reelIdx]);
+  if(jpSafetyTimers[reelIdx]) clearTimeout(jpSafetyTimers[reelIdx]);
+
+  const reel  = document.getElementById(`reel${reelIdx}`);
+  const inner = document.getElementById(`reel${reelIdx}inner`);
+  const items = inner.querySelectorAll('.jp-reel-item');
+  if(!items.length) { onStop(); return; }
+
   const itemH  = 200;
   const totalH = items.length * itemH;
-
-  // Encontrar posición del ganador
   const winnerText = (winner||'???').substring(0,13).toUpperCase();
+
+  // Encontrar ÚLTIMO índice del ganador (más confiable que el primero)
   let winnerItemIdx = 0;
   Array.from(items).forEach((el,i)=>{ if(el.textContent===winnerText) winnerItemIdx=i; });
   const winnerTargetPos = winnerItemIdx * itemH;
 
-  let pos = parseFloat(inner.style.transform.replace('translateY(-','').replace('px)','')) || 0;
+  let pos = Math.abs(parseFloat((inner.style.transform||'0').replace(/[^0-9.]/g,''))||0) % totalH;
   const startTime = performance.now();
-  let phase = 'spin'; // spin → teasing → stopping
+  let phase = 'spin';
   let teasesDone = 0;
-  let teaseStartPos = 0;
   let teaseStartTime = 0;
-  const TEASE_EXTRA = itemH * (1.5 + Math.random()); // cuánto avanza en el tease
+  let stopped = false;
+
+  // Safety: forzar parada después de duration + 1.5s
+  jpSafetyTimers[reelIdx] = setTimeout(()=>{
+    if(stopped) return;
+    stopped = true;
+    if(jpFrames[reelIdx]) cancelAnimationFrame(jpFrames[reelIdx]);
+    inner.style.transition='transform .2s ease-out';
+    inner.style.transform=`translateY(-${winnerTargetPos}px)`;
+    reel.classList.remove('spinning'); reel.classList.add('stopped');
+    items[winnerItemIdx].classList.add('winner');
+    playReelStop(reelIdx);
+    setTimeout(onStop, 220);
+  }, duration + 1500);
 
   function frame(now){
+    if(stopped) return;
     const elapsed = now - startTime;
     const t = Math.min(1, elapsed/duration);
 
     if(phase === 'spin'){
-  // Velocidad alta al inicio, desacelera suavemente
-      const velocity = 55 * Math.pow(1-t, 1.0) + 1.5;
+      const velocity = 50 * Math.pow(1-t, 0.9) + 1.5;
       pos = (pos + velocity) % totalH;
       inner.style.transition='none';
       inner.style.transform=`translateY(-${pos}px)`;
-
-      // Cuando llega al 85% del tiempo, empieza el tease
       if(t > 0.82 && teasesDone < teaseCount){
-        phase = 'teasing';
-        teaseStartPos = pos;
-        teaseStartTime = now;
+        phase='teasing'; teaseStartTime=now;
       } else if(t >= 1 && teasesDone >= teaseCount){
-        phase = 'stopping';
+        phase='stopping';
       }
     }
-
     else if(phase === 'teasing'){
-      // Tease rápido — casi para y vuelve
-      const tp = Math.min(1, (now - teaseStartTime) / 200);
-      const slowDown = Math.sin(tp * Math.PI);
-      const vel = 0.8 + slowDown * 10;
-      pos = (pos + vel) % totalH;
+      const tp = Math.min(1,(now-teaseStartTime)/200);
+      pos = (pos + 0.8 + Math.sin(tp*Math.PI)*10) % totalH;
       inner.style.transition='none';
       inner.style.transform=`translateY(-${pos}px)`;
       if(tp >= 1){
         teasesDone++;
-        if(teasesDone >= teaseCount) phase='stopping';
-        else { teaseStartPos=pos; teaseStartTime=now; }
+        phase = teasesDone >= teaseCount ? 'stopping' : 'teasing';
+        teaseStartTime = now;
       }
     }
-
     else if(phase === 'stopping'){
-      const diff = winnerTargetPos - pos;
-      const adjustedDiff = ((diff % totalH) + totalH) % totalH;
-      const shortDiff = adjustedDiff > totalH/2 ? adjustedDiff - totalH : adjustedDiff;
-      if(Math.abs(shortDiff) < 2){
+      const raw = winnerTargetPos - pos;
+      const adj = ((raw % totalH) + totalH) % totalH;
+      const diff = adj > totalH/2 ? adj - totalH : adj;
+      if(Math.abs(diff) < 1.5){
+        stopped = true;
+        clearTimeout(jpSafetyTimers[reelIdx]);
         inner.style.transition='transform .15s cubic-bezier(.34,1.56,.64,1)';
         inner.style.transform=`translateY(-${winnerTargetPos}px)`;
-        reel.classList.remove('spinning');
-        reel.classList.add('stopped');
+        reel.classList.remove('spinning'); reel.classList.add('stopped');
         items[winnerItemIdx].classList.add('winner');
         playReelStop(reelIdx);
         setTimeout(onStop, 180);
         return;
-      } else {
-        const speed = Math.min(18, Math.abs(shortDiff)*0.28 + 2);
-        pos = (pos + Math.sign(shortDiff)*speed + totalH) % totalH;
-        inner.style.transition='none';
-        inner.style.transform=`translateY(-${pos}px)`;
       }
+      const speed = Math.min(16, Math.abs(diff)*0.25 + 2);
+      pos = (pos + Math.sign(diff)*speed + totalH) % totalH;
+      inner.style.transition='none';
+      inner.style.transform=`translateY(-${pos}px)`;
     }
 
-    jpAnimFrame = requestAnimationFrame(frame);
+    jpFrames[reelIdx] = requestAnimationFrame(frame);
   }
-  jpAnimFrame = requestAnimationFrame(frame);
+  jpFrames[reelIdx] = requestAnimationFrame(frame);
 }
 
 function revealJackpot(name){
