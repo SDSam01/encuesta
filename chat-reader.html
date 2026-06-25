@@ -408,7 +408,9 @@ async function pollYouTube() {
       const uid      = item.authorDetails?.channelId;
       const name     = item.authorDetails?.displayName || 'Usuario';
       const text     = item.snippet?.displayMessage || '';
-      const isMember = !!(item.authorDetails?.isChatSponsor || item.authorDetails?.isChatModerator || item.authorDetails?.isChatOwner);
+      // isMember = solo suscriptores/miembros pagando (isChatSponsor)
+      // isChatModerator y isChatOwner NO son miembros pagados
+      const isMember = !!(item.authorDetails?.isChatSponsor);
       if(!uid || !text) continue;
       if(isDuplicate(msgId)) continue;   // ← ID único, nunca pierde mensajes del mismo segundo
       batch.push({ userId:uid, username:name, text, src:'yt', isMember:!!isMember, ts:Date.now() });
