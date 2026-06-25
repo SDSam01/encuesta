@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Representante</title>
+<title>Rep Overlay</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@700;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -77,69 +77,54 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 .s-badge.show{opacity:1;}
 
 /* ══ JACKPOT — Slot Machine Premium ══ */
+/* ══ JACKPOT SPOTLIGHT ══ */
 #jackpotStage{
   position:fixed;inset:0;z-index:22;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  pointer-events:none;opacity:0;transition:opacity .3s;
-  background:rgba(0,0,0,.92);
+  pointer-events:none;opacity:0;transition:opacity .4s;
+  background:#000;
 }
 #jackpotStage.show{opacity:1;}
 
+/* Canvas para spotlight */
+#jpSpotCanvas{position:absolute;inset:0;width:100%;height:100%;}
+
+/* Nombres flotantes */
+.jp-name-tag{
+  position:absolute;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px;letter-spacing:3px;
+  color:rgba(255,255,255,.18);
+  pointer-events:none;
+  transition:color .25s, text-shadow .25s, transform .25s, font-size .25s;
+  white-space:nowrap;
+  transform:translate(-50%,-50%);
+}
+.jp-name-tag.lit{
+  color:rgba(255,240,180,.9);
+  text-shadow:0 0 12px rgba(255,220,100,.7);
+  transform:translate(-50%,-50%) scale(1.1);
+}
+.jp-name-tag.winner-lit{
+  color:#FFD700;
+  font-size:32px;
+  text-shadow:0 0 20px rgba(255,215,0,1),0 0 40px rgba(255,180,0,.8),0 0 70px rgba(255,150,0,.4);
+  transform:translate(-50%,-50%) scale(1.6);
+}
+
+/* Eyebrow */
 .jp-eyebrow{
+  position:absolute;top:40px;left:50%;transform:translateX(-50%);
   font-family:'Bebas Neue',sans-serif;
-  font-size:22px;letter-spacing:14px;
-  color:rgba(255,210,0,.75);margin-bottom:28px;
-  text-shadow:0 0 20px rgba(255,200,0,.4);
-  animation:eyePulse 1.2s infinite alternate;
-}
-@keyframes eyePulse{from{opacity:.65;letter-spacing:12px;}to{opacity:1;letter-spacing:16px;}}
-
-/* Reeles */
-.jp-slots{display:flex;gap:20px;margin-bottom:20px;}
-
-.jp-reel{
-  width:340px;height:200px;
-  background:linear-gradient(180deg,#0a0500,#120800,#0a0500);
-  border:2px solid rgba(255,200,0,.45);
-  border-radius:16px;overflow:hidden;position:relative;
-  box-shadow:0 0 40px rgba(255,180,0,.25),0 0 80px rgba(255,120,0,.1),
-             inset 0 0 40px rgba(0,0,0,.7);
-  transition:box-shadow .3s;
-}
-.jp-reel.spinning{
-  filter:blur(.6px);
-  box-shadow:0 0 50px rgba(255,180,0,.4),0 0 100px rgba(255,120,0,.2),inset 0 0 40px rgba(0,0,0,.7);
-}
-.jp-reel.stopped{
-  filter:none;
-  box-shadow:0 0 60px rgba(255,215,0,.65),0 0 120px rgba(255,150,0,.35),
-             inset 0 0 30px rgba(255,180,0,.08);
-  border-color:rgba(255,215,0,.9);
+  font-size:16px;letter-spacing:12px;
+  color:rgba(255,210,0,.5);
+  text-shadow:0 0 12px rgba(255,200,0,.3);
+  white-space:nowrap;z-index:2;
 }
 
-.jp-reel::before,.jp-reel::after{
-  content:'';position:absolute;left:0;right:0;height:65px;z-index:2;pointer-events:none;
-}
-.jp-reel::before{top:0;background:linear-gradient(rgba(0,0,0,.98),transparent);}
-.jp-reel::after{bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.98));}
-
-.jp-reel-inner{position:absolute;width:100%;display:flex;flex-direction:column;align-items:center;}
-.jp-reel-item{
-  height:200px;display:flex;align-items:center;justify-content:center;
-  font-family:'Bebas Neue',sans-serif;
-  font-size:34px;letter-spacing:2px;color:rgba(255,255,255,.5);
-  text-align:center;padding:0 16px;
-  white-space:nowrap;overflow:hidden;width:100%;
-}
-.jp-reel-item.winner{
-  color:#FFD700;font-size:40px;
-  text-shadow:0 0 25px rgba(255,215,0,1),0 0 50px rgba(255,150,0,.7);
-  animation:winnerShine 1.2s infinite alternate;
-}
-@keyframes winnerShine{
-  from{text-shadow:0 0 20px rgba(255,215,0,.8),0 0 40px rgba(255,130,0,.5);}
-  to{text-shadow:0 0 40px rgba(255,215,0,1),0 0 80px rgba(255,150,0,.8),0 0 120px rgba(255,100,0,.4);}
-}
+/* Slots ocultos — mantenemos HTML para no romper referencias */
+.jp-slots{display:none;}
+.jp-reel,.jp-reel-inner,.jp-reel-item{display:none;}
+@keyframes winnerShine{from{opacity:1;}to{opacity:1;}}
 
 .jp-reel-line{
   position:absolute;top:50%;left:0;right:0;height:3px;
@@ -260,6 +245,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 </div>
 
 <div id="jackpotStage">
+  <canvas id="jpSpotCanvas"></canvas>
   <div id="jpSpotlight"></div>
   <div class="jp-eyebrow">⭐ SELECCIONANDO MIEMBRO VIP ⭐</div>
   <div class="jp-slots">
@@ -289,6 +275,114 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 </div>
 
 <script>
+
+// ══ JACKPOT SPOTLIGHT ══
+let jpSpotAnim = null;
+let jpNameTags = [];
+
+function clearNameTags(){
+  jpNameTags.forEach(el=>el.remove()); jpNameTags=[];
+}
+
+function startJackpot(candidates, chosen){
+  if(jpSpotAnim) clearTimeout(jpSpotAnim);
+  clearNameTags();
+  const stage=document.getElementById('jackpotStage');
+  const canvas=document.getElementById('jpSpotCanvas');
+  document.getElementById('bg').className='jackpot show';
+  document.getElementById('jpReveal').classList.remove('show');
+  document.getElementById('jpSubBadge').classList.remove('show');
+  stage.classList.add('show');
+  const cv2=document.getElementById('jpCanvas');
+  if(cv2) cv2.style.display='none';
+  canvas.width=1920; canvas.height=1080;
+  const ctx=canvas.getContext('2d');
+  const pool=candidates.length>0?[...candidates]:[chosen||'???'];
+  const positions=generatePositions(pool.length,1920,1080);
+  pool.forEach((name,i)=>{
+    const el=document.createElement('div');
+    el.className='jp-name-tag';
+    el.textContent=(name||'???').substring(0,14).toUpperCase();
+    el.style.left=positions[i].x+'px';
+    el.style.top=positions[i].y+'px';
+    stage.appendChild(el);
+    jpNameTags.push(el);
+  });
+  playJackpotSpin();
+  startParticles(false);
+  const chosenText=(chosen||'???').substring(0,14).toUpperCase();
+  let winnerTag=jpNameTags.find(el=>el.textContent===chosenText)||jpNameTags[0];
+  let scanCount=0, litTag=null;
+  const totalScans=18;
+
+  function drawSpot(x,y,r,a){
+    ctx.clearRect(0,0,1920,1080);
+    const g=ctx.createRadialGradient(x,y,5,x,y,r);
+    g.addColorStop(0,`rgba(255,230,120,${a*0.28})`);
+    g.addColorStop(0.5,`rgba(255,200,80,${a*0.1})`);
+    g.addColorStop(1,'transparent');
+    ctx.fillStyle=g; ctx.fillRect(0,0,1920,1080);
+  }
+  function getPos(el){ return {x:parseFloat(el.style.left),y:parseFloat(el.style.top)}; }
+
+  function scan(){
+    if(litTag) litTag.classList.remove('lit');
+    const goWin=scanCount>totalScans*0.65&&Math.random()<0.35;
+    litTag=goWin?winnerTag:jpNameTags[Math.floor(Math.random()*jpNameTags.length)];
+    litTag.classList.add('lit');
+    const c=getPos(litTag); drawSpot(c.x,c.y,160,1);
+    scanCount++;
+    if(scanCount<totalScans){
+      const delay=70+(scanCount/totalScans)*260;
+      jpSpotAnim=setTimeout(scan,delay);
+    } else setTimeout(lockWinner,300);
+  }
+
+  function lockWinner(){
+    if(litTag) litTag.classList.remove('lit');
+    winnerTag.classList.add('lit');
+    const c=getPos(winnerTag); drawSpot(c.x,c.y,200,1);
+    jpNameTags.forEach(el=>{ if(el!==winnerTag) el.style.opacity='0'; });
+    setTimeout(()=>{
+      winnerTag.classList.remove('lit'); winnerTag.classList.add('winner-lit');
+      drawSpot(c.x,c.y,300,1.5); playJackpotWin();
+      setTimeout(()=>{
+        ctx.clearRect(0,0,1920,1080); stage.classList.remove('show'); clearNameTags(); revealJackpot(chosen);
+      },1800);
+    },600);
+  }
+  scan();
+}
+
+function generatePositions(count,w,h){
+  const pos=[],margin=120,minDist=130;
+  for(let i=0;i<count;i++){
+    let p,ok,tries=0;
+    do{
+      p={x:margin+Math.random()*(w-margin*2),y:margin+Math.random()*(h-margin*2)};
+      const cx=Math.abs(p.x-w/2),cy=Math.abs(p.y-h/2);
+      ok=(cx>160||cy>140);
+      if(ok) ok=pos.every(q=>Math.hypot(q.x-p.x,q.y-p.y)>minDist);
+      tries++;
+    }while(!ok&&tries<60);
+    pos.push(p);
+  }
+  return pos;
+}
+
+function revealJackpot(name){
+  const flash=document.getElementById('jpFlash');
+  [0,130,260].forEach(d=>setTimeout(()=>{flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),90);},d));
+  document.getElementById('jackpotStage').classList.remove('show');
+  document.getElementById('bg').className='jackpot show';
+  const reveal=document.getElementById('jpReveal');
+  document.getElementById('jpWinnerName').textContent=(name||'???').toUpperCase();
+  document.getElementById('jpSubBadge').classList.remove('show');
+  reveal.classList.remove('show'); void reveal.offsetWidth; reveal.classList.add('show');
+  setTimeout(()=>document.getElementById('jpSubBadge').classList.add('show'),700);
+  startParticles(true);
+}
+
 const LS = 'rep_state';
 let repUserId=null, repUsername=null, repIsSubscriber=false;
 let ttsTimeout=null, msgTimeout=null;
@@ -468,174 +562,6 @@ function revealChosen(name){
 // ── frame independiente por reel + timeout de seguridad ──
 const jpFrames = [null, null, null];
 const jpSafetyTimers = [null, null, null];
-
-function startJackpot(candidates, chosen){
-  let pool = candidates.length > 0 ? [...candidates] : [chosen||'???'];
-  while(pool.length < 8) pool = [...pool, ...pool];
-
-  // Cancelar animaciones previas
-  jpFrames.forEach((f,i)=>{ if(f) cancelAnimationFrame(f); jpFrames[i]=null; });
-  jpSafetyTimers.forEach((t,i)=>{ if(t) clearTimeout(t); jpSafetyTimers[i]=null; });
-
-  document.getElementById('bg').className='jackpot show';
-  document.getElementById('jpReveal').classList.remove('show');
-  document.getElementById('jpSubBadge').classList.remove('show');
-  document.getElementById('jackpotStage').classList.add('show');
-  const cv = document.getElementById('jpCanvas');
-  if(cv) cv.style.display='none';
-
-  startParticles(true);
-  playJackpotSpin();
-
-  // Llenar reeles
-  [0,1,2].forEach(i=>{
-    const reel = document.getElementById(`reel${i}`);
-    const inner = document.getElementById(`reel${i}inner`);
-    reel.classList.remove('stopped','spinning');
-    reel.classList.add('spinning');
-    inner.innerHTML='';
-    // Pool mezclado con ganador garantizado múltiples veces
-    const shuffled = [...pool,...pool,...pool].sort(()=>Math.random()-.5);
-    // Insertar el ganador en varias posiciones para asegurar que se encuentre
-    shuffled.push(chosen, chosen);
-    shuffled.forEach(name=>{
-      const div=document.createElement('div');
-      div.className='jp-reel-item';
-      div.textContent=(name||'???').substring(0,13).toUpperCase();
-      inner.appendChild(div);
-    });
-    inner.style.transition='none';
-    inner.style.transform=`translateY(-${Math.floor(Math.random()*shuffled.length)*200}px)`;
-  });
-
-  // Los 3 arrancan juntos, paran en cascada
-  spinReelPremium(0, chosen, 1000, 0, ()=>{});
-  setTimeout(()=> spinReelPremium(1, chosen, 1000, 0, ()=>{}), 300);
-  setTimeout(()=> spinReelPremium(2, chosen, 1000, 1, ()=>{
-    setTimeout(()=> revealJackpot(chosen), 200);
-  }), 600);
-}
-
-function spinReelPremium(reelIdx, winner, duration, teaseCount, onStop){
-  // Cancelar animación previa de este reel
-  if(jpFrames[reelIdx]) cancelAnimationFrame(jpFrames[reelIdx]);
-  if(jpSafetyTimers[reelIdx]) clearTimeout(jpSafetyTimers[reelIdx]);
-
-  const reel  = document.getElementById(`reel${reelIdx}`);
-  const inner = document.getElementById(`reel${reelIdx}inner`);
-  const items = inner.querySelectorAll('.jp-reel-item');
-  if(!items.length) { onStop(); return; }
-
-  const itemH  = 200;
-  const totalH = items.length * itemH;
-  const winnerText = (winner||'???').substring(0,13).toUpperCase();
-
-  // Encontrar ÚLTIMO índice del ganador (más confiable que el primero)
-  let winnerItemIdx = 0;
-  Array.from(items).forEach((el,i)=>{ if(el.textContent===winnerText) winnerItemIdx=i; });
-  const winnerTargetPos = winnerItemIdx * itemH;
-
-  let pos = Math.abs(parseFloat((inner.style.transform||'0').replace(/[^0-9.]/g,''))||0) % totalH;
-  const startTime = performance.now();
-  let phase = 'spin';
-  let teasesDone = 0;
-  let teaseStartTime = 0;
-  let stopped = false;
-
-  // Safety: forzar parada después de duration + 1.5s
-  jpSafetyTimers[reelIdx] = setTimeout(()=>{
-    if(stopped) return;
-    stopped = true;
-    if(jpFrames[reelIdx]) cancelAnimationFrame(jpFrames[reelIdx]);
-    inner.style.transition='transform .2s ease-out';
-    inner.style.transform=`translateY(-${winnerTargetPos}px)`;
-    reel.classList.remove('spinning'); reel.classList.add('stopped');
-    items[winnerItemIdx].classList.add('winner');
-    playReelStop(reelIdx);
-    setTimeout(onStop, 220);
-  }, duration + 1500);
-
-  function frame(now){
-    if(stopped) return;
-    const elapsed = now - startTime;
-    const t = Math.min(1, elapsed/duration);
-
-    if(phase === 'spin'){
-      const velocity = 50 * Math.pow(1-t, 0.9) + 1.5;
-      pos = (pos + velocity) % totalH;
-      inner.style.transition='none';
-      inner.style.transform=`translateY(-${pos}px)`;
-      if(t > 0.82 && teasesDone < teaseCount){
-        phase='teasing'; teaseStartTime=now;
-      } else if(t >= 1 && teasesDone >= teaseCount){
-        phase='stopping';
-      }
-    }
-    else if(phase === 'teasing'){
-      const tp = Math.min(1,(now-teaseStartTime)/200);
-      pos = (pos + 0.8 + Math.sin(tp*Math.PI)*10) % totalH;
-      inner.style.transition='none';
-      inner.style.transform=`translateY(-${pos}px)`;
-      if(tp >= 1){
-        teasesDone++;
-        phase = teasesDone >= teaseCount ? 'stopping' : 'teasing';
-        teaseStartTime = now;
-      }
-    }
-    else if(phase === 'stopping'){
-      const raw = winnerTargetPos - pos;
-      const adj = ((raw % totalH) + totalH) % totalH;
-      const diff = adj > totalH/2 ? adj - totalH : adj;
-      if(Math.abs(diff) < 1.5){
-        stopped = true;
-        clearTimeout(jpSafetyTimers[reelIdx]);
-        inner.style.transition='transform .15s cubic-bezier(.34,1.56,.64,1)';
-        inner.style.transform=`translateY(-${winnerTargetPos}px)`;
-        reel.classList.remove('spinning'); reel.classList.add('stopped');
-        items[winnerItemIdx].classList.add('winner');
-        playReelStop(reelIdx);
-        setTimeout(onStop, 180);
-        return;
-      }
-      const speed = Math.min(16, Math.abs(diff)*0.25 + 2);
-      pos = (pos + Math.sign(diff)*speed + totalH) % totalH;
-      inner.style.transition='none';
-      inner.style.transform=`translateY(-${pos}px)`;
-    }
-
-    jpFrames[reelIdx] = requestAnimationFrame(frame);
-  }
-  jpFrames[reelIdx] = requestAnimationFrame(frame);
-}
-
-function revealJackpot(name){
-  const flash=document.getElementById('jpFlash');
-  // Flash triple
-  [0,140,300].forEach(delay=>{
-    setTimeout(()=>{flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),100);},delay);
-  });
-
-  document.getElementById('jackpotStage').classList.remove('show');
-  document.getElementById('bg').className='jackpot show';
-
-  const reveal=document.getElementById('jpReveal');
-  document.getElementById('jpWinnerName').textContent=(name||'???').toUpperCase();
-  document.getElementById('jpSubBadge').classList.remove('show');
-  reveal.classList.remove('show');
-  void reveal.offsetWidth;
-  reveal.classList.add('show');
-
-  playJackpotWin();
-  setTimeout(()=>document.getElementById('jpSubBadge').classList.add('show'),800);
-  startParticles(true);
-
-  setTimeout(()=>{
-    reveal.classList.remove('show');
-    document.getElementById('bg').className='';
-    stopParticles();
-    setTimeout(()=>activateRep(true),500);
-  },4000);
-}
 
 // ══ PERFILES DE VOZ — varían mucho entre representantes ══
 // Se asigna uno nuevo al activar cada rep, se mantiene hasta que cambia
