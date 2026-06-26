@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Trigger</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:#0a0a0f;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100vh;font-family:'Bebas Neue',sans-serif;
+  overflow:hidden;
+}
+.icon{font-size:64px;margin-bottom:12px;animation:pop .3s cubic-bezier(.34,1.56,.64,1);}
+.label{font-size:22px;letter-spacing:4px;color:#fff;text-align:center;margin-bottom:6px;}
+.sublabel{font-size:13px;letter-spacing:2px;color:rgba(255,255,255,.35);text-align:center;}
+.bar{width:200px;height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:20px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:2px;animation:progress 1s linear forwards;}
+@keyframes pop{0%{transform:scale(0);}100%{transform:scale(1);}}
+@keyframes progress{0%{width:0%;}100%{width:100%;}}
+</style>
+</head>
+<body>
+<div class="icon" id="icon">⚡</div>
+<div class="label" id="label">Ejecutando...</div>
+<div class="sublabel" id="sublabel"></div>
+<div class="bar"><div class="bar-fill" id="barFill"></div></div>
+
+<script>
+// ══ ACCIONES DISPONIBLES ══
+const ACTIONS = {
+  // ── BOTE ──
+  'bote_enc_win':      { label:'ENCUESTA GANADA',      sub:'+80 coins',  icon:'✅', color:'#4ade80', fn: ()=>addBote(80, '✅ Encuesta ganada') },
+  'bote_enc_lose':     { label:'ENCUESTA PERDIDA',     sub:'-80 coins',  icon:'❌', color:'#f87171', fn: ()=>addBote(-80,'❌ Encuesta perdida') },
+  'bote_chat_win':     { label:'1VS1 CHAT GANADO',     sub:'+150 coins', icon:'🥊', color:'#4ade80', fn: ()=>addBote(150,'🥊 1vs1 Chat ganado') },
+  'bote_chat_lose':    { label:'1VS1 CHAT PERDIDO',    sub:'-150 coins', icon:'💀', color:'#f87171', fn: ()=>addBote(-150,'🥊 1vs1 Chat perdido') },
+  'bote_sub_win':      { label:'1VS1 MIEMBRO GANADO',  sub:'+250 coins', icon:'⭐', color:'#FFD000', fn: ()=>addBote(250,'⭐ 1vs1 Miembro ganado') },
+  'bote_sub_lose':     { label:'1VS1 MIEMBRO PERDIDO', sub:'-250 coins', icon:'💔', color:'#f87171', fn: ()=>addBote(-250,'⭐ 1vs1 Miembro perdido') },
+  // ── TIENDA ──
+  'tienda_open':       { label:'TIENDA ABIERTA',       sub:'',           icon:'🛒', color:'#FFD000', fn: ()=>setShop(true) },
+  'tienda_close':      { label:'TIENDA CERRADA',       sub:'',           icon:'🔒', color:'#f87171', fn: ()=>setShop(false) },
+  // ── MÚSICA ──
+  'musica_on':         { label:'MÚSICA ACTIVADA',      sub:'1vs1 Trap',  icon:'🎵', color:'#4488ff', fn: ()=>setMusic(true) },
+  'musica_off':        { label:'MÚSICA DESACTIVADA',   sub:'',           icon:'🔇', color:'#f87171', fn: ()=>setMusic(false) },
+  // ── CASTIGOS ──
+  'castigos_sam':      { label:'TÓMBOLA DE SAM',       sub:'Girando...',  icon:'🎰', color:'#4488ff', fn: ()=>girarCastigos('sam') },
+  'castigos_chat':     { label:'TÓMBOLA DEL CHAT',     sub:'Girando...',  icon:'🎰', color:'#f87171', fn: ()=>girarCastigos('chat') },
+  // ── BOTE RESET ──
+  'bote_reset':        { label:'BOTE RESETEADO',       sub:'Inicio stream',icon:'🔄',color:'#888',   fn: ()=>resetBote() },
+};
+
+// ══ FUNCIONES ══
+function addBote(amount, label){
+  let data = {};
+  try{ data = JSON.parse(localStorage.getItem('stream_bote')||'{"amount":0,"history":[],"streak":0}'); }catch(e){}
+  data.amount = (data.amount||0) + amount;
+  if(!data.history) data.history=[];
+  data.history.push({change:amount, label, ts:Date.now()});
+  if(data.history.length>50) data.history=data.history.slice(-50);
+  // Racha
+  if(amount>0) data.streak=(data.streak||0)+1;
+  else data.streak=0;
+  localStorage.setItem('stream_bote', JSON.stringify(data));
+}
+
+function setShop(open){
+  let s={};
+  try{ s=JSON.parse(localStorage.getItem('shop_state')||'{}'); }catch(e){}
+  s.open=open;
+  localStorage.setItem('shop_state', JSON.stringify(s));
+}
+
+function setMusic(on){
+  let s={};
+  try{ s=JSON.parse(localStorage.getItem('music_state')||'{}'); }catch(e){}
+  s.manual=on;
+  localStorage.setItem('music_state', JSON.stringify(s));
+}
+
+function girarCastigos(side){
+  let s={};
+  try{ s=JSON.parse(localStorage.getItem('castigos_state')||'{}'); }catch(e){}
+  const castigos=s[side]||[];
+  const valid=castigos.filter(c=>c.titulo);
+  if(!valid.length) return;
+  const winnerIdx=castigos.indexOf(valid[Math.floor(Math.random()*valid.length)]);
+  localStorage.setItem('castigos_state', JSON.stringify({
+    ...s, spinning:true, target:side, winner:winnerIdx, ts:Date.now()
+  }));
+}
+
+function resetBote(){
+  localStorage.setItem('stream_bote', JSON.stringify({amount:0,history:[{change:0,label:'🔄 Reset',ts:Date.now()}],streak:0}));
+}
+
+// ══ EJECUTAR ══
+const params = new URLSearchParams(window.location.search);
+const action = params.get('a') || params.get('action') || '';
+const cfg = ACTIONS[action];
+
+if(cfg){
+  cfg.fn();
+  document.getElementById('icon').textContent=cfg.icon;
+  document.getElementById('label').textContent=cfg.label;
+  document.getElementById('sublabel').textContent=cfg.sub;
+  document.getElementById('barFill').style.background=cfg.color;
+  document.body.style.background='#0a0a0f';
+  document.getElementById('label').style.color=cfg.color;
+} else {
+  document.getElementById('icon').textContent='❓';
+  document.getElementById('label').textContent='ACCIÓN NO ENCONTRADA';
+  document.getElementById('sublabel').textContent=action||'sin parámetro ?a=';
+  document.getElementById('barFill').style.background='#888';
+}
+
+// Intentar cerrar tab después de 1 segundo
+setTimeout(()=>{ try{window.close();}catch(e){} }, 1000);
+</script>
+</body>
+</html>
