@@ -135,6 +135,8 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 <button class="btn-reset-all" onclick="resetTodo()">🔄 Reset completo — limpiar todo</button>
 <button class="btn-limpiar" onclick="limpiarRep()">✕ Quitar representante</button>
 <button class="btn-demo" onclick="modoDemo()">🧪 Modo prueba (sin stream)</button>
+<div id="pastRepsCount" style="font-size:10px;color:rgba(248,113,113,.6);text-align:center;margin-top:4px;min-height:14px;"></div>
+<button onclick="resetPastReps()" style="width:100%;padding:5px;border-radius:7px;font-size:10px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;background:transparent;border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.25);margin-top:2px;">♻️ Reiniciar lista de exclusión</button>
 <div class="tts-test-row">
   <input type="text" id="ttsTestInput" placeholder="Escribe un mensaje de prueba..." />
   <button class="btn-tts" onclick="testTTS()">🔊 Probar voz</button>
@@ -150,6 +152,7 @@ let windowSecs  = 10;
 let soloSubs    = false;
 let currentRep  = null;
 let recentUsers = {};
+let pastReps    = new Set(); // usuarios que ya fueron rep este stream
 // (lastRepQueueTs se declara junto al interval del rep más abajo)
 
 // FIX: timeout automático para rep (45 min) — evita que quede pegado indefinidamente
@@ -264,16 +267,38 @@ function setSubs(val, btn){
 
 function buscarRep(){
   const now=Date.now();
-  const active=Object.entries(recentUsers)
-    .filter(([_,u])=>now-u.lastSeen<=windowSecs*1000&&(!soloSubs||u.isMember));
+
+  // Pool principal: ventana activa seleccionada
+  let active=Object.entries(recentUsers)
+    .filter(([id,u])=>now-u.lastSeen<=windowSecs*1000&&(!soloSubs||u.isMember)&&!pastReps.has(id));
+
+  // Si el pool es muy pequeño (<5), ampliar a 3 minutos automáticamente
+  if(active.length<5){
+    const expanded=Object.entries(recentUsers)
+      .filter(([id,u])=>now-u.lastSeen<=180*1000&&(!soloSubs||u.isMember)&&!pastReps.has(id));
+    if(expanded.length>active.length) active=expanded;
+  }
+
+  // Si aún no hay nadie (todos ya salieron), resetear exclusiones
   if(active.length===0){
-    setStatus(`⚠️ No hay usuarios activos en los últimos ${windowSecs}s`,'err');
-    return;
+    const sinExcluir=Object.entries(recentUsers)
+      .filter(([_,u])=>now-u.lastSeen<=windowSecs*1000&&(!soloSubs||u.isMember));
+    if(sinExcluir.length>0){
+      pastReps.clear();
+      updatePastRepsCount();
+      active=sinExcluir;
+      setStatus('♻️ Lista reiniciada — todos pueden volver a salir','ok');
+    } else {
+      setStatus(`⚠️ No hay usuarios activos en los últimos ${windowSecs}s`,'err');
+      return;
+    }
   }
 
   const [userId,user]=active[Math.floor(Math.random()*active.length)];
+  pastReps.add(userId);
+  updatePastRepsCount();
   currentRep={userId, username:user.username, src:user.src};
-  lastRepQueueTs = Date.now(); // solo mensajes a partir de este momento
+  lastRepQueueTs = Date.now();
 
   document.getElementById('repCard').classList.add('show');
   document.getElementById('repName').textContent=user.username;
@@ -281,8 +306,8 @@ function buscarRep(){
   document.getElementById('repLast').textContent='Esperando mensaje...';
 
   const candidates=Object.entries(recentUsers)
-    .filter(([_,u])=>now-u.lastSeen<=windowSecs*1000)
-    .map(([_,u])=>u.username).slice(0,20);
+    .filter(([_,u])=>now-u.lastSeen<=Math.max(windowSecs,30)*1000)
+    .map(([_,u])=>u.username).slice(0,25);
 
   localStorage.setItem(LS_REP, JSON.stringify({
     trigger:Date.now(), candidates,
@@ -292,20 +317,33 @@ function buscarRep(){
     clear:0,
   }));
 
-  // FIX: auto-clear después de 45 min
   armRepAutoTimer();
   setStatus(`🎤 ${user.username} es el nuevo representante`,'ok');
 }
 
 function activarModVip(){
   const now=Date.now();
-  const activeSubs=Object.entries(recentUsers)
-    .filter(([_,u])=>now-u.lastSeen<=windowSecs*1000&&u.isMember);
 
-  // FIX: mensaje específico cuando no hay suscriptores en la ventana
+  // Pool principal: subs activos en ventana, sin haber salido ya
+  let activeSubs=Object.entries(recentUsers)
+    .filter(([id,u])=>now-u.lastSeen<=windowSecs*1000&&u.isMember&&!pastReps.has(id));
+
+  // Si pool pequeño, ampliar a 3 minutos
+  if(activeSubs.length<3){
+    const expanded=Object.entries(recentUsers)
+      .filter(([id,u])=>now-u.lastSeen<=180*1000&&u.isMember&&!pastReps.has(id));
+    if(expanded.length>activeSubs.length) activeSubs=expanded;
+  }
+
+  // Si aún vacío, ignorar exclusiones
   if(activeSubs.length===0){
-    setStatus(`⚠️ Sin suscriptores activos en ${windowSecs}s — amplía la ventana de tiempo`,'err');
-    return;
+    activeSubs=Object.entries(recentUsers)
+      .filter(([_,u])=>now-u.lastSeen<=windowSecs*1000&&u.isMember);
+    if(activeSubs.length===0){
+      setStatus(`⚠️ Sin suscriptores activos en ${windowSecs}s — amplía la ventana de tiempo`,'err');
+      return;
+    }
+    pastReps.clear(); updatePastRepsCount();
   }
 
   const btn=document.getElementById('btnSiren');
@@ -315,26 +353,21 @@ function activarModVip(){
   setStatus('🚨 Sirena activada — buscando suscriptor...','loading');
 
   setTimeout(()=>{
-    // FIX: try/catch + finally para garantizar que el botón se reactive siempre
     try {
-      // Re-verificar que aún hay suscriptores en la ventana (pueden haber salido)
-      const nowInner = Date.now();
-      const stillActiveSubs = Object.entries(recentUsers)
-        .filter(([_,u])=>nowInner-u.lastSeen<=windowSecs*1000&&u.isMember);
-
-      const pool = stillActiveSubs.length > 0 ? stillActiveSubs : activeSubs;
-      const [userId,user]=pool[Math.floor(Math.random()*pool.length)];
+      const [userId,user]=activeSubs[Math.floor(Math.random()*activeSubs.length)];
+      pastReps.add(userId); updatePastRepsCount();
       currentRep={userId, username:user.username, src:user.src};
-      lastRepQueueTs = Date.now(); // solo mensajes a partir de este momento
+      lastRepQueueTs = Date.now();
 
       document.getElementById('repCard').classList.add('show');
       document.getElementById('repName').textContent='⭐ '+user.username;
       document.getElementById('repSrc').textContent=user.src==='yt'?'▶ YOUTUBE':user.src==='kick'?'⚡ KICK':'🟣 TWITCH';
       document.getElementById('repLast').textContent='Esperando mensaje...';
 
+      const nowInner=Date.now();
       const candidates=Object.entries(recentUsers)
-        .filter(([_,u])=>nowInner-u.lastSeen<=windowSecs*1000)
-        .map(([_,u])=>u.username).slice(0,20);
+        .filter(([_,u])=>nowInner-u.lastSeen<=Math.max(windowSecs,30)*1000&&u.isMember)
+        .map(([_,u])=>u.username).slice(0,25);
 
       localStorage.setItem(LS_REP, JSON.stringify({
         trigger:Date.now(), candidates,
@@ -344,7 +377,6 @@ function activarModVip(){
         clear:0,
       }));
 
-      // FIX: auto-clear después de 45 min
       armRepAutoTimer();
       setStatus('⭐ '+user.username+' es el representante VIP','ok');
 
@@ -442,6 +474,16 @@ function modoDemo(){
 function setStatus(msg,type){
   const el=document.getElementById('statusBar');
   el.textContent=msg; el.className='status '+(type||'');
+}
+
+function updatePastRepsCount(){
+  const el=document.getElementById('pastRepsCount');
+  if(el) el.textContent=pastReps.size>0?`🚫 ${pastReps.size} ya salieron este stream — no se repetirán`:'';
+}
+
+function resetPastReps(){
+  pastReps.clear(); updatePastRepsCount();
+  setStatus('♻️ Lista reiniciada — todos pueden volver a salir','ok');
 }
 
 // ══ Música 1vs1 ══
