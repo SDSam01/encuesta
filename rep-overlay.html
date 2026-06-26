@@ -77,51 +77,99 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 .s-badge.show{opacity:1;}
 
 /* ══ JACKPOT — Slot Machine Premium ══ */
-/* ══ JACKPOT SPOTLIGHT ══ */
+/* ══ JACKPOT — CARTA FLIP ══ */
 #jackpotStage{
   position:fixed;inset:0;z-index:22;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
   pointer-events:none;opacity:0;transition:opacity .4s;
-  background:#000;
+  background:rgba(0,0,0,.94);
 }
 #jackpotStage.show{opacity:1;}
 
-/* Canvas para spotlight */
-#jpSpotCanvas{position:absolute;inset:0;width:100%;height:100%;}
-
-/* Nombres flotantes */
-.jp-name-tag{
-  position:absolute;
-  font-family:'Bebas Neue',sans-serif;
-  font-size:20px;letter-spacing:3px;
-  color:rgba(255,255,255,.18);
-  pointer-events:none;
-  transition:color .25s, text-shadow .25s, transform .25s, font-size .25s;
-  white-space:nowrap;
-  transform:translate(-50%,-50%);
-}
-.jp-name-tag.lit{
-  color:rgba(255,240,180,.9);
-  text-shadow:0 0 12px rgba(255,220,100,.7);
-  transform:translate(-50%,-50%) scale(1.1);
-}
-.jp-name-tag.winner-lit{
-  color:#FFD700;
-  font-size:32px;
-  text-shadow:0 0 20px rgba(255,215,0,1),0 0 40px rgba(255,180,0,.8),0 0 70px rgba(255,150,0,.4);
-  transform:translate(-50%,-50%) scale(1.6);
-}
-
 /* Eyebrow */
 .jp-eyebrow{
-  position:absolute;top:40px;left:50%;transform:translateX(-50%);
   font-family:'Bebas Neue',sans-serif;
-  font-size:16px;letter-spacing:12px;
-  color:rgba(255,210,0,.5);
-  text-shadow:0 0 12px rgba(255,200,0,.3);
-  white-space:nowrap;z-index:2;
+  font-size:16px;letter-spacing:10px;
+  color:rgba(255,210,0,.6);
+  margin-bottom:32px;
+  animation:eyePulse 1s infinite alternate;
+}
+@keyframes eyePulse{from{opacity:.5;}to{opacity:1;}}
+
+/* Card 3D scene */
+.jp-card-scene{
+  width:580px;height:340px;
+  perspective:1000px;
+}
+.jp-card{
+  width:100%;height:100%;
+  position:relative;
+  transform-style:preserve-3d;
+  transition:transform 1s cubic-bezier(.4,0,.2,1);
+  animation:cardEnter .5s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+@keyframes cardEnter{from{transform:translateY(80px) scale(.8);opacity:0;}to{transform:translateY(0) scale(1);opacity:1;}}
+.jp-card.flipped{transform:rotateY(180deg);}
+
+/* Card faces */
+.jp-card-face{
+  position:absolute;inset:0;
+  border-radius:22px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
 }
 
-/* Slots ocultos — mantenemos HTML para no romper referencias */
+/* Front — dorado oscuro */
+.jp-card-front{
+  background:linear-gradient(145deg,#1c0c00,#2e1600,#1a0a00);
+  border:3px solid rgba(255,180,0,.5);
+  box-shadow:0 0 40px rgba(255,150,0,.2),inset 0 0 40px rgba(0,0,0,.5);
+}
+.jp-card-front-icon{font-size:54px;margin-bottom:10px;opacity:.85;}
+.jp-card-scanning{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:28px;letter-spacing:4px;
+  color:rgba(255,200,100,.7);
+  min-height:40px;text-align:center;
+  transition:opacity .1s;
+}
+.jp-card-vip{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:12px;letter-spacing:10px;
+  color:rgba(255,180,0,.4);margin-top:10px;
+}
+
+/* Back — azul oscuro con nombre */
+.jp-card-back{
+  background:linear-gradient(145deg,#010814,#011225,#010814);
+  border:3px solid rgba(255,215,0,.7);
+  box-shadow:0 0 60px rgba(255,215,0,.3),0 0 120px rgba(255,180,0,.15),inset 0 0 40px rgba(0,0,0,.5);
+  transform:rotateY(180deg);
+}
+.jp-card-back-label{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;letter-spacing:10px;
+  color:rgba(255,215,0,.5);margin-bottom:14px;
+}
+.jp-card-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:62px;letter-spacing:6px;color:#fff;line-height:1;
+  text-shadow:0 0 30px rgba(255,255,255,.9),0 0 60px rgba(255,215,0,.7);
+  animation:none;text-align:center;padding:0 20px;
+}
+.jp-card-name.glow{animation:nameGlow 1.2s infinite alternate;}
+@keyframes nameGlow{
+  from{text-shadow:0 0 20px rgba(255,255,255,.7),0 0 40px rgba(255,215,0,.5);}
+  to{text-shadow:0 0 40px rgba(255,255,255,1),0 0 80px rgba(255,215,0,.9),0 0 120px rgba(255,150,0,.4);}
+}
+.jp-card-back-badge{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;letter-spacing:6px;
+  color:rgba(255,215,0,.6);margin-top:14px;
+}
+
+/* Slots ocultos */
 .jp-slots{display:none;}
 .jp-reel,.jp-reel-inner,.jp-reel-item{display:none;}
 @keyframes winnerShine{from{opacity:1;}to{opacity:1;}}
@@ -245,9 +293,24 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 </div>
 
 <div id="jackpotStage">
-  <canvas id="jpSpotCanvas"></canvas>
-  <div id="jpSpotlight"></div>
-  <div class="jp-eyebrow">⭐ SELECCIONANDO MIEMBRO VIP ⭐</div>
+  <div class="jp-eyebrow" id="jpEyebrow">⭐ SELECCIONANDO MIEMBRO VIP ⭐</div>
+  <div class="jp-card-scene">
+    <div class="jp-card" id="jpCard">
+      <!-- Frente -->
+      <div class="jp-card-face jp-card-front">
+        <div class="jp-card-front-icon">⭐</div>
+        <div class="jp-card-scanning" id="jpScanning">---</div>
+        <div class="jp-card-vip">MIEMBRO VIP</div>
+      </div>
+      <!-- Reverso -->
+      <div class="jp-card-face jp-card-back">
+        <div class="jp-card-back-label">👑 MIEMBRO VIP SELECCIONADO</div>
+        <div class="jp-card-name" id="jpCardName">NOMBRE</div>
+        <div class="jp-card-back-badge">⭐ REPRESENTANTE OFICIAL ⭐</div>
+      </div>
+    </div>
+  </div>
+  <!-- Reels ocultos — mantener para no romper referencias -->
   <div class="jp-slots">
     <div class="jp-reel" id="reel0"><div class="jp-reel-inner" id="reel0inner"></div><div class="jp-reel-line"></div></div>
     <div class="jp-reel" id="reel1"><div class="jp-reel-inner" id="reel1inner"></div><div class="jp-reel-line"></div></div>
@@ -276,98 +339,74 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 
 <script>
 
-// ══ JACKPOT SPOTLIGHT ══
-let jpSpotAnim = null;
-let jpNameTags = [];
-
-function clearNameTags(){
-  jpNameTags.forEach(el=>el.remove()); jpNameTags=[];
-}
+// ══ JACKPOT — CARTA FLIP ══
+let jpScanInterval = null;
+let jpScanTimers = [];
 
 function startJackpot(candidates, chosen){
-  if(jpSpotAnim) clearTimeout(jpSpotAnim);
-  clearNameTags();
-  const stage=document.getElementById('jackpotStage');
-  const canvas=document.getElementById('jpSpotCanvas');
+  // Limpiar timers previos
+  if(jpScanInterval) clearInterval(jpScanInterval);
+  jpScanTimers.forEach(t=>clearTimeout(t)); jpScanTimers=[];
+
+  const stage = document.getElementById('jackpotStage');
+  const card  = document.getElementById('jpCard');
+  const scanning = document.getElementById('jpScanning');
+  const cardName = document.getElementById('jpCardName');
+
+  // Reset visual
+  card.classList.remove('flipped');
+  cardName.classList.remove('glow');
   document.getElementById('bg').className='jackpot show';
   document.getElementById('jpReveal').classList.remove('show');
   document.getElementById('jpSubBadge').classList.remove('show');
   stage.classList.add('show');
-  const cv2=document.getElementById('jpCanvas');
-  if(cv2) cv2.style.display='none';
-  canvas.width=1920; canvas.height=1080;
-  const ctx=canvas.getContext('2d');
-  const pool=candidates.length>0?[...candidates]:[chosen||'???'];
-  const positions=generatePositions(pool.length,1920,1080);
-  pool.forEach((name,i)=>{
-    const el=document.createElement('div');
-    el.className='jp-name-tag';
-    el.textContent=(name||'???').substring(0,14).toUpperCase();
-    el.style.left=positions[i].x+'px';
-    el.style.top=positions[i].y+'px';
-    stage.appendChild(el);
-    jpNameTags.push(el);
-  });
+
   playJackpotSpin();
   startParticles(false);
-  const chosenText=(chosen||'???').substring(0,14).toUpperCase();
-  let winnerTag=jpNameTags.find(el=>el.textContent===chosenText)||jpNameTags[0];
-  let scanCount=0, litTag=null;
-  const totalScans=18;
 
-  function drawSpot(x,y,r,a){
-    ctx.clearRect(0,0,1920,1080);
-    const g=ctx.createRadialGradient(x,y,5,x,y,r);
-    g.addColorStop(0,`rgba(255,230,120,${a*0.28})`);
-    g.addColorStop(0.5,`rgba(255,200,80,${a*0.1})`);
-    g.addColorStop(1,'transparent');
-    ctx.fillStyle=g; ctx.fillRect(0,0,1920,1080);
-  }
-  function getPos(el){ return {x:parseFloat(el.style.left),y:parseFloat(el.style.top)}; }
+  const pool = candidates.length>0 ? [...candidates] : [chosen||'???'];
+  let idx = 0;
+  let speed = 70;
 
-  function scan(){
-    if(litTag) litTag.classList.remove('lit');
-    const goWin=scanCount>totalScans*0.65&&Math.random()<0.35;
-    litTag=goWin?winnerTag:jpNameTags[Math.floor(Math.random()*jpNameTags.length)];
-    litTag.classList.add('lit');
-    const c=getPos(litTag); drawSpot(c.x,c.y,160,1);
-    scanCount++;
-    if(scanCount<totalScans){
-      const delay=70+(scanCount/totalScans)*260;
-      jpSpotAnim=setTimeout(scan,delay);
-    } else setTimeout(lockWinner,300);
-  }
+  // FASE 1 — nombres ciclan rápido (2s)
+  jpScanInterval = setInterval(()=>{
+    scanning.textContent = (pool[idx%pool.length]||'???').substring(0,12).toUpperCase();
+    idx++;
+  }, speed);
 
-  function lockWinner(){
-    if(litTag) litTag.classList.remove('lit');
-    winnerTag.classList.add('lit');
-    const c=getPos(winnerTag); drawSpot(c.x,c.y,200,1);
-    jpNameTags.forEach(el=>{ if(el!==winnerTag) el.style.opacity='0'; });
-    setTimeout(()=>{
-      winnerTag.classList.remove('lit'); winnerTag.classList.add('winner-lit');
-      drawSpot(c.x,c.y,300,1.5); playJackpotWin();
-      setTimeout(()=>{
-        ctx.clearRect(0,0,1920,1080); stage.classList.remove('show'); clearNameTags(); revealJackpot(chosen);
-      },1800);
-    },600);
-  }
-  scan();
-}
+  // FASE 2 — desaceleran (1s)
+  jpScanTimers.push(setTimeout(()=>{
+    clearInterval(jpScanInterval);
+    speed = 160;
+    jpScanInterval = setInterval(()=>{
+      scanning.textContent = (pool[idx%pool.length]||'???').substring(0,12).toUpperCase();
+      idx++;
+    }, speed);
+  }, 2000));
 
-function generatePositions(count,w,h){
-  const pos=[],margin=120,minDist=130;
-  for(let i=0;i<count;i++){
-    let p,ok,tries=0;
-    do{
-      p={x:margin+Math.random()*(w-margin*2),y:margin+Math.random()*(h-margin*2)};
-      const cx=Math.abs(p.x-w/2),cy=Math.abs(p.y-h/2);
-      ok=(cx>160||cy>140);
-      if(ok) ok=pos.every(q=>Math.hypot(q.x-p.x,q.y-p.y)>minDist);
-      tries++;
-    }while(!ok&&tries<60);
-    pos.push(p);
-  }
-  return pos;
+  // FASE 3 — quedan en el ganador
+  jpScanTimers.push(setTimeout(()=>{
+    clearInterval(jpScanInterval);
+    scanning.textContent = (chosen||'???').substring(0,12).toUpperCase();
+  }, 3000));
+
+  // FASE 4 — voltear carta (con delay dramático)
+  jpScanTimers.push(setTimeout(()=>{
+    cardName.textContent = (chosen||'???').substring(0,14).toUpperCase();
+    card.classList.add('flipped');
+    playJackpotWin();
+    // Glow en el nombre después de que termine el flip
+    jpScanTimers.push(setTimeout(()=>{
+      cardName.classList.add('glow');
+      startParticles(true);
+    }, 1100));
+  }, 3500));
+
+  // FASE 5 — transición al reveal
+  jpScanTimers.push(setTimeout(()=>{
+    stage.classList.remove('show');
+    revealJackpot(chosen);
+  }, 7500));
 }
 
 function revealJackpot(name){
