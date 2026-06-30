@@ -420,6 +420,14 @@ function revealJackpot(name){
   reveal.classList.remove('show'); void reveal.offsetWidth; reveal.classList.add('show');
   setTimeout(()=>document.getElementById('jpSubBadge').classList.add('show'),700);
   startParticles(true);
+
+  // ← Auto-cerrar después de 5 segundos y activar HUD normal
+  setTimeout(()=>{
+    reveal.classList.remove('show');
+    document.getElementById('bg').className='';
+    stopParticles();
+    activateRep(true);
+  }, 5000);
 }
 
 const LS = 'rep_state';
