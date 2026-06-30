@@ -412,19 +412,25 @@ function startJackpot(candidates, chosen){
 function revealJackpot(name){
   const flash=document.getElementById('jpFlash');
   [0,130,260].forEach(d=>setTimeout(()=>{flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),90);},d));
-  document.getElementById('jackpotStage').classList.remove('show');
-  document.getElementById('bg').className='jackpot show';
+
   const reveal=document.getElementById('jpReveal');
+  const stage=document.getElementById('jackpotStage');
+  stage.classList.remove('show');
+  document.getElementById('bg').className='jackpot show';
   document.getElementById('jpWinnerName').textContent=(name||'???').toUpperCase();
   document.getElementById('jpSubBadge').classList.remove('show');
-  reveal.classList.remove('show'); void reveal.offsetWidth; reveal.classList.add('show');
+  reveal.style.display='flex'; reveal.style.opacity='1';
   setTimeout(()=>document.getElementById('jpSubBadge').classList.add('show'),700);
   startParticles(true);
 
-  // ← Auto-cerrar después de 5 segundos y activar HUD normal
+  // Cierre forzado a los 5 segundos
   setTimeout(()=>{
+    reveal.style.opacity='0';
+    reveal.style.display='none';
     reveal.classList.remove('show');
+    stage.classList.remove('show');
     document.getElementById('bg').className='';
+    document.getElementById('jpFlash').classList.remove('show');
     stopParticles();
     activateRep(true);
   }, 5000);
@@ -501,6 +507,21 @@ function hideSirenAnimation(){
   document.getElementById('sirenOverlay').classList.remove('show');
   stopSirenSound();
 }
+
+// ══ Safety: cierra reveal si se queda pegado ══
+setInterval(()=>{
+  const reveal=document.getElementById('jpReveal');
+  if(!reveal) return;
+  const visible=reveal.style.display==='flex'||reveal.classList.contains('show');
+  if(visible && repUserId){
+    reveal.style.display='none';
+    reveal.style.opacity='0';
+    reveal.classList.remove('show');
+    document.getElementById('bg').className='';
+    document.getElementById('jackpotStage').classList.remove('show');
+    stopParticles();
+  }
+},2000);
 
 // ══ Polling principal del estado ══
 setInterval(()=>{
@@ -636,9 +657,6 @@ function pickRandomVoiceProfile(){
 }
 
 function activateRep(isSub){
-  // Siempre ocultar pantalla de reveal aunque pendingRep sea null
-  document.getElementById('jpReveal').classList.remove('show');
-  document.getElementById('bg').className='';
   if(!pendingRep) return;
   repUserId=pendingRep.userId;
   repUsername=pendingRep.username;
