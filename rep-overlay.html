@@ -636,6 +636,9 @@ function pickRandomVoiceProfile(){
 }
 
 function activateRep(isSub){
+  // Siempre ocultar pantalla de reveal aunque pendingRep sea null
+  document.getElementById('jpReveal').classList.remove('show');
+  document.getElementById('bg').className='';
   if(!pendingRep) return;
   repUserId=pendingRep.userId;
   repUsername=pendingRep.username;
