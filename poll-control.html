@@ -75,6 +75,7 @@ input:focus{border-color:rgba(255,185,0,0.4);}
     <button class="opt-btn active" onclick="setNumOpts(2,this)">2 opciones</button>
     <button class="opt-btn" onclick="setNumOpts(3,this)">3 opciones</button>
     <button class="opt-btn" onclick="setNumOpts(4,this)">4 opciones</button>
+    <button class="opt-btn" onclick="setNumOpts(9,this)" style="background:rgba(255,208,0,.12);border-color:rgba(255,208,0,.4);color:#FFD000;">🃏 Comodines (1-9)</button>
   </div>
   <div class="timer-fixed">⏱ Timer fijo: 30 segundos</div>
 
@@ -188,24 +189,34 @@ function setNumOpts(n, btn){
   state.numOpts=n;
   document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
-  // Mostrar/ocultar fila C/D
-  $('rowCD').style.display=n>=3?'grid':'none';
+  // Mostrar/ocultar fila C/D (solo para 2-4 opciones)
+  $('rowCD').style.display=(n>=3&&n<=4)?'grid':'none';
   $('colD').style.display=n>=4?'block':'none';
+  // Modo comodines: 9 opciones con números
+  if(n===9){
+    // Auto-inicializar votos 1-9
+    state.votes={};
+    for(let i=1;i<=9;i++) state.votes[String(i)]=0;
+  }
   if(state.active) renderVoteRows();
 }
 
 function renderVoteRows(){
-  const keys=['A','B','C','D'].slice(0,state.numOpts);
+  const isComodin=state.numOpts===9;
+  const keys=isComodin
+    ? ['1','2','3','4','5','6','7','8','9']
+    : ['A','B','C','D'].slice(0,state.numOpts);
   const rows=$('voteRows');
   rows.innerHTML='';
   keys.forEach(k=>{
-    const name=($(('name'+k))?.value||k).toUpperCase();
+    const color=isComodin?'#FFD000':(OPT_COLORS[k]||'#888');
+    const name=isComodin?('Carta '+k):($(('name'+k))?.value||k).toUpperCase();
     const div=document.createElement('div');
     div.className='vote-row';
     div.innerHTML=`
-      <span class="opt-tag"><span class="dot" style="background:${OPT_COLORS[k]};"></span><span id="label${k}">${name}</span></span>
+      <span class="opt-tag"><span class="dot" style="background:${color};"></span><span id="label${k}">${name}</span></span>
       <button class="vbtn" onclick="cv('${k}',-1)">−</button>
-      <span class="vcount" id="vc${k}">${state.votes[k]}</span>
+      <span class="vcount" id="vc${k}">${state.votes[k]||0}</span>
       <button class="vbtn" onclick="cv('${k}',1)">+</button>
     `;
     rows.appendChild(div);
