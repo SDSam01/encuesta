@@ -182,12 +182,53 @@ function countVotesFromBatch(msgs) {
     let voters = {};
     try { voters = JSON.parse(localStorage.getItem('poll_voters') || '{}'); } catch(e) {}
 
-    // FIX 1: regex más amplio + soporte para opciones C y D
+    const numOpts = poll.numOpts || 2;
+    const isComodin = numOpts === 9;
+
+    // Modo comodines: votos por número 1-9
+    if(isComodin){
+      const deltas = {};
+      for(let i=1;i<=9;i++) deltas[String(i)]=0;
+
+      for(const msg of msgs){
+        const txt=(msg.text||'').trim();
+        const uid=msg.userId;
+        if(!uid||voters[uid]) continue;
+        const m=txt.match(/^[1-9]$/);
+        if(m){ voters[uid]=m[0]; deltas[m[0]]++; }
+      }
+
+      const hasVotes=Object.values(deltas).some(v=>v>0);
+      if(!hasVotes) return;
+
+      let delta={};
+      try{ delta=JSON.parse(localStorage.getItem('poll_vote_delta')||'{}'); }catch(e){}
+      for(let i=1;i<=9;i++){
+        const k=String(i);
+        delta[k]=(delta[k]||0)+deltas[k];
+      }
+      delta.ts=Date.now();
+      localStorage.setItem('poll_vote_delta', JSON.stringify(delta));
+      localStorage.setItem('poll_voters', JSON.stringify(voters));
+
+      try{
+        const latest=JSON.parse(localStorage.getItem('poll_state')||'{}');
+        if(latest.active){
+          for(let i=1;i<=9;i++){
+            const k='v'+i;
+            latest[k]=(latest[k]||0)+deltas[String(i)];
+          }
+          localStorage.setItem('poll_state',JSON.stringify(latest));
+        }
+      }catch(e){}
+      return;
+    }
+
+    // Modo normal: votos A/B/C/D
     const isVoteA = txt => /^!*a+!*$/i.test(txt);
     const isVoteB = txt => /^!*b+!*$/i.test(txt);
     const isVoteC = txt => /^!*c+!*$/i.test(txt);
     const isVoteD = txt => /^!*d+!*$/i.test(txt);
-    const numOpts = poll.numOpts || 2;
 
     let dA=0, dB=0, dC=0, dD=0;
     for(const msg of msgs) {
@@ -202,7 +243,6 @@ function countVotesFromBatch(msgs) {
 
     if(dA===0 && dB===0 && dC===0 && dD===0) return;
 
-    // FIX 2: escribir delta en clave separada para evitar race condition
     let delta={vA:0,vB:0,vC:0,vD:0,ts:0};
     try{ delta=JSON.parse(localStorage.getItem('poll_vote_delta')||'{"vA":0,"vB":0,"vC":0,"vD":0,"ts":0}'); }catch(e){}
     delta.vA+=dA; delta.vB+=dB; delta.vC+=dC; delta.vD+=dD;
@@ -210,7 +250,6 @@ function countVotesFromBatch(msgs) {
     localStorage.setItem('poll_vote_delta', JSON.stringify(delta));
     localStorage.setItem('poll_voters', JSON.stringify(voters));
 
-    // Respaldo en poll_state
     try{
       const latest=JSON.parse(localStorage.getItem('poll_state')||'{}');
       if(latest.active){
