@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Comodines Overlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@700;900&family=Inter:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
+
+/* ══ STAGE PRINCIPAL ══ */
+#stage{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0);pointer-events:none;z-index:10;
+  transition:background .8s;
+}
+#stage.show{background:rgba(0,0,0,.92);}
+
+/* ══ HEADER ══ */
+#header{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;letter-spacing:12px;
+  color:rgba(255,208,0,.7);
+  margin-bottom:36px;
+  opacity:0;transform:translateY(-10px);
+  transition:opacity .5s,transform .5s;
+  text-shadow:0 0 20px rgba(255,208,0,.4);
+}
+#stage.show #header{opacity:1;transform:translateY(0);}
+
+/* ══ MAZO DE CARTAS ══ */
+#cardRow{
+  display:flex;gap:14px;align-items:center;justify-content:center;
+}
+
+/* ══ CARTA BASE ══ */
+.card-wrap{
+  width:155px;height:230px;
+  perspective:700px;
+  opacity:0;
+  transform:translateY(60px);
+  transition:opacity .4s, transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+.card-wrap.visible{opacity:1;transform:translateY(0);}
+.card-wrap.sam-chosen .card-inner{
+  box-shadow:0 0 30px rgba(68,136,255,.9),0 0 60px rgba(68,136,255,.4);
+  border-color:rgba(68,136,255,.9);
+}
+.card-wrap.chat-chosen .card-inner{
+  box-shadow:0 0 30px rgba(248,113,113,.9),0 0 60px rgba(248,113,113,.4);
+  border-color:rgba(248,113,113,.9);
+}
+.card-wrap.flipped .card-inner{transform:rotateY(180deg);}
+
+.card-inner{
+  width:100%;height:100%;
+  position:relative;transform-style:preserve-3d;
+  transition:transform .8s cubic-bezier(.4,0,.2,1);
+  border-radius:14px;
+  border:2px solid rgba(255,208,0,.35);
+  box-shadow:0 4px 20px rgba(0,0,0,.6);
+}
+
+/* ══ CARA TRASERA (boca abajo) ══ */
+.card-back{
+  position:absolute;inset:0;border-radius:14px;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  background:linear-gradient(145deg,#0a0015,#150025,#0a0015);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.card-back::before{
+  content:'';position:absolute;inset:4px;
+  border:1px solid rgba(255,208,0,.15);border-radius:11px;
+}
+.card-back::after{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(45deg,transparent,transparent 8px,rgba(255,208,0,.03) 8px,rgba(255,208,0,.03) 9px);
+}
+.card-back-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:52px;color:rgba(255,208,0,.25);
+  z-index:2;line-height:1;
+}
+.card-back-label{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:10px;letter-spacing:4px;
+  color:rgba(255,208,0,.2);z-index:2;margin-top:4px;
+}
+.card-back-icon{
+  position:absolute;bottom:14px;
+  font-size:18px;opacity:.2;z-index:2;
+}
+
+/* ══ CARA DELANTERA (revelada) ══ */
+.card-front{
+  position:absolute;inset:0;border-radius:14px;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  transform:rotateY(180deg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:12px 8px;text-align:center;
+}
+.card-front.comun{background:linear-gradient(145deg,#001a06,#003010);}
+.card-front.raro{background:linear-gradient(145deg,#1a1000,#302000);}
+.card-front.epico{background:linear-gradient(145deg,#150015,#280028);}
+
+.card-rarity{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:9px;letter-spacing:4px;margin-bottom:8px;
+}
+.comun .card-rarity{color:#4ade80;}
+.raro .card-rarity{color:#FFD000;}
+.epico .card-rarity{color:#c084fc;}
+
+.card-emoji{font-size:34px;margin-bottom:6px;line-height:1;}
+
+.card-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:15px;letter-spacing:2px;color:#fff;
+  line-height:1.1;margin-bottom:6px;
+}
+.card-desc{
+  font-family:'Inter',sans-serif;
+  font-size:9px;color:rgba(255,255,255,.55);
+  line-height:1.4;
+}
+
+/* ══ QUIÉN TIENE QUÉ ══ */
+#holders{
+  display:flex;gap:60px;margin-top:32px;
+  opacity:0;transition:opacity .5s .3s;
+}
+#stage.show #holders{opacity:1;}
+.holder{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.holder-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:14px;letter-spacing:6px;
+}
+.holder-name.sam{color:#4488ff;}
+.holder-name.chat{color:#f87171;}
+.holder-card{
+  width:100px;height:148px;perspective:500px;
+  opacity:0;transform:scale(.8);
+  transition:opacity .4s,transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+.holder-card.show{opacity:1;transform:scale(1);}
+.holder-inner{
+  width:100%;height:100%;
+  border-radius:10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:8px 6px;text-align:center;
+  border:2px solid transparent;
+}
+.holder-inner.sam-side{border-color:rgba(68,136,255,.5);background:linear-gradient(145deg,#000510,#001025);}
+.holder-inner.chat-side{border-color:rgba(248,113,113,.5);background:linear-gradient(145deg,#150005,#250010);}
+.holder-emoji{font-size:26px;margin-bottom:4px;}
+.holder-title{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;color:rgba(255,255,255,.8);}
+.holder-rarity{font-family:'Bebas Neue',sans-serif;font-size:8px;letter-spacing:3px;margin-top:2px;}
+.holder-used{
+  font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:3px;
+  color:rgba(255,255,255,.3);text-decoration:line-through;
+}
+
+/* ══ PANTALLA DE ACTIVACIÓN (Yu-Gi-Oh) ══ */
+#activation{
+  position:fixed;inset:0;z-index:30;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.97);
+}
+#activation.show{display:flex;}
+
+/* Energía de fondo */
+#actBg{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 50%,rgba(255,208,0,.08) 0%,transparent 70%);
+  animation:bgPulse 1s infinite alternate;
+}
+@keyframes bgPulse{from{opacity:.5;}to{opacity:1;}}
+
+/* Carta grande central */
+#actCard{
+  width:280px;height:420px;
+  border-radius:20px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px 20px;text-align:center;
+  position:relative;z-index:2;
+  opacity:0;transform:scale(0) rotateY(90deg);
+  transition:transform .7s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+  box-shadow:0 0 60px rgba(255,208,0,.4),0 0 120px rgba(255,208,0,.2);
+}
+#actCard.show{opacity:1;transform:scale(1) rotateY(0deg);}
+#actCard.comun{background:linear-gradient(160deg,#001a06,#003010);border:3px solid #4ade80;box-shadow:0 0 60px rgba(74,222,128,.4);}
+#actCard.raro{background:linear-gradient(160deg,#1a1000,#302000);border:3px solid #FFD000;box-shadow:0 0 60px rgba(255,208,0,.5);}
+#actCard.epico{background:linear-gradient(160deg,#150015,#280028);border:3px solid #c084fc;box-shadow:0 0 80px rgba(192,132,252,.5);}
+
+#actWho{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:11px;letter-spacing:8px;
+  margin-bottom:16px;
+}
+#actEmoji{font-size:72px;line-height:1;margin-bottom:16px;}
+#actRarity{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:6px;margin-bottom:8px;}
+#actTitle{
+  font-family:'Cinzel',serif;
+  font-size:32px;font-weight:900;color:#fff;
+  line-height:1.1;margin-bottom:16px;
+  text-shadow:0 0 20px rgba(255,255,255,.5);
+}
+.act-divider{
+  width:80%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);
+  margin-bottom:14px;
+}
+#actDesc{
+  font-family:'Inter',sans-serif;
+  font-size:14px;font-weight:700;
+  color:rgba(255,255,255,.75);
+  line-height:1.5;font-style:italic;
+}
+
+/* Texto de quién lo activa */
+#actWhoLabel{
+  position:absolute;top:-40px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:16px;letter-spacing:8px;
+  opacity:0;transform:translateY(-8px);
+  transition:opacity .4s .5s,transform .4s .5s;
+}
+#actCard.show #actWhoLabel{opacity:1;transform:translateY(0);}
+
+/* Flash de activación */
+#actFlash{
+  position:fixed;inset:0;z-index:35;
+  opacity:0;pointer-events:none;
+  transition:opacity .08s;
+}
+</style>
+</head>
+<body>
+
+<!-- ══ STAGE — sorteo de cartas ══ -->
+<div id="stage">
+  <div id="header">🃏 ELIGE TU COMODÍN 🃏</div>
+  <div id="cardRow"></div>
+  <div id="holders">
+    <div class="holder">
+      <div class="holder-name sam">⚔️ SAM</div>
+      <div class="holder-card" id="samHolder">
+        <div class="holder-inner sam-side" id="samHolderInner">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:3px;color:rgba(68,136,255,.4);">SIN CARTA</div>
+        </div>
+      </div>
+    </div>
+    <div class="holder">
+      <div class="holder-name chat">💬 CHAT</div>
+      <div class="holder-card" id="chatHolder">
+        <div class="holder-inner chat-side" id="chatHolderInner">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:3px;color:rgba(248,113,113,.4);">SIN CARTA</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ACTIVACIÓN ══ -->
+<div id="activation">
+  <div id="actBg"></div>
+  <div style="position:relative;z-index:2;">
+    <div id="actCard">
+      <div id="actWhoLabel"></div>
+      <div id="actWho"></div>
+      <div id="actEmoji">⭐</div>
+      <div id="actRarity"></div>
+      <div id="actTitle">COMODÍN</div>
+      <div class="act-divider"></div>
+      <div id="actDesc"></div>
+    </div>
+  </div>
+</div>
+
+<div id="actFlash"></div>
+
+<script>
+const LS = 'comodines_state';
+
+// ══ MAZO ══
+const MAZO = [
+  { id:1, emoji:'💚', titulo:'Recuperación',    desc:'Si ganas esta ronda recuperas media vida.',          rareza:'comun',  color:'#4ade80' },
+  { id:2, emoji:'🎲', titulo:'Lotería',          desc:'Ganas o pierdes media vida al azar. 50/50.',         rareza:'comun',  color:'#4ade80' },
+  { id:3, emoji:'🔄', titulo:'Inversión Total',  desc:'Las opciones se invierten. Hay que votar "mal" para ganar.', rareza:'raro', color:'#FFD000' },
+  { id:4, emoji:'💀', titulo:'Doble o nada',     desc:'Si pierdes esta ronda, pierdes 1 vida completa.',   rareza:'raro',   color:'#FFD000' },
+  { id:5, emoji:'🛡️',  titulo:'Escudo',           desc:'Tu próximo error no te quita vida. 1 fallo gratis.',rareza:'raro',   color:'#FFD000' },
+  { id:6, emoji:'⚔️', titulo:'Sabotaje',          desc:'Si el rival se equivoca pierde 1 vida completa en lugar de media.', rareza:'raro', color:'#FFD000' },
+  { id:7, emoji:'🩸', titulo:'Robo de vida',     desc:'Le robas media vida al rival y te la sumas.',       rareza:'epico',  color:'#c084fc' },
+  { id:8, emoji:'🔀', titulo:'Ruleta de vidas',  desc:'Las vidas de Sam y Chat se intercambian completamente.', rareza:'epico', color:'#c084fc' },
+  { id:9, emoji:'✨', titulo:'Resurrección',     desc:'Recuperas TODAS tus vidas de golpe.',               rareza:'epico',  color:'#c084fc' },
+];
+
+// Mezclar el mazo (Fisher-Yates)
+let mazo = [...MAZO].sort(()=>Math.random()-.5);
+
+let samCard = null, chatCard = null;
+let samUsed = false, chatUsed = false;
+let lastTs = 0, lastActTs = 0;
+let stageVisible = false;
+
+// ══ Construir cartas ══
+function buildCards(){
+  const row = document.getElementById('cardRow');
+  row.innerHTML = '';
+  mazo.forEach((comodin, i)=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'card-wrap';
+    wrap.id = 'card-'+i;
+    wrap.innerHTML = `
+      <div class="card-inner">
+        <div class="card-back">
+          <div class="card-back-num">${i+1}</div>
+          <div class="card-back-label">COMODÍN</div>
+          <div class="card-back-icon">🃏</div>
+        </div>
+        <div class="card-front ${comodin.rareza}">
+          <div class="card-rarity">${comodin.rareza.toUpperCase()}</div>
+          <div class="card-emoji">${comodin.emoji}</div>
+          <div class="card-title">${comodin.titulo}</div>
+          <div class="card-desc">${comodin.desc}</div>
+        </div>
+      </div>
+    `;
+    row.appendChild(wrap);
+    // Entrada escalonada
+    setTimeout(()=>wrap.classList.add('visible'), i*80+100);
+  });
+}
+
+// ══ Mostrar sorteo ══
+function showSorteo(){
+  stageVisible = true;
+  mazo = [...MAZO].sort(()=>Math.random()-.5);
+  buildCards();
+  document.getElementById('stage').classList.add('show');
+  samCard = null; chatCard = null; samUsed = false; chatUsed = false;
+  resetHolders();
+}
+
+function hideSorteo(){
+  stageVisible = false;
+  document.getElementById('stage').classList.remove('show');
+}
+
+// ══ Elegir carta ══
+function chooseSam(idx){
+  if(idx<0||idx>=9) return;
+  samCard = mazo[idx];
+  const wrap = document.getElementById('card-'+idx);
+  if(wrap){ wrap.classList.add('sam-chosen'); wrap.classList.add('flipped'); }
+  updateHolder('sam', samCard);
+  setTimeout(()=>revealHolder('sam'), 900);
+}
+
+function chooseChat(idx){
+  if(idx<0||idx>=9) return;
+  chatCard = mazo[idx];
+  const wrap = document.getElementById('card-'+idx);
+  if(wrap){ wrap.classList.add('chat-chosen'); wrap.classList.add('flipped'); }
+  updateHolder('chat', chatCard);
+  setTimeout(()=>revealHolder('chat'), 900);
+}
+
+function updateHolder(side, comodin){
+  const inner = document.getElementById(side+'HolderInner');
+  const rarityColor = comodin.rareza==='comun'?'#4ade80':comodin.rareza==='raro'?'#FFD000':'#c084fc';
+  inner.innerHTML = `
+    <div class="holder-emoji">${comodin.emoji}</div>
+    <div class="holder-title">${comodin.titulo}</div>
+    <div class="holder-rarity" style="color:${rarityColor}">${comodin.rareza.toUpperCase()}</div>
+  `;
+}
+
+function revealHolder(side){
+  document.getElementById(side+'Holder').classList.add('show');
+}
+
+function resetHolders(){
+  ['sam','chat'].forEach(side=>{
+    const h = document.getElementById(side+'Holder');
+    h.classList.remove('show');
+    const inner = document.getElementById(side+'HolderInner');
+    inner.innerHTML=`<div style="font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:3px;color:${side==='sam'?'rgba(68,136,255,.4)':'rgba(248,113,113,.4)'};">SIN CARTA</div>`;
+  });
+}
+
+// ══ ACTIVACIÓN estilo Yu-Gi-Oh ══
+function activateComodin(side){
+  const comodin = side==='sam' ? samCard : chatCard;
+  if(!comodin) return;
+
+  const actCard = document.getElementById('actCard');
+  const actFlash = document.getElementById('actFlash');
+  const activation = document.getElementById('activation');
+
+  // Rellenar datos
+  document.getElementById('actWho').textContent = side==='sam' ? '⚔️ SAM ACTIVA' : '💬 CHAT ACTIVA';
+  document.getElementById('actWhoLabel').textContent = side==='sam' ? '⚔️ SAM' : '💬 CHAT';
+  document.getElementById('actEmoji').textContent = comodin.emoji;
+  document.getElementById('actRarity').textContent = comodin.rareza.toUpperCase();
+  document.getElementById('actRarity').style.color = comodin.rareza==='comun'?'#4ade80':comodin.rareza==='raro'?'#FFD000':'#c084fc';
+  document.getElementById('actTitle').textContent = comodin.titulo.toUpperCase();
+  document.getElementById('actDesc').textContent = comodin.desc;
+  document.getElementById('actWho').style.color = side==='sam'?'rgba(68,136,255,.7)':'rgba(248,113,113,.7)';
+  document.getElementById('actWhoLabel').style.color = side==='sam'?'#4488ff':'#f87171';
+
+  actCard.className = 'card'; // reset
+  actCard.classList.add(comodin.rareza);
+  actFlash.style.background = side==='sam'?'rgba(68,136,255,.4)':'rgba(248,113,113,.4)';
+
+  // Flash
+  activation.classList.add('show');
+  actFlash.style.opacity='1'; setTimeout(()=>actFlash.style.opacity='0',120);
+  setTimeout(()=>{actFlash.style.opacity='.5';setTimeout(()=>actFlash.style.opacity='0',100);},280);
+
+  // Entrada de carta
+  setTimeout(()=>actCard.classList.add('show'),100);
+
+  // Maléfica habla
+  setTimeout(()=>speakMaleficent(`${comodin.titulo}... ${comodin.desc}`), 900);
+
+  // Marcar como usado
+  if(side==='sam') samUsed=true;
+  else chatUsed=true;
+  if(stageVisible){
+    const inner=document.getElementById(side+'HolderInner');
+    inner.innerHTML=`<div class="holder-used">${comodin.titulo}</div><div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.25);font-family:'Bebas Neue',sans-serif;margin-top:4px;">USADO</div>`;
+  }
+
+  // Cerrar después de 6s
+  setTimeout(()=>{
+    actCard.classList.remove('show');
+    setTimeout(()=>activation.classList.remove('show'),700);
+  }, 7000);
+}
+
+// ══ Maléfica ══
+function speakMaleficent(text){
+  window.speechSynthesis.cancel();
+  const utt=new SpeechSynthesisUtterance();
+  utt.lang='es-MX'; utt.pitch=0.25; utt.rate=0.58; utt.volume=1.0;
+  utt.text=text.replace(/\./g,'...').replace(/,/g,',,');
+  const voices=window.speechSynthesis.getVoices();
+  const v=voices.find(v=>v.lang.startsWith('es'))||voices[0];
+  if(v) utt.voice=v;
+  window.speechSynthesis.speak(utt);
+}
+window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
+
+// ══ Polling ══
+setInterval(()=>{
+  try{
+    const raw=localStorage.getItem(LS);
+    if(!raw) return;
+    const s=JSON.parse(raw);
+    if(!s.ts||s.ts===lastTs) return;
+    lastTs=s.ts;
+
+    if(s.action==='sorteo') showSorteo();
+    else if(s.action==='hide') hideSorteo();
+    else if(s.action==='chooseSam') chooseSam(s.idx);
+    else if(s.action==='chooseChat') chooseChat(s.idx);
+    else if(s.action==='activateSam') activateComodin('sam');
+    else if(s.action==='activateChat') activateComodin('chat');
+  }catch(e){}
+},300);
+</script>
+</body>
+</html>

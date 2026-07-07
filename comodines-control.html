@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Comodines Control</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0a0f;font-family:'Inter',sans-serif;color:#fff;padding:12px;max-width:500px;}
+h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
+.sub{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:12px;}
+
+/* Holders de Sam y Chat */
+.holders{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.holder{background:rgba(255,255,255,.04);border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,.07);}
+.holder.sam{border-color:rgba(68,136,255,.25);}
+.holder.chat{border-color:rgba(248,113,113,.25);}
+.holder-title{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;}
+.holder.sam .holder-title{color:#4488ff;}
+.holder.chat .holder-title{color:#f87171;}
+.holder-content{font-size:10px;color:rgba(255,255,255,.4);min-height:20px;}
+.holder-card{
+  background:rgba(255,255,255,.06);border-radius:7px;padding:7px 8px;
+  border-left:3px solid transparent;
+}
+.holder.sam .holder-card{border-left-color:#4488ff;}
+.holder.chat .holder-card{border-left-color:#f87171;}
+.holder-card-name{font-size:11px;font-weight:700;color:#fff;margin-bottom:2px;}
+.holder-card-desc{font-size:9px;color:rgba(255,255,255,.45);line-height:1.4;}
+.holder-card-rarity{font-size:8px;letter-spacing:2px;font-weight:700;margin-top:4px;}
+.comun{color:#4ade80;} .raro{color:#FFD000;} .epico{color:#c084fc;}
+
+/* Botones de acción */
+.action-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;}
+.btn-action{padding:9px 8px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;border:1px solid;transition:.15s;text-align:center;}
+.btn-sorteo{background:rgba(255,208,0,.12);border-color:rgba(255,208,0,.4);color:#FFD000;grid-column:1/-1;}
+.btn-reveal-sam{background:rgba(68,136,255,.1);border-color:rgba(68,136,255,.35);color:#4488ff;}
+.btn-reveal-chat{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.35);color:#f87171;}
+.btn-act-sam{background:rgba(68,136,255,.18);border-color:rgba(68,136,255,.5);color:#4488ff;}
+.btn-act-chat{background:rgba(248,113,113,.18);border-color:rgba(248,113,113,.5);color:#f87171;}
+.btn-hide{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);color:rgba(255,255,255,.4);grid-column:1/-1;font-size:10px;}
+.btn-action:disabled{opacity:.3;cursor:not-allowed;}
+.btn-action:not(:disabled):hover{opacity:.8;}
+
+/* Referencia de comodines */
+.section-title{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:8px;}
+.mazo-grid{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.comodin-row{
+  display:flex;align-items:flex-start;gap:8px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+  border-radius:8px;padding:7px 9px;cursor:pointer;transition:.15s;
+}
+.comodin-row:hover{background:rgba(255,255,255,.07);}
+.comodin-row.selected-sam{border-color:rgba(68,136,255,.5);background:rgba(68,136,255,.08);}
+.comodin-row.selected-chat{border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.08);}
+.comodin-num{font-size:16px;font-weight:900;color:rgba(255,255,255,.15);min-width:20px;text-align:center;line-height:1.4;}
+.comodin-emoji{font-size:16px;line-height:1.4;min-width:22px;text-align:center;}
+.comodin-info{flex:1;}
+.comodin-name{font-size:11px;font-weight:700;color:#fff;margin-bottom:2px;}
+.comodin-desc{font-size:9px;color:rgba(255,255,255,.45);line-height:1.4;}
+.comodin-rarity{font-size:7px;letter-spacing:3px;font-weight:700;margin-top:3px;}
+.comodin-badge{font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;align-self:flex-start;margin-top:2px;}
+.badge-sam{background:rgba(68,136,255,.2);color:#4488ff;}
+.badge-chat{background:rgba(248,113,113,.2);color:#f87171;}
+
+/* Selector de carta para Sam */
+.sam-selector{display:none;background:rgba(255,208,0,.05);border:1px solid rgba(255,208,0,.2);border-radius:8px;padding:8px;margin-bottom:8px;}
+.sam-selector.show{display:block;}
+.sam-selector-title{font-size:9px;letter-spacing:2px;color:rgba(255,208,0,.6);margin-bottom:6px;}
+.num-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;}
+.num-btn{padding:5px 2px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;background:rgba(255,208,0,.1);border:1px solid rgba(255,208,0,.25);color:#FFD000;transition:.15s;text-align:center;}
+.num-btn:hover{background:rgba(255,208,0,.25);}
+.num-btn:disabled{opacity:.3;cursor:not-allowed;}
+
+.status{font-size:10px;text-align:center;color:rgba(255,255,255,.3);padding:5px;min-height:18px;}
+.status.ok{color:#4ade80;}.status.err{color:#f87171;}
+</style>
+</head>
+<body>
+<h1>🃏 Comodines Control</h1>
+<div class="sub">Panel de control del mazo — solo visible para Sam</div>
+
+<!-- Quién tiene qué -->
+<div class="holders">
+  <div class="holder sam">
+    <div class="holder-title">⚔️ Sam tiene</div>
+    <div class="holder-content" id="samHolderContent">
+      <span style="color:rgba(255,255,255,.25);">Sin carta</span>
+    </div>
+  </div>
+  <div class="holder chat">
+    <div class="holder-title">💬 Chat tiene</div>
+    <div class="holder-content" id="chatHolderContent">
+      <span style="color:rgba(255,255,255,.25);">Sin carta</span>
+    </div>
+  </div>
+</div>
+
+<!-- Botones de acción -->
+<div class="action-btns">
+  <button class="btn-action btn-sorteo" onclick="iniciarSorteo()">🃏 Iniciar sorteo — mostrar mazo en stream</button>
+  
+  <div class="sam-selector" id="samSelector">
+    <div class="sam-selector-title">Sam elige carta (1-9):</div>
+    <div class="num-grid" id="numGrid"></div>
+  </div>
+  
+  <button class="btn-action btn-reveal-sam" id="btnRevealSam" disabled onclick="revelarSam()">🔵 Revelar carta Sam</button>
+  <button class="btn-action btn-reveal-chat" id="btnRevealChat" disabled onclick="revelarChat()">🔴 Revelar carta Chat</button>
+  <button class="btn-action btn-act-sam" id="btnActSam" disabled onclick="activar('sam')">⚡ Activar comodín Sam</button>
+  <button class="btn-action btn-act-chat" id="btnActChat" disabled onclick="activar('chat')">⚡ Activar comodín Chat</button>
+  <button class="btn-action btn-hide" onclick="ocultarOverlay()">🙈 Ocultar overlay</button>
+</div>
+
+<!-- Referencia completa del mazo -->
+<div class="section-title">Referencia del mazo</div>
+<div class="mazo-grid" id="mazoGrid"></div>
+
+<div class="status" id="statusBar"></div>
+
+<script>
+const LS = 'comodines_state';
+
+const MAZO_BASE = [
+  {id:1, emoji:'💚', titulo:'Recuperación',   desc:'Si ganas esta ronda recuperas media vida.',                            rareza:'comun'},
+  {id:2, emoji:'🎲', titulo:'Lotería',         desc:'Ganas o pierdes media vida al azar. 50/50.',                          rareza:'comun'},
+  {id:3, emoji:'🔄', titulo:'Inversión Total', desc:'Las opciones se invierten. Hay que votar "mal" para ganar.',          rareza:'raro'},
+  {id:4, emoji:'💀', titulo:'Doble o nada',    desc:'Si pierdes esta ronda, pierdes 1 vida completa en lugar de media.',   rareza:'raro'},
+  {id:5, emoji:'🛡️', titulo:'Escudo',          desc:'Tu próximo error no te quita vida. Tienes 1 fallo gratis.',           rareza:'raro'},
+  {id:6, emoji:'⚔️', titulo:'Sabotaje',        desc:'Si el rival se equivoca, pierde 1 vida completa en lugar de media.',  rareza:'raro'},
+  {id:7, emoji:'🩸', titulo:'Robo de vida',    desc:'Le robas media vida al rival y te la sumas a ti mismo.',              rareza:'epico'},
+  {id:8, emoji:'🔀', titulo:'Ruleta de vidas', desc:'Las vidas de Sam y Chat se intercambian completamente.',              rareza:'epico'},
+  {id:9, emoji:'✨', titulo:'Resurrección',    desc:'Recuperas TODAS tus vidas de golpe. Instantáneo.',                   rareza:'epico'},
+];
+
+let mazo = [];
+let samIdx = null, chatIdx = null;
+let samUsed = false, chatUsed = false;
+
+// ── Mezclar mazo ──
+function shuffleMazo(){
+  mazo = [...MAZO_BASE].sort(()=>Math.random()-.5);
+}
+
+// ── Iniciar sorteo ──
+function iniciarSorteo(){
+  shuffleMazo();
+  samIdx = null; chatIdx = null; samUsed = false; chatUsed = false;
+  renderMazoGrid();
+  updateHolders();
+  updateButtons();
+  // Mostrar selector de Sam
+  document.getElementById('samSelector').classList.add('show');
+  renderNumGrid();
+  // Enviar a overlay
+  save({action:'sorteo'});
+  setStatus('Mazo iniciado — Sam elige su carta', 'ok');
+}
+
+// ── Selector numérico para Sam ──
+function renderNumGrid(){
+  const grid = document.getElementById('numGrid');
+  grid.innerHTML = '';
+  mazo.forEach((_,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'num-btn';
+    btn.textContent = i+1;
+    btn.disabled = (i === chatIdx);
+    btn.onclick = ()=>elegirSam(i);
+    grid.appendChild(btn);
+  });
+}
+
+function elegirSam(idx){
+  samIdx = idx;
+  document.getElementById('samSelector').classList.remove('show');
+  document.getElementById('btnRevealSam').disabled = false;
+  updateHolders();
+  updateButtons();
+  renderMazoGrid();
+  setStatus(`Sam eligió carta ${idx+1}: ${mazo[idx].titulo}`, 'ok');
+}
+
+// ── El Chat también elige (por poll 1-9 o Sam asigna) ──
+function elegirChat(idx){
+  if(idx === samIdx){ setStatus('Esa carta ya la tiene Sam','err'); return; }
+  chatIdx = idx;
+  document.getElementById('btnRevealChat').disabled = false;
+  updateHolders();
+  updateButtons();
+  renderMazoGrid();
+  setStatus(`Chat eligió carta ${idx+1}: ${mazo[idx].titulo}`, 'ok');
+}
+
+// ── Revelar en overlay ──
+function revelarSam(){
+  if(samIdx===null) return;
+  save({action:'chooseSam', idx:samIdx});
+  setStatus('Revelando carta de Sam...', 'ok');
+}
+
+function revelarChat(){
+  if(chatIdx===null) return;
+  save({action:'chooseChat', idx:chatIdx});
+  setStatus('Revelando carta del Chat...', 'ok');
+}
+
+// ── Activar comodín ──
+function activar(side){
+  save({action: side==='sam'?'activateSam':'activateChat'});
+  if(side==='sam') samUsed=true;
+  else chatUsed=true;
+  updateButtons();
+  updateHolders();
+  renderMazoGrid();
+  setStatus(`Comodín de ${side==='sam'?'Sam':'el Chat'} activado`, 'ok');
+}
+
+// ── Ocultar overlay ──
+function ocultarOverlay(){
+  save({action:'hide'});
+  setStatus('Overlay oculto','');
+}
+
+// ── UI ──
+function updateHolders(){
+  const samEl = document.getElementById('samHolderContent');
+  const chatEl = document.getElementById('chatHolderContent');
+
+  if(samIdx!==null){
+    const c=mazo[samIdx];
+    samEl.innerHTML=`<div class="holder-card">
+      <div class="holder-card-name">${c.emoji} ${c.titulo} ${samUsed?'<span style="color:rgba(255,255,255,.3);font-size:9px;">· USADO</span>':''}</div>
+      <div class="holder-card-desc">${c.desc}</div>
+      <div class="holder-card-rarity ${c.rareza}">${c.rareza.toUpperCase()}</div>
+    </div>`;
+  } else {
+    samEl.innerHTML='<span style="color:rgba(255,255,255,.25);font-size:10px;">Sin carta</span>';
+  }
+
+  if(chatIdx!==null){
+    const c=mazo[chatIdx];
+    chatEl.innerHTML=`<div class="holder-card">
+      <div class="holder-card-name">${c.emoji} ${c.titulo} ${chatUsed?'<span style="color:rgba(255,255,255,.3);font-size:9px;">· USADO</span>':''}</div>
+      <div class="holder-card-desc">${c.desc}</div>
+      <div class="holder-card-rarity ${c.rareza}">${c.rareza.toUpperCase()}</div>
+    </div>`;
+  } else {
+    chatEl.innerHTML='<span style="color:rgba(255,255,255,.25);font-size:10px;">Sin carta</span>';
+  }
+}
+
+function updateButtons(){
+  document.getElementById('btnRevealSam').disabled = samIdx===null;
+  document.getElementById('btnRevealChat').disabled = chatIdx===null;
+  document.getElementById('btnActSam').disabled = samIdx===null||samUsed;
+  document.getElementById('btnActChat').disabled = chatIdx===null||chatUsed;
+}
+
+function renderMazoGrid(){
+  const grid = document.getElementById('mazoGrid');
+  grid.innerHTML='';
+  mazo.forEach((c,i)=>{
+    const isSam=i===samIdx, isChat=i===chatIdx;
+    const div=document.createElement('div');
+    div.className='comodin-row'+(isSam?' selected-sam':isChat?' selected-chat':'');
+    div.onclick=()=>{
+      if(samIdx===null){elegirSam(i);}
+      else if(chatIdx===null&&i!==samIdx){elegirChat(i);}
+    };
+    div.innerHTML=`
+      <div class="comodin-num">${i+1}</div>
+      <div class="comodin-emoji">${c.emoji}</div>
+      <div class="comodin-info">
+        <div class="comodin-name">${c.titulo}</div>
+        <div class="comodin-desc">${c.desc}</div>
+        <div class="comodin-rarity ${c.rareza}">${c.rareza.toUpperCase()}</div>
+      </div>
+      ${isSam?'<span class="comodin-badge badge-sam">SAM</span>':''}
+      ${isChat?'<span class="comodin-badge badge-chat">CHAT</span>':''}
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function save(extra={}){
+  localStorage.setItem(LS, JSON.stringify({
+    action:'idle', mazo, samIdx, chatIdx, samUsed, chatUsed,
+    ts:Date.now(), ...extra
+  }));
+}
+
+function setStatus(msg,type){
+  const el=document.getElementById('statusBar');
+  el.textContent=msg; el.className='status '+(type||'');
+}
+
+// También detectar cuando el chat vota en la encuesta para asignarle carta
+setInterval(()=>{
+  if(chatIdx!==null) return;
+  try{
+    const ps=JSON.parse(localStorage.getItem('poll_state')||'{}');
+    if(!ps.active||ps.numOpts!==9) return;
+    if(ps.timerEnd&&Date.now()>ps.timerEnd){
+      // La votación terminó — encontrar carta más votada
+      let maxV=0, winIdx=-1;
+      for(let i=1;i<=9;i++){
+        const v=ps['v'+i]||0;
+        if(v>maxV&&i-1!==samIdx){maxV=v;winIdx=i-1;}
+      }
+      if(winIdx>=0&&maxV>0) elegirChat(winIdx);
+    }
+  }catch(e){}
+}, 1000);
+
+// Init
+shuffleMazo();
+renderMazoGrid();
+</script>
+</body>
+</html>
