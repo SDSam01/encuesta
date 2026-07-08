@@ -8,219 +8,145 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 
-/* ══ SORTEO — pantalla completa ══ */
+/* ══ SORTEO ══ */
 #sorteoStage{
   position:fixed;inset:0;z-index:20;
   background:rgba(0,0,0,.93);
   display:none;flex-direction:column;align-items:center;justify-content:center;
-  transition:background .5s, opacity .5s;
 }
 #sorteoStage.show{display:flex;}
-#sorteoStage.shrinking{
-  animation:stageOut .7s cubic-bezier(.55,0,1,.45) forwards;
-}
-@keyframes stageOut{
-  0%{opacity:1;background:rgba(0,0,0,.93);}
-  100%{opacity:0;background:rgba(0,0,0,0);}
-}
-
+#sorteoStage.shrinking{animation:stageOut .7s cubic-bezier(.55,0,1,.45) forwards;}
+@keyframes stageOut{0%{opacity:1;}100%{opacity:0;}}
 .sorteo-title{
   font-family:'Bebas Neue',sans-serif;
   font-size:20px;letter-spacing:14px;color:rgba(255,208,0,.7);
-  margin-bottom:40px;
-  text-shadow:0 0 20px rgba(255,208,0,.3);
-  transition:opacity .3s,transform .3s;
+  margin-bottom:40px;text-shadow:0 0 20px rgba(255,208,0,.3);
 }
-#cardRow{display:flex;gap:16px;align-items:center;justify-content:center;}
-
-/* Animación de encogimiento de cada carta */
-.cw.shrink{
-  animation:cardShrink .6s cubic-bezier(.55,0,1,.45) forwards;
-}
-@keyframes cardShrink{
-  0%{opacity:1;transform:translateY(0) scale(1);}
-  60%{transform:translateY(-10px) scale(.95);}
-  100%{opacity:0;transform:translateY(20px) scale(.3);}
-}
+#cardRow{display:flex;gap:14px;align-items:center;justify-content:center;}
 
 /* ══ CARTA ══ */
 .cw{
-  width:150px;height:220px;
-  perspective:600px;cursor:default;
+  width:148px;height:218px;perspective:600px;
   opacity:0;transform:translateY(40px);
   transition:opacity .3s,transform .3s cubic-bezier(.34,1.56,.64,1);
 }
 .cw.visible{opacity:1;transform:translateY(0);}
-.cw.sam-c .ci{border-color:rgba(68,136,255,.9);box-shadow:0 0 25px rgba(68,136,255,.8),0 0 50px rgba(68,136,255,.3);}
-.cw.chat-c .ci{border-color:rgba(248,113,113,.9);box-shadow:0 0 25px rgba(248,113,113,.8),0 0 50px rgba(248,113,113,.3);}
+.cw.sam-c1 .ci,.cw.sam-c2 .ci{border-color:rgba(255,208,0,.9);box-shadow:0 0 25px rgba(255,208,0,.7);}
+.cw.chat-c1 .ci,.cw.chat-c2 .ci{border-color:rgba(245,158,11,.9);box-shadow:0 0 25px rgba(245,158,11,.7);}
 .cw.flipped .ci{transform:rotateY(180deg);}
+.cw.shrink{animation:cardShrink .55s cubic-bezier(.55,0,1,.45) forwards;}
+@keyframes cardShrink{0%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(.2) translateY(30px);}}
 
 .ci{
-  width:100%;height:100%;
-  position:relative;transform-style:preserve-3d;
+  width:100%;height:100%;position:relative;transform-style:preserve-3d;
   transition:transform .7s cubic-bezier(.4,0,.2,1);
-  border-radius:12px;
-  border:2px solid rgba(255,208,0,.3);
+  border-radius:12px;border:2px solid rgba(255,208,0,.28);
   box-shadow:0 6px 24px rgba(0,0,0,.7);
 }
-
-/* Trasera */
 .cb,.cf{
   position:absolute;inset:0;border-radius:11px;
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
 }
-.cb{
-  background:linear-gradient(145deg,#08000f,#130020,#08000f);
-  overflow:hidden;
-}
-.cb::after{
-  content:'';position:absolute;inset:0;
-  background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(255,208,0,.025) 10px,rgba(255,208,0,.025) 11px);
-}
-.cb-num{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:68px;color:rgba(255,208,0,.2);
-  z-index:2;line-height:1;
-}
-.cb-label{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:11px;letter-spacing:5px;color:rgba(255,208,0,.15);
-  z-index:2;margin-top:4px;
-}
+.cb{background:linear-gradient(145deg,#08000f,#130020,#08000f);overflow:hidden;}
+.cb::after{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(255,208,0,.022) 10px,rgba(255,208,0,.022) 11px);}
+.cb-num{font-family:'Bebas Neue',sans-serif;font-size:68px;color:rgba(255,208,0,.2);z-index:2;line-height:1;}
+.cb-label{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:5px;color:rgba(255,208,0,.15);z-index:2;margin-top:4px;}
+.cf{transform:rotateY(180deg);padding:14px 10px;text-align:center;
+  background:linear-gradient(145deg,#0d0900,#1f1400);border:2px solid rgba(255,208,0,.6);}
+.cf-emoji{font-size:38px;line-height:1;margin-bottom:8px;}
+.cf-title{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:#fff;line-height:1.1;margin-bottom:8px;}
+.cf-desc{font-family:'Inter',sans-serif;font-size:9px;color:rgba(255,255,255,.5);line-height:1.4;}
 
-/* Delantera */
-.cf{
-  transform:rotateY(180deg);
-  padding:14px 10px;text-align:center;
-}
-.cf.comun{background:linear-gradient(145deg,#001806,#002d0a);border:2px solid #4ade80;}
-.cf.raro{background:linear-gradient(145deg,#1a1000,#2e1c00);border:2px solid #FFD000;}
-.cf.epico{background:linear-gradient(145deg,#140012,#240020);border:2px solid #c084fc;}
-
-.cf-rar{font-family:'Bebas Neue',sans-serif;font-size:9px;letter-spacing:5px;margin-bottom:8px;}
-.cf.comun .cf-rar{color:#4ade80;}
-.cf.raro .cf-rar{color:#FFD000;}
-.cf.epico .cf-rar{color:#c084fc;}
-.cf-emoji{font-size:40px;line-height:1;margin-bottom:8px;}
-.cf-title{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:16px;letter-spacing:2px;color:#fff;
-  line-height:1.1;margin-bottom:8px;
-}
-.cf-desc{
-  font-family:'Inter',sans-serif;
-  font-size:9px;color:rgba(255,255,255,.55);
-  line-height:1.4;
-}
-
-/* ══ HUD COMPACTO (después del sorteo) ══ */
+/* ══ HUD COMPACTO — más simple ══ */
 #hud{
-  position:fixed;top:100px;right:30px;z-index:15;
-  display:none;flex-direction:column;gap:10px;
+  position:fixed;top:100px;right:28px;z-index:15;
+  display:none;flex-direction:column;gap:8px;
 }
 #hud.show{display:flex;}
-#hud.entering .hud-card{
-  animation:hudSlideIn .5s cubic-bezier(.34,1.56,.64,1) forwards;
-}
-#hud.entering .hud-card:nth-child(2){animation-delay:.12s;}
-@keyframes hudSlideIn{
-  0%{opacity:0;transform:translateX(80px) scale(.7);}
-  100%{opacity:1;transform:translateX(0) scale(1);}
-}
-.hud-card{
-  width:210px;border-radius:10px;padding:10px 12px;
-  display:flex;align-items:center;gap:10px;
+#hud.entering .hud-row{animation:hudIn .5s cubic-bezier(.34,1.56,.64,1) forwards;opacity:0;}
+#hud.entering .hud-row:nth-child(2){animation-delay:.1s;}
+@keyframes hudIn{from{opacity:0;transform:translateX(60px);}to{opacity:1;transform:translateX(0);}}
+
+.hud-row{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(6,4,0,.85);
+  border:1px solid rgba(255,208,0,.35);
+  border-radius:10px;padding:7px 10px;
   backdrop-filter:blur(8px);
 }
-.hud-card.sam{background:rgba(10,8,0,.88);border:1.5px solid rgba(255,208,0,.6);}
-.hud-card.chat{background:rgba(12,8,0,.88);border:1.5px solid rgba(245,158,11,.5);}
-.hud-card.used{opacity:.35;}
 .hud-side{
   font-family:'Bebas Neue',sans-serif;
-  font-size:10px;letter-spacing:4px;min-width:32px;
+  font-size:11px;letter-spacing:4px;color:rgba(255,208,0,.7);
+  min-width:38px;
 }
-.hud-card.sam .hud-side{color:#FFD000;}
-.hud-card.chat .hud-side{color:#F59E0B;}
-.hud-emoji{font-size:22px;line-height:1;}
-.hud-info{flex:1;}
-.hud-name{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;color:#fff;line-height:1;}
-.hud-rar{font-family:'Bebas Neue',sans-serif;font-size:8px;letter-spacing:3px;margin-top:2px;}
-.hud-used-txt{font-family:'Bebas Neue',sans-serif;font-size:8px;letter-spacing:3px;color:rgba(255,200,0,.3);}
+.hud-cards{display:flex;gap:6px;}
+.hud-mini{
+  width:38px;height:38px;border-radius:7px;
+  border:1px solid rgba(255,208,0,.35);
+  background:rgba(255,208,0,.06);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;transition:opacity .3s;
+}
+.hud-mini.used{opacity:.2;text-decoration:line-through;}
+.hud-mini.empty{opacity:.2;}
 
-/* ══ ACTIVACIÓN — Yu-Gi-Oh ══ */
+/* ══ ACTIVACIÓN ══ */
 #activation{
   position:fixed;inset:0;z-index:30;
   background:rgba(0,0,0,.97);
   display:none;flex-direction:column;align-items:center;justify-content:center;
 }
 #activation.show{display:flex;}
-#actBg{
-  position:absolute;inset:0;
-  background:radial-gradient(ellipse at 50% 50%,rgba(255,208,0,.07) 0%,transparent 65%);
-  animation:bgP 1.2s infinite alternate;
-}
+#actBg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(255,208,0,.07) 0%,transparent 65%);animation:bgP 1.2s infinite alternate;}
 @keyframes bgP{from{opacity:.5;}to{opacity:1;}}
-
 #actCard{
-  position:relative;z-index:2;
-  width:300px;border-radius:20px;
+  position:relative;z-index:2;width:300px;border-radius:20px;
   padding:28px 24px;text-align:center;
+  border:3px solid rgba(255,208,0,.8);
+  background:linear-gradient(160deg,#0d0900,#1f1400);
+  box-shadow:0 0 70px rgba(255,208,0,.5),0 0 140px rgba(255,180,0,.2);
   opacity:0;transform:scale(0) rotateY(90deg);
   transition:transform .7s cubic-bezier(.34,1.56,.64,1),opacity .3s;
 }
 #actCard.show{opacity:1;transform:scale(1) rotateY(0deg);}
-#actCard.comun{background:linear-gradient(160deg,#001806,#002d0a);border:3px solid #4ade80;box-shadow:0 0 60px rgba(74,222,128,.5);}
-#actCard.raro{background:linear-gradient(160deg,#1a1000,#2e1c00);border:3px solid #FFD000;box-shadow:0 0 60px rgba(255,208,0,.6);}
-#actCard.epico{background:linear-gradient(160deg,#140012,#240020);border:3px solid #c084fc;box-shadow:0 0 80px rgba(192,132,252,.6);}
-
-#actWho{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:8px;margin-bottom:14px;}
+#actWho{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:8px;color:rgba(255,208,0,.6);margin-bottom:14px;}
 #actEmoji{font-size:80px;line-height:1;margin-bottom:14px;}
-#actRarity{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:6px;margin-bottom:6px;}
 #actTitle{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:3px;color:#fff;line-height:1;margin-bottom:16px;text-shadow:0 0 20px rgba(255,255,255,.4);}
-.act-div{width:80%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);margin:0 auto 16px;}
+.act-div{width:80%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,208,0,.4),transparent);margin:0 auto 16px;}
 #actDesc{font-family:'Inter',sans-serif;font-size:15px;font-weight:700;color:rgba(255,255,255,.75);line-height:1.5;font-style:italic;}
-
-#actFlash{position:fixed;inset:0;opacity:0;pointer-events:none;z-index:35;transition:opacity .07s;}
+#actFlash{position:fixed;inset:0;opacity:0;pointer-events:none;z-index:35;background:rgba(255,208,0,.35);transition:opacity .07s;}
 </style>
 </head>
 <body>
-
-<!-- ══ SORTEO ══ -->
 <div id="sorteoStage">
   <div class="sorteo-title">🃏 ELIGE TU COMODÍN 🃏</div>
   <div id="cardRow"></div>
 </div>
 
-<!-- ══ HUD COMPACTO ══ -->
 <div id="hud">
-  <div class="hud-card sam" id="hudSam" style="display:none;">
+  <div class="hud-row" id="hudRowSam">
     <div class="hud-side">SAM</div>
-    <div class="hud-emoji" id="hudSamEmoji">⭐</div>
-    <div class="hud-info">
-      <div class="hud-name" id="hudSamName">—</div>
-      <div class="hud-rar" id="hudSamRar"></div>
-      <div class="hud-used-txt" id="hudSamUsed" style="display:none;">USADO</div>
+    <div class="hud-cards">
+      <div class="hud-mini empty" id="hudSam0">🃏</div>
+      <div class="hud-mini empty" id="hudSam1">🃏</div>
     </div>
   </div>
-  <div class="hud-card chat" id="hudChat" style="display:none;">
+  <div class="hud-row" id="hudRowChat">
     <div class="hud-side">CHAT</div>
-    <div class="hud-emoji" id="hudChatEmoji">⭐</div>
-    <div class="hud-info">
-      <div class="hud-name" id="hudChatName">—</div>
-      <div class="hud-rar" id="hudChatRar"></div>
-      <div class="hud-used-txt" id="hudChatUsed" style="display:none;">USADO</div>
+    <div class="hud-cards">
+      <div class="hud-mini empty" id="hudChat0">🃏</div>
+      <div class="hud-mini empty" id="hudChat1">🃏</div>
     </div>
   </div>
 </div>
 
-<!-- ══ ACTIVACIÓN ══ -->
 <div id="activation">
   <div id="actBg"></div>
   <div id="actCard">
     <div id="actWho"></div>
     <div id="actEmoji">⭐</div>
-    <div id="actRarity"></div>
     <div id="actTitle">COMODÍN</div>
     <div class="act-div"></div>
     <div id="actDesc"></div>
@@ -233,163 +159,121 @@ const LS='comodines_state';
 const AC=new(window.AudioContext||window.webkitAudioContext)();
 
 const MAZO_BASE=[
-  {id:1,emoji:'💚',titulo:'Recuperación',   desc:'Si ganas esta ronda recuperas media vida.',                           rareza:'comun'},
-  {id:2,emoji:'🎲',titulo:'Lotería',        desc:'Ganas o pierdes media vida al azar. 50/50.',                         rareza:'comun'},
-  {id:3,emoji:'🔄',titulo:'Inversión Total',desc:'El rival tiene que votar mal para ganar esta ronda. Sus votos correctos cuentan como perdidos.',           rareza:'raro'},
-  {id:4,emoji:'💀',titulo:'Doble o nada',   desc:'Si el rival pierde esta ronda, pierde 1 vida completa en lugar de media.',                    rareza:'raro'},
-  {id:5,emoji:'🛡️',titulo:'Escudo',         desc:'Tu próximo error no te quita vida. Un fallo gratis.',                rareza:'raro'},
-  {id:6,emoji:'⚔️',titulo:'Sabotaje',       desc:'Si el rival falla, pierde 1 vida completa en lugar de media.',       rareza:'raro'},
-  {id:7,emoji:'🩸',titulo:'Robo de vida',   desc:'Le robas media vida al rival y te la sumas.',                        rareza:'epico'},
-  {id:8,emoji:'🔀',titulo:'Ruleta de vidas',desc:'Las vidas de Sam y Chat se intercambian completamente.',             rareza:'epico'},
-  {id:9,emoji:'✨',titulo:'Resurrección',   desc:'Recuperas TODAS tus vidas de golpe. Instantáneo.',                  rareza:'epico'},
+  {emoji:'💚',titulo:'Recuperación',    desc:'Si ganas esta ronda recuperas media vida.'},
+  {emoji:'🎲',titulo:'Lotería',         desc:'Ganas o pierdes media vida al azar. 50/50.'},
+  {emoji:'🔄',titulo:'Inversión Total', desc:'El rival tiene que votar mal para ganar esta ronda.'},
+  {emoji:'💀',titulo:'Doble o nada',    desc:'Si el rival pierde esta ronda, pierde 1 vida completa.'},
+  {emoji:'🛡️',titulo:'Escudo',          desc:'Tu próximo error no te quita vida. Un fallo gratis.'},
+  {emoji:'⚔️',titulo:'Sabotaje',        desc:'Si el rival falla, pierde 1 vida completa en lugar de media.'},
+  {emoji:'🩸',titulo:'Robo de vida',    desc:'Le robas media vida al rival y te la sumas.'},
+  {emoji:'🔀',titulo:'Ruleta de vidas', desc:'Las vidas de Sam y Chat se intercambian completamente.'},
+  {emoji:'✨',titulo:'Resurrección',    desc:'Recuperas TODAS tus vidas de golpe.'},
+  {emoji:'🎭',titulo:'Cambiar Personaje',desc:'El representante del chat responde en el personaje que Sam elija al momento.'},
 ];
 
 let mazo=[];
-let samCard=null,chatCard=null;
-let samUsed=false,chatUsed=false;
-let lastTs=0,actTimer=null;
+let samCards=[null,null], chatCards=[null,null];
+let samUsed=[false,false], chatUsed=[false,false];
+let lastTs=0, actTimer=null;
 
-// ══ SORTEO ══
 function showSorteo(mazoData){
   mazo=mazoData||[...MAZO_BASE].sort(()=>Math.random()-.5);
-  samCard=null;chatCard=null;samUsed=false;chatUsed=false;
+  samCards=[null,null];chatCards=[null,null];
+  samUsed=[false,false];chatUsed=[false,false];
+  resetHudMinis();
   document.getElementById('sorteoStage').classList.add('show');
-  document.getElementById('hud').classList.remove('show');
-  document.getElementById('hudSam').style.display='none';
-  document.getElementById('hudChat').style.display='none';
   buildCards();
   playSound('appear');
 }
 
 function hideSorteo(){
-  const stage = document.getElementById('sorteoStage');
-  const cards = document.querySelectorAll('.cw');
-  // Animar cada carta con delay escalonado
-  cards.forEach((c,i)=>{
-    setTimeout(()=>c.classList.add('shrink'), i*40);
-  });
-  // Fade out del stage completo
-  setTimeout(()=>stage.classList.add('shrinking'), cards.length*40);
-  setTimeout(()=>{
-    stage.classList.remove('show','shrinking');
-    cards.forEach(c=>c.classList.remove('shrink'));
-  }, cards.length*40 + 750);
+  const stage=document.getElementById('sorteoStage');
+  document.querySelectorAll('.cw').forEach((c,i)=>setTimeout(()=>c.classList.add('shrink'),i*35));
+  const n=document.querySelectorAll('.cw').length;
+  setTimeout(()=>stage.classList.add('shrinking'),n*35);
+  setTimeout(()=>{stage.classList.remove('show','shrinking');
+    document.querySelectorAll('.cw').forEach(c=>c.classList.remove('shrink'));
+  },n*35+750);
 }
 
 function showHudAnimated(){
-  const hud = document.getElementById('hud');
+  const hud=document.getElementById('hud');
   hud.classList.add('show','entering');
-  setTimeout(()=>hud.classList.remove('entering'), 700);
+  setTimeout(()=>hud.classList.remove('entering'),700);
 }
 
-// ══ CARTAS ══
 function buildCards(){
   const row=document.getElementById('cardRow');
   row.innerHTML='';
   mazo.forEach((c,i)=>{
     const w=document.createElement('div');
-    w.className='cw'; w.id='cw'+i;
+    w.className='cw';w.id='cw'+i;
     w.innerHTML=`<div class="ci">
-      <div class="cb">
-        <div class="cb-num">${i+1}</div>
-        <div class="cb-label">COMODÍN</div>
-      </div>
-      <div class="cf ${c.rareza}">
-        <div class="cf-rar">${c.rareza.toUpperCase()}</div>
-        <div class="cf-emoji">${c.emoji}</div>
-        <div class="cf-title">${c.titulo}</div>
-        <div class="cf-desc">${c.desc}</div>
-      </div>
+      <div class="cb"><div class="cb-num">${i+1}</div><div class="cb-label">COMODÍN</div></div>
+      <div class="cf"><div class="cf-emoji">${c.emoji}</div><div class="cf-title">${c.titulo}</div><div class="cf-desc">${c.desc}</div></div>
     </div>`;
     row.appendChild(w);
-    setTimeout(()=>w.classList.add('visible'),i*70+100);
+    setTimeout(()=>w.classList.add('visible'),i*65+80);
   });
 }
 
-function chooseSam(idx){
-  samCard=mazo[idx];
+function chooseSide(side,slot,idx){
+  if(idx<0||idx>=mazo.length)return;
+  if(side==='sam')samCards[slot]=mazo[idx];
+  else chatCards[slot]=mazo[idx];
+  const suffix=side==='sam'?'sam-c':'chat-c';
   const w=document.getElementById('cw'+idx);
-  if(w){w.classList.add('sam-c');setTimeout(()=>w.classList.add('flipped'),200);}
+  if(w){w.classList.add(suffix+(slot+1));setTimeout(()=>w.classList.add('flipped'),200);}
   playSound('flip');
-  setTimeout(()=>updateHud(),1000);
+  setTimeout(()=>updateHudMinis(),1000);
 }
 
-function chooseChat(idx){
-  chatCard=mazo[idx];
-  const w=document.getElementById('cw'+idx);
-  if(w){w.classList.add('chat-c');setTimeout(()=>w.classList.add('flipped'),200);}
-  playSound('flip');
-  setTimeout(()=>{
-    updateHud();
-    // Si ambos eligieron → compactar después de 2s
-    if(samCard&&chatCard){
-      setTimeout(()=>{
-        hideSorteo();
-        setTimeout(showHudAnimated,600);
-      },2000);
-    }
-  },1000);
+function updateHudMinis(){
+  samCards.forEach((c,i)=>{
+    const el=document.getElementById('hudSam'+i);
+    if(!el)return;
+    if(c){el.textContent=c.emoji;el.classList.remove('empty');el.classList.toggle('used',samUsed[i]);}
+  });
+  chatCards.forEach((c,i)=>{
+    const el=document.getElementById('hudChat'+i);
+    if(!el)return;
+    if(c){el.textContent=c.emoji;el.classList.remove('empty');el.classList.toggle('used',chatUsed[i]);}
+  });
 }
 
-function updateHud(){
-  if(samCard){
-    const h=document.getElementById('hudSam');
-    h.style.display='flex';
-    document.getElementById('hudSamEmoji').textContent=samCard.emoji;
-    document.getElementById('hudSamName').textContent=samCard.titulo.toUpperCase();
-    const r=document.getElementById('hudSamRar');
-    r.textContent=samCard.rareza.toUpperCase();
-    r.className='hud-rar '+samCard.rareza;
-    document.getElementById('hudSamUsed').style.display=samUsed?'block':'none';
-    document.getElementById('hudSam').classList.toggle('used',samUsed);
-  }
-  if(chatCard){
-    const h=document.getElementById('hudChat');
-    h.style.display='flex';
-    document.getElementById('hudChatEmoji').textContent=chatCard.emoji;
-    document.getElementById('hudChatName').textContent=chatCard.titulo.toUpperCase();
-    const r=document.getElementById('hudChatRar');
-    r.textContent=chatCard.rareza.toUpperCase();
-    r.className='hud-rar '+chatCard.rareza;
-    document.getElementById('hudChatUsed').style.display=chatUsed?'block':'none';
-    document.getElementById('hudChat').classList.toggle('used',chatUsed);
-  }
+function resetHudMinis(){
+  ['Sam','Chat'].forEach(side=>['0','1'].forEach(i=>{
+    const el=document.getElementById('hud'+side+i);
+    if(el){el.textContent='🃏';el.className='hud-mini empty';}
+  }));
 }
 
-// ══ ACTIVACIÓN ══
-function activateComodin(side){
-  const c=side==='sam'?samCard:chatCard;
-  if(!c) return;
+function activateComodin(side,slot){
+  const cards=side==='sam'?samCards:chatCards;
+  const used=side==='sam'?samUsed:chatUsed;
+  const c=cards[slot];
+  if(!c||used[slot])return;
   if(actTimer){clearTimeout(actTimer);actTimer=null;}
 
-  const act=document.getElementById('activation');
   const actCard=document.getElementById('actCard');
   const flash=document.getElementById('actFlash');
-
+  const act=document.getElementById('activation');
   actCard.classList.remove('show');
-  actCard.className='';
   document.getElementById('actWho').textContent=side==='sam'?'⚔️ SAM ACTIVA SU COMODÍN':'💬 EL CHAT ACTIVA SU COMODÍN';
-  document.getElementById('actWho').style.color=side==='sam'?'rgba(68,136,255,.7)':'rgba(248,113,113,.7)';
+  document.getElementById('actWho').style.color=side==='sam'?'rgba(255,208,0,.7)':'rgba(245,158,11,.7)';
   document.getElementById('actEmoji').textContent=c.emoji;
-  const rar=document.getElementById('actRarity');
-  rar.textContent=c.rareza.toUpperCase();
-  rar.style.color=c.rareza==='comun'?'#4ade80':c.rareza==='raro'?'#FFD000':'#c084fc';
   document.getElementById('actTitle').textContent=c.titulo.toUpperCase();
   document.getElementById('actDesc').textContent=c.desc;
-  flash.style.background=side==='sam'?'rgba(68,136,255,.4)':'rgba(248,113,113,.4)';
 
   act.classList.add('show');
-  flash.style.opacity='1';
-  setTimeout(()=>flash.style.opacity='0',120);
-  setTimeout(()=>{flash.style.opacity='.5';setTimeout(()=>flash.style.opacity='0',100);},280);
-  setTimeout(()=>actCard.classList.add(c.rareza),50);
-  setTimeout(()=>actCard.classList.add('show'),100);
-  playSound('activate',c.rareza);
+  flash.style.opacity='1';setTimeout(()=>flash.style.opacity='0',120);
+  setTimeout(()=>{flash.style.opacity='.4';setTimeout(()=>flash.style.opacity='0',100);},280);
+  setTimeout(()=>actCard.classList.add('show'),80);
+  playSound('activate');
   setTimeout(()=>speakMaleficent(c.titulo+'. '+c.desc),900);
 
-  if(side==='sam'){samUsed=true;}else{chatUsed=true;}
-  updateHud();
-
+  if(side==='sam')samUsed[slot]=true; else chatUsed[slot]=true;
+  updateHudMinis();
   actTimer=setTimeout(()=>closeActivation(),7500);
 }
 
@@ -397,53 +281,29 @@ function closeActivation(){
   if(actTimer){clearTimeout(actTimer);actTimer=null;}
   const actCard=document.getElementById('actCard');
   actCard.classList.remove('show');
-  setTimeout(()=>{
-    document.getElementById('activation').classList.remove('show');
-    window.speechSynthesis.cancel();
-  },700);
+  setTimeout(()=>{document.getElementById('activation').classList.remove('show');window.speechSynthesis.cancel();},700);
 }
 
-// ══ RESET TOTAL ══
 function resetAll(){
-  closeActivation();
-  hideSorteo();
+  closeActivation();hideSorteo();
   document.getElementById('hud').classList.remove('show');
-  document.getElementById('hudSam').style.display='none';
-  document.getElementById('hudChat').style.display='none';
-  samCard=null;chatCard=null;samUsed=false;chatUsed=false;
+  resetHudMinis();
+  samCards=[null,null];chatCards=[null,null];
+  samUsed=[false,false];chatUsed=[false,false];
 }
 
-// ══ SONIDOS ══
-function playSound(type,rareza){
-  AC.resume();
-  const t=AC.currentTime;
+function playSound(type){
+  AC.resume();const t=AC.currentTime;
   if(type==='appear'){
-    [0,.1,.2].forEach((d,i)=>{
-      const o=AC.createOscillator();o.type='sine';o.frequency.value=400+i*200;
-      const g=AC.createGain();g.gain.setValueAtTime(0.15,t+d);g.gain.exponentialRampToValueAtTime(0.001,t+d+0.2);
-      o.connect(g);g.connect(AC.destination);o.start(t+d);o.stop(t+d+0.21);
-    });
-  } else if(type==='flip'){
-    const o=AC.createOscillator();o.type='sine';o.frequency.setValueAtTime(300,t);o.frequency.exponentialRampToValueAtTime(600,t+0.15);
-    const g=AC.createGain();g.gain.setValueAtTime(0.2,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.2);
-    o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+0.22);
-  } else if(type==='activate'){
-    const color=rareza==='epico'?[196,132,252]:rareza==='raro'?[255,208,0]:[74,222,128];
-    const sub=AC.createOscillator();sub.type='sine';
-    sub.frequency.setValueAtTime(120,t);sub.frequency.exponentialRampToValueAtTime(35,t+0.5);
-    const sg=AC.createGain();sg.gain.setValueAtTime(0.9,t);sg.gain.exponentialRampToValueAtTime(0.001,t+0.6);
-    sub.connect(sg);sg.connect(AC.destination);sub.start(t);sub.stop(t+0.65);
-    const notes=rareza==='epico'?[523,415,330,262]:rareza==='raro'?[523,659,784,1047]:[523,659,784,659];
-    notes.forEach((freq,i)=>{
-      const o=AC.createOscillator();o.type='triangle';
-      const g=AC.createGain();const st=t+0.1+i*0.13;
-      g.gain.setValueAtTime(0.25,st);g.gain.exponentialRampToValueAtTime(0.001,st+0.35);
-      o.frequency.value=freq;o.connect(g);g.connect(AC.destination);o.start(st);o.stop(st+0.37);
-    });
+    [0,.1,.2].forEach((d,i)=>{const o=AC.createOscillator();o.type='sine';o.frequency.value=400+i*180;const g=AC.createGain();g.gain.setValueAtTime(.14,t+d);g.gain.exponentialRampToValueAtTime(.001,t+d+.18);o.connect(g);g.connect(AC.destination);o.start(t+d);o.stop(t+d+.2);});
+  }else if(type==='flip'){
+    const o=AC.createOscillator();o.type='sine';o.frequency.setValueAtTime(280,t);o.frequency.exponentialRampToValueAtTime(580,t+.14);const g=AC.createGain();g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.2);
+  }else if(type==='activate'){
+    const sub=AC.createOscillator();sub.type='sine';sub.frequency.setValueAtTime(110,t);sub.frequency.exponentialRampToValueAtTime(32,t+.5);const sg=AC.createGain();sg.gain.setValueAtTime(.85,t);sg.gain.exponentialRampToValueAtTime(.001,t+.6);sub.connect(sg);sg.connect(AC.destination);sub.start(t);sub.stop(t+.65);
+    [523,659,784,1047].forEach((f,i)=>{const o=AC.createOscillator();o.type='triangle';const g=AC.createGain();const st=t+.1+i*.12;g.gain.setValueAtTime(.22,st);g.gain.exponentialRampToValueAtTime(.001,st+.32);o.frequency.value=f;o.connect(g);g.connect(AC.destination);o.start(st);o.stop(st+.34);});
   }
 }
 
-// ══ MALÉFICA ══
 function speakMaleficent(text){
   window.speechSynthesis.cancel();
   const utt=new SpeechSynthesisUtterance();
@@ -455,23 +315,23 @@ function speakMaleficent(text){
 }
 window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
 
-// ══ POLLING ══
 let lastTs2=0;
 setInterval(()=>{
   try{
-    const raw=localStorage.getItem(LS);
-    if(!raw)return;
-    const s=JSON.parse(raw);
-    if(!s.ts||s.ts===lastTs2)return;
-    lastTs2=s.ts;
-    const a=s.action;
+    const raw=localStorage.getItem(LS);if(!raw)return;
+    const s=JSON.parse(raw);if(!s.ts||s.ts===lastTs2)return;
+    lastTs2=s.ts;const a=s.action;
     if(a==='sorteo')       showSorteo(s.mazo);
     else if(a==='hide')    resetAll();
     else if(a==='compacto'){hideSorteo();setTimeout(showHudAnimated,600);}
-    else if(a==='chooseSam')  chooseSam(s.idx);
-    else if(a==='chooseChat') chooseChat(s.idx);
-    else if(a==='activateSam')  activateComodin('sam');
-    else if(a==='activateChat') activateComodin('chat');
+    else if(a==='chooseSam0')  chooseSide('sam',0,s.idx);
+    else if(a==='chooseSam1')  chooseSide('sam',1,s.idx);
+    else if(a==='chooseChat0') chooseSide('chat',0,s.idx);
+    else if(a==='chooseChat1') chooseSide('chat',1,s.idx);
+    else if(a==='activateSam0')  activateComodin('sam',0);
+    else if(a==='activateSam1')  activateComodin('sam',1);
+    else if(a==='activateChat0') activateComodin('chat',0);
+    else if(a==='activateChat1') activateComodin('chat',1);
     else if(a==='closeAct')   closeActivation();
     else if(a==='reset')      resetAll();
   }catch(e){}
