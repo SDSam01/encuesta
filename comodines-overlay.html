@@ -207,8 +207,8 @@ const AC=new(window.AudioContext||window.webkitAudioContext)();
 const MAZO_BASE=[
   {id:1,emoji:'💚',titulo:'Recuperación',   desc:'Si ganas esta ronda recuperas media vida.',                           rareza:'comun'},
   {id:2,emoji:'🎲',titulo:'Lotería',        desc:'Ganas o pierdes media vida al azar. 50/50.',                         rareza:'comun'},
-  {id:3,emoji:'🔄',titulo:'Inversión Total',desc:'Las opciones se invierten. Hay que votar mal para ganar.',           rareza:'raro'},
-  {id:4,emoji:'💀',titulo:'Doble o nada',   desc:'Si pierdes esta ronda, pierdes 1 vida completa.',                    rareza:'raro'},
+  {id:3,emoji:'🔄',titulo:'Inversión Total',desc:'El rival tiene que votar mal para ganar esta ronda. Sus votos correctos cuentan como perdidos.',           rareza:'raro'},
+  {id:4,emoji:'💀',titulo:'Doble o nada',   desc:'Si el rival pierde esta ronda, pierde 1 vida completa en lugar de media.',                    rareza:'raro'},
   {id:5,emoji:'🛡️',titulo:'Escudo',         desc:'Tu próximo error no te quita vida. Un fallo gratis.',                rareza:'raro'},
   {id:6,emoji:'⚔️',titulo:'Sabotaje',       desc:'Si el rival falla, pierde 1 vida completa en lugar de media.',       rareza:'raro'},
   {id:7,emoji:'🩸',titulo:'Robo de vida',   desc:'Le robas media vida al rival y te la sumas.',                        rareza:'epico'},
