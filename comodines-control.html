@@ -126,6 +126,7 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
   <button class="btn-a btn-act-chat" id="btnActChat" disabled onclick="activar('chat')">⚡ Activar comodín Chat</button>
   <button class="btn-a btn-close" onclick="cerrarActivacion()">✕ Cerrar activación</button>
   <button class="btn-a btn-hide" onclick="ocultarTodo()">🙈 Ocultar HUD</button>
+  <button class="btn-a" onclick="hacerCompacto()" style="background:rgba(255,208,0,.08);border-color:rgba(255,208,0,.3);color:rgba(255,208,0,.7);grid-column:1/-1;">⬛ Hacer pequeño — pasar a HUD compacto</button>
   <button class="btn-a btn-emergency" onclick="resetEmergencia()">🔄 RESET EMERGENCIA</button>
 </div>
 
@@ -245,6 +246,7 @@ function activar(side){
 
 function cerrarActivacion(){save({action:'closeAct'});setStatus('Activación cerrada','ok');}
 function ocultarTodo(){save({action:'hide'});setStatus('HUD oculto','');}
+function hacerCompacto(){save({action:'compacto'});setStatus('Vista compacta activada','ok');}
 
 function resetEmergencia(){
   samIdx=null;chatIdx=null;samUsed=false;chatUsed=false;
