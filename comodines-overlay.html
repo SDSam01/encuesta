@@ -13,15 +13,35 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
   position:fixed;inset:0;z-index:20;
   background:rgba(0,0,0,.93);
   display:none;flex-direction:column;align-items:center;justify-content:center;
+  transition:background .5s, opacity .5s;
 }
 #sorteoStage.show{display:flex;}
+#sorteoStage.shrinking{
+  animation:stageOut .7s cubic-bezier(.55,0,1,.45) forwards;
+}
+@keyframes stageOut{
+  0%{opacity:1;background:rgba(0,0,0,.93);}
+  100%{opacity:0;background:rgba(0,0,0,0);}
+}
+
 .sorteo-title{
   font-family:'Bebas Neue',sans-serif;
   font-size:20px;letter-spacing:14px;color:rgba(255,208,0,.7);
   margin-bottom:40px;
   text-shadow:0 0 20px rgba(255,208,0,.3);
+  transition:opacity .3s,transform .3s;
 }
 #cardRow{display:flex;gap:16px;align-items:center;justify-content:center;}
+
+/* Animación de encogimiento de cada carta */
+.cw.shrink{
+  animation:cardShrink .6s cubic-bezier(.55,0,1,.45) forwards;
+}
+@keyframes cardShrink{
+  0%{opacity:1;transform:translateY(0) scale(1);}
+  60%{transform:translateY(-10px) scale(.95);}
+  100%{opacity:0;transform:translateY(20px) scale(.3);}
+}
 
 /* ══ CARTA ══ */
 .cw{
@@ -100,6 +120,14 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
   display:none;flex-direction:column;gap:10px;
 }
 #hud.show{display:flex;}
+#hud.entering .hud-card{
+  animation:hudSlideIn .5s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+#hud.entering .hud-card:nth-child(2){animation-delay:.12s;}
+@keyframes hudSlideIn{
+  0%{opacity:0;transform:translateX(80px) scale(.7);}
+  100%{opacity:1;transform:translateX(0) scale(1);}
+}
 .hud-card{
   width:210px;border-radius:10px;padding:10px 12px;
   display:flex;align-items:center;gap:10px;
@@ -234,7 +262,24 @@ function showSorteo(mazoData){
 }
 
 function hideSorteo(){
-  document.getElementById('sorteoStage').classList.remove('show');
+  const stage = document.getElementById('sorteoStage');
+  const cards = document.querySelectorAll('.cw');
+  // Animar cada carta con delay escalonado
+  cards.forEach((c,i)=>{
+    setTimeout(()=>c.classList.add('shrink'), i*40);
+  });
+  // Fade out del stage completo
+  setTimeout(()=>stage.classList.add('shrinking'), cards.length*40);
+  setTimeout(()=>{
+    stage.classList.remove('show','shrinking');
+    cards.forEach(c=>c.classList.remove('shrink'));
+  }, cards.length*40 + 750);
+}
+
+function showHudAnimated(){
+  const hud = document.getElementById('hud');
+  hud.classList.add('show','entering');
+  setTimeout(()=>hud.classList.remove('entering'), 700);
 }
 
 // ══ CARTAS ══
@@ -280,7 +325,7 @@ function chooseChat(idx){
     if(samCard&&chatCard){
       setTimeout(()=>{
         hideSorteo();
-        document.getElementById('hud').classList.add('show');
+        setTimeout(showHudAnimated,600);
       },2000);
     }
   },1000);
@@ -422,7 +467,7 @@ setInterval(()=>{
     const a=s.action;
     if(a==='sorteo')       showSorteo(s.mazo);
     else if(a==='hide')    resetAll();
-    else if(a==='compacto'){hideSorteo();document.getElementById('hud').classList.add('show');}
+    else if(a==='compacto'){hideSorteo();setTimeout(showHudAnimated,600);}
     else if(a==='chooseSam')  chooseSam(s.idx);
     else if(a==='chooseChat') chooseChat(s.idx);
     else if(a==='activateSam')  activateComodin('sam');
