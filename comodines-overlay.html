@@ -422,6 +422,7 @@ setInterval(()=>{
     const a=s.action;
     if(a==='sorteo')       showSorteo(s.mazo);
     else if(a==='hide')    resetAll();
+    else if(a==='compacto'){hideSorteo();document.getElementById('hud').classList.add('show');}
     else if(a==='chooseSam')  chooseSam(s.idx);
     else if(a==='chooseChat') chooseChat(s.idx);
     else if(a==='activateSam')  activateComodin('sam');
