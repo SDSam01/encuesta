@@ -109,7 +109,9 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
   <button class="btn-action btn-reveal-chat" id="btnRevealChat" disabled onclick="revelarChat()">🔴 Revelar carta Chat</button>
   <button class="btn-action btn-act-sam" id="btnActSam" disabled onclick="activar('sam')">⚡ Activar comodín Sam</button>
   <button class="btn-action btn-act-chat" id="btnActChat" disabled onclick="activar('chat')">⚡ Activar comodín Chat</button>
-  <button class="btn-action btn-hide" onclick="ocultarOverlay()">🙈 Ocultar overlay</button>
+  <button class="btn-action btn-close" onclick="cerrarActivacion()" style="background:rgba(255,150,0,.1);border-color:rgba(255,150,0,.35);color:rgba(255,150,0,.8);">✕ Cerrar activación</button>
+  <button class="btn-action btn-hide" onclick="ocultarOverlay()">🙈 Ocultar todo</button>
+  <button class="btn-action btn-reset-emergency" onclick="resetEmergencia()" style="background:rgba(255,50,50,.1);border-color:rgba(255,50,50,.4);color:#f87171;grid-column:1/-1;">🔄 RESET EMERGENCIA — limpiar todo</button>
 </div>
 
 <!-- Referencia completa del mazo -->
@@ -220,6 +222,27 @@ function activar(side){
 function ocultarOverlay(){
   save({action:'hide'});
   setStatus('Overlay oculto','');
+}
+
+function cerrarActivacion(){
+  save({action:'closeAct'});
+  setStatus('Activación cerrada','ok');
+}
+
+function resetEmergencia(){
+  samIdx=null;chatIdx=null;samUsed=false;chatUsed=false;
+  document.getElementById('samSelector').classList.remove('show');
+  document.getElementById('btnRevealSam').disabled=true;
+  document.getElementById('btnRevealChat').disabled=true;
+  document.getElementById('btnActSam').disabled=true;
+  document.getElementById('btnActChat').disabled=true;
+  ['samH','chatH'].forEach(id=>{
+    const h=document.getElementById(id);
+    if(h){h.classList.remove('show');h.innerHTML=`<div style="font-size:8px;letter-spacing:2px;color:${id==='samH'?'rgba(68,136,255,.4)':'rgba(248,113,113,.4)'};">SIN CARTA</div>`;}
+  });
+  save({action:'reset'});
+  shuffleMazo();renderMazoGrid();
+  setStatus('🔄 Reset de emergencia completo','ok');
 }
 
 // ── UI ──
