@@ -183,18 +183,18 @@ function countVotesFromBatch(msgs) {
     try { voters = JSON.parse(localStorage.getItem('poll_voters') || '{}'); } catch(e) {}
 
     const numOpts = poll.numOpts || 2;
-    const isComodin = numOpts === 9;
+    const isComodin = numOpts === 10;
 
     // Modo comodines: votos por número 1-9
     if(isComodin){
       const deltas = {};
-      for(let i=1;i<=9;i++) deltas[String(i)]=0;
+      for(let i=1;i<=10;i++) deltas[String(i)]=0;
 
       for(const msg of msgs){
         const txt=(msg.text||'').trim();
         const uid=msg.userId;
         if(!uid||voters[uid]) continue;
-        const m=txt.match(/^[1-9]$/);
+        const m=txt.match(/^([1-9]|10)$/);
         if(m){ voters[uid]=m[0]; deltas[m[0]]++; }
       }
 
@@ -203,7 +203,7 @@ function countVotesFromBatch(msgs) {
 
       let delta={};
       try{ delta=JSON.parse(localStorage.getItem('poll_vote_delta')||'{}'); }catch(e){}
-      for(let i=1;i<=9;i++){
+      for(let i=1;i<=10;i++){
         const k=String(i);
         delta[k]=(delta[k]||0)+deltas[k];
       }
@@ -214,7 +214,7 @@ function countVotesFromBatch(msgs) {
       try{
         const latest=JSON.parse(localStorage.getItem('poll_state')||'{}');
         if(latest.active){
-          for(let i=1;i<=9;i++){
+          for(let i=1;i<=10;i++){
             const k='v'+i;
             latest[k]=(latest[k]||0)+deltas[String(i)];
           }
