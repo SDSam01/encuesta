@@ -185,6 +185,13 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
   from{box-shadow:0 0 0 rgba(255,208,0,0);border-color:rgba(255,208,0,.55);}
   to{box-shadow:0 0 18px rgba(255,208,0,.6),0 0 6px rgba(255,208,0,.4);border-color:rgba(255,208,0,.9);}
 }
+@keyframes comodinBigWin{
+  0%{transform:scale(1);box-shadow:0 0 0 rgba(255,208,0,0);}
+  20%{transform:scale(1.25);box-shadow:0 0 40px rgba(255,208,0,1),0 0 80px rgba(255,180,0,.6);}
+  50%{transform:scale(1.18);box-shadow:0 0 30px rgba(255,208,0,.8);}
+  80%{transform:scale(1.22);box-shadow:0 0 35px rgba(255,208,0,.9);}
+  100%{transform:scale(1.18);box-shadow:0 0 25px rgba(255,208,0,.7);}
+}
 </style>
 </head>
 <body>
@@ -315,6 +322,36 @@ function stopConfetti(){
   c.getContext('2d').clearRect(0,0,c.width,c.height);
 }
 
+function triggerComodinBigWin(s){
+  const numVotes=[];
+  for(let i=1;i<=10;i++) numVotes.push(s['v'+i]||0);
+  const total=numVotes.reduce((a,v)=>a+v,0);
+  if(!total) return;
+  const maxV=Math.max(...numVotes);
+  const winIdx=numVotes.indexOf(maxV);
+  playWinner(true);
+  // Aplicar animación grande solo a la ganadora, opacar las demás
+  const labels=document.getElementById('wMultiLabels');
+  if(!labels) return;
+  Array.from(labels.children).forEach((div,i)=>{
+    if(i===winIdx){
+      div.style.animation='comodinBigWin .6s cubic-bezier(.34,1.56,.64,1) forwards';
+      div.style.zIndex='10';
+      div.style.position='relative';
+      // Agregar corona arriba
+      const crown=document.createElement('div');
+      crown.textContent='👑';
+      crown.style.cssText='position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:20px;animation:fadeInUp .4s ease forwards;';
+      div.style.position='relative';
+      div.appendChild(crown);
+    } else {
+      div.style.opacity='.25';
+      div.style.animation='none';
+      div.style.filter='grayscale(.8)';
+    }
+  });
+}
+
 function showWinner(s,votes,names,colors,total){
   if(!total) return;
   const numOpts=s.numOpts||2;
@@ -350,13 +387,12 @@ function render(s){
   const box2=document.getElementById('wBox');
   const boxM=document.getElementById('wBoxMulti');
   if(numOpts===2){box2.style.display='';boxM.style.display='none';renderTwo(s,total,votes,names);}
-  else if(numOpts===9){
+  else if(numOpts===10){
     box2.style.display='none';boxM.style.display='block';
     const numVotes=[];
-    for(let i=1;i<=9;i++) numVotes.push(s['v'+i]||0);
-    renderMulti(numVotes,[],Object.values(s).reduce((a,v)=>typeof v==='number'?a:a,0),9);
-    const t9=numVotes.reduce((a,v)=>a+v,0);
-    renderMulti(numVotes,[],t9,9);
+    for(let i=1;i<=10;i++) numVotes.push(s['v'+i]||0);
+    const t10=numVotes.reduce((a,v)=>a+v,0);
+    renderMulti(numVotes,[],t10,10);
   }
   else{box2.style.display='none';boxM.style.display='block';renderMulti(votes,names,total,numOpts);}
   const timerEl=document.getElementById('wTimer');
@@ -369,7 +405,16 @@ function render(s){
       if(winnerShown&&s.timerEnd!==lastTimerEnd)hideWinner();
     } else {
       timerEl.style.display='none';
-      if(!winnerShown){winnerShown=true;lastTimerEnd=s.timerEnd;showWinner(s,votes,names,COLORS,total);if(total>0)playWinner(votes[0]>=Math.max(...votes));}
+      if(!winnerShown){
+        winnerShown=true;lastTimerEnd=s.timerEnd;
+        if((s.numOpts||2)===10){
+          // Modo comodines — animación dramática en la carta ganadora
+          triggerComodinBigWin(s);
+        } else {
+          showWinner(s,votes,names,COLORS,total);
+          if(total>0)playWinner(votes[0]>=Math.max(...votes));
+        }
+      }
     }
   } else {timerEl.style.display='none';if(winnerShown)hideWinner();}
 }
@@ -406,7 +451,7 @@ function renderTwo(s,total,votes,names){
 
 function renderMulti(votes,names,total,numOpts){
   // Modo comodines (9 opciones) — grid 3x3 dorado
-  if(numOpts===9){
+  if(numOpts===10){
     renderComodinGrid(votes,total);
     return;
   }
@@ -433,12 +478,12 @@ function renderComodinGrid(votes,total){
   const labels=document.getElementById('wMultiLabels');
   const bar=document.getElementById('wMultiBar');
   bar.style.display='none';
-  labels.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;';
+  labels.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:100%;';
   const maxV=Math.max(...votes,1);
 
   if(labels.children.length!==9){
     labels.innerHTML='';
-    for(let i=0;i<9;i++){
+    for(let i=0;i<10;i++){
       const v=votes[i]||0;
       const pct=total===0?0:Math.round(v/total*100);
       const isWin=v===maxV&&total>0;
@@ -461,7 +506,7 @@ function renderComodinGrid(votes,total){
       const isWin=v===maxV&&total>0;
       div.style.background=`rgba(255,208,0,${isWin?.14:.05})`;
       div.style.borderColor=`rgba(255,208,0,${isWin?.55:.18})`;
-      div.style.animation=isWin&&total>0?'comodinWin 1s ease-in-out infinite alternate':''  ;
+      div.style.animation=isWin&&total>0?'comodinWin 1s ease-in-out infinite alternate':'';
       const barEl=div.querySelector(`#cgbar${i}`);
       if(barEl){barEl.style.height=pct+'%';barEl.style.background=`rgba(255,208,0,${isWin?.12:.04})`;}
       const pctEl=div.querySelector(`#cgpct${i}`);
