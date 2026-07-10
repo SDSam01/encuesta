@@ -327,27 +327,24 @@ function triggerComodinBigWin(s){
   for(let i=1;i<=10;i++) numVotes.push(s['v'+i]||0);
   const total=numVotes.reduce((a,v)=>a+v,0);
   if(!total) return;
-  const maxV=Math.max(...numVotes);
-  const winIdx=numVotes.indexOf(maxV);
   playWinner(true);
-  // Aplicar animación grande solo a la ganadora, opacar las demás
+  // Ordenar por votos
+  const sorted=[...numVotes].map((v,i)=>({v,i})).sort((a,b)=>b.v-a.v);
+  const topIdxs=sorted.slice(0,3).map(x=>x.i);
+  const medals=['👑','🥈','🥉'];
   const labels=document.getElementById('wMultiLabels');
   if(!labels) return;
   Array.from(labels.children).forEach((div,i)=>{
-    if(i===winIdx){
-      div.style.animation='comodinBigWin .6s cubic-bezier(.34,1.56,.64,1) forwards';
-      div.style.zIndex='10';
-      div.style.position='relative';
-      // Agregar corona arriba
+    const rank=topIdxs.indexOf(i);
+    if(rank>=0){
+      div.style.animation=`comodinBigWin .5s cubic-bezier(.34,1.56,.64,1) ${rank*0.15}s forwards`;
+      div.style.zIndex='10';div.style.position='relative';
       const crown=document.createElement('div');
-      crown.textContent='👑';
-      crown.style.cssText='position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:20px;animation:fadeInUp .4s ease forwards;';
-      div.style.position='relative';
+      crown.textContent=medals[rank];
+      crown.style.cssText='position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:22px;';
       div.appendChild(crown);
     } else {
-      div.style.opacity='.25';
-      div.style.animation='none';
-      div.style.filter='grayscale(.8)';
+      div.style.opacity='.2';div.style.animation='none';div.style.filter='grayscale(1)';
     }
   });
 }
@@ -479,23 +476,34 @@ function renderComodinGrid(votes,total){
   const bar=document.getElementById('wMultiBar');
   bar.style.display='none';
   labels.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:100%;';
-  const maxV=Math.max(...votes,1);
 
-  if(labels.children.length!==9){
+  // Calcular top 3
+  const sorted=[...votes].map((v,i)=>({v,i})).sort((a,b)=>b.v-a.v);
+  const rankOf=(i)=>{
+    if(total===0)return 0;
+    const r=sorted.findIndex(x=>x.i===i);
+    return r<3?r+1:0;
+  };
+
+  if(labels.children.length!==10){
     labels.innerHTML='';
     for(let i=0;i<10;i++){
       const v=votes[i]||0;
       const pct=total===0?0:Math.round(v/total*100);
-      const isWin=v===maxV&&total>0;
+      const rank=rankOf(i);
+      const inTop=rank>0;
+      const medals=['','👑','🥈','🥉'];
+      const glowAlpha=rank===1?.9:rank===2?.65:rank===3?.4:.18;
+      const bgAlpha=rank===1?.18:rank===2?.12:rank===3?.08:.04;
       const div=document.createElement('div');
-      div.style.cssText=`text-align:center;background:rgba(255,208,0,${isWin?.14:.05});border:1px solid rgba(255,208,0,${isWin?.55:.18});border-radius:10px;padding:8px 4px;transition:background .5s,border-color .5s;overflow:hidden;position:relative;${isWin&&total>0?'animation:comodinWin 1s ease-in-out infinite alternate;':''}` ;
-      // Barra de fondo animada
+      div.style.cssText=`text-align:center;background:rgba(255,208,0,${bgAlpha});border:${inTop?2:1}px solid rgba(255,208,0,${glowAlpha});border-radius:10px;padding:6px 4px;transition:all .4s;overflow:hidden;position:relative;${inTop?`animation:comodinWin ${0.8+rank*0.25}s ease-in-out infinite alternate;`:''}`;
       div.innerHTML=`
-        <div id="cgbar${i}" style="position:absolute;bottom:0;left:0;width:100%;background:rgba(255,208,0,${isWin?.12:.04});height:${pct}%;transition:height 1.2s cubic-bezier(.25,.46,.45,.94);"></div>
+        <div id="cgbar${i}" style="position:absolute;bottom:0;left:0;width:100%;background:rgba(255,208,0,${inTop?.1:.03});height:${pct}%;transition:height 1.2s cubic-bezier(.25,.46,.45,.94);"></div>
         <div style="position:relative;z-index:1;">
-          <div style="font-size:22px;font-weight:900;color:#FFD000;font-family:'Bebas Neue',sans-serif;line-height:1;">${i+1}</div>
-          <div style="font-size:10px;color:rgba(255,255,255,.4);font-family:'Bebas Neue',sans-serif;letter-spacing:2px;margin-top:2px;">Carta</div>
-          <div id="cgpct${i}" style="font-size:20px;font-weight:900;font-family:'Bebas Neue',sans-serif;color:${isWin?'#FFD000':'rgba(255,255,255,.5)'};margin-top:4px;transition:color .5s;">${pct}%</div>
+          <div style="font-size:11px;line-height:1;min-height:12px;">${rank>0&&total>0?medals[rank]:''}</div>
+          <div style="font-size:20px;font-weight:900;color:${inTop?'#FFD000':'rgba(255,255,255,.35)'};font-family:'Bebas Neue',sans-serif;line-height:1;">${i+1}</div>
+          <div style="font-size:8px;color:rgba(255,255,255,.25);font-family:'Bebas Neue',sans-serif;letter-spacing:2px;margin-top:1px;">Carta</div>
+          <div id="cgpct${i}" style="font-size:17px;font-weight:900;font-family:'Bebas Neue',sans-serif;color:${inTop?'#FFD000':'rgba(255,255,255,.3)'};margin-top:2px;transition:color .4s;">${pct}%</div>
         </div>`;
       labels.appendChild(div);
     }
@@ -503,14 +511,18 @@ function renderComodinGrid(votes,total){
     Array.from(labels.children).forEach((div,i)=>{
       const v=votes[i]||0;
       const pct=total===0?0:Math.round(v/total*100);
-      const isWin=v===maxV&&total>0;
-      div.style.background=`rgba(255,208,0,${isWin?.14:.05})`;
-      div.style.borderColor=`rgba(255,208,0,${isWin?.55:.18})`;
-      div.style.animation=isWin&&total>0?'comodinWin 1s ease-in-out infinite alternate':'';
+      const rank=rankOf(i);
+      const inTop=rank>0;
+      const glowAlpha=rank===1?.9:rank===2?.65:rank===3?.4:.18;
+      const bgAlpha=rank===1?.18:rank===2?.12:rank===3?.08:.04;
+      div.style.background=`rgba(255,208,0,${bgAlpha})`;
+      div.style.borderColor=`rgba(255,208,0,${glowAlpha})`;
+      div.style.borderWidth=inTop?'2px':'1px';
+      div.style.animation=inTop?`comodinWin ${0.8+rank*0.25}s ease-in-out infinite alternate`:'';
       const barEl=div.querySelector(`#cgbar${i}`);
-      if(barEl){barEl.style.height=pct+'%';barEl.style.background=`rgba(255,208,0,${isWin?.12:.04})`;}
+      if(barEl){barEl.style.height=pct+'%';}
       const pctEl=div.querySelector(`#cgpct${i}`);
-      if(pctEl){pctEl.textContent=pct+'%';pctEl.style.color=isWin?'#FFD000':'rgba(255,255,255,.5)';}
+      if(pctEl){pctEl.textContent=pct+'%';pctEl.style.color=inTop?'#FFD000':'rgba(255,255,255,.3)';}
     });
   }
 }
