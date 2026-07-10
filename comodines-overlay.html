@@ -131,6 +131,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
     <div class="hud-cards">
       <div class="hud-mini empty" id="hudSam0">🃏</div>
       <div class="hud-mini empty" id="hudSam1">🃏</div>
+      <div class="hud-mini empty" id="hudSam2">🃏</div>
     </div>
   </div>
   <div class="hud-row" id="hudRowChat">
@@ -138,6 +139,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
     <div class="hud-cards">
       <div class="hud-mini empty" id="hudChat0">🃏</div>
       <div class="hud-mini empty" id="hudChat1">🃏</div>
+      <div class="hud-mini empty" id="hudChat2">🃏</div>
     </div>
   </div>
 </div>
@@ -172,14 +174,14 @@ const MAZO_BASE=[
 ];
 
 let mazo=[];
-let samCards=[null,null], chatCards=[null,null];
-let samUsed=[false,false], chatUsed=[false,false];
+let samCards=[null,null,null], chatCards=[null,null,null];
+let samUsed=[false,false,false], chatUsed=[false,false,false];
 let lastTs=0, actTimer=null;
 
 function showSorteo(mazoData){
   mazo=mazoData||[...MAZO_BASE].sort(()=>Math.random()-.5);
-  samCards=[null,null];chatCards=[null,null];
-  samUsed=[false,false];chatUsed=[false,false];
+  samCards=[null,null,null];chatCards=[null,null,null];
+  samUsed=[false,false,false];chatUsed=[false,false,false];
   resetHudMinis();
   document.getElementById('sorteoStage').classList.add('show');
   buildCards();
@@ -242,7 +244,7 @@ function updateHudMinis(){
 }
 
 function resetHudMinis(){
-  ['Sam','Chat'].forEach(side=>['0','1'].forEach(i=>{
+  ['Sam','Chat'].forEach(side=>['0','1','2'].forEach(i=>{
     const el=document.getElementById('hud'+side+i);
     if(el){el.textContent='🃏';el.className='hud-mini empty';}
   }));
@@ -288,8 +290,8 @@ function resetAll(){
   closeActivation();hideSorteo();
   document.getElementById('hud').classList.remove('show');
   resetHudMinis();
-  samCards=[null,null];chatCards=[null,null];
-  samUsed=[false,false];chatUsed=[false,false];
+  samCards=[null,null,null];chatCards=[null,null,null];
+  samUsed=[false,false,false];chatUsed=[false,false,false];
 }
 
 function playSound(type){
@@ -326,12 +328,16 @@ setInterval(()=>{
     else if(a==='compacto'){hideSorteo();setTimeout(showHudAnimated,600);}
     else if(a==='chooseSam0')  chooseSide('sam',0,s.idx);
     else if(a==='chooseSam1')  chooseSide('sam',1,s.idx);
+    else if(a==='chooseSam2')  chooseSide('sam',2,s.idx);
     else if(a==='chooseChat0') chooseSide('chat',0,s.idx);
     else if(a==='chooseChat1') chooseSide('chat',1,s.idx);
+    else if(a==='chooseChat2') chooseSide('chat',2,s.idx);
     else if(a==='activateSam0')  activateComodin('sam',0);
     else if(a==='activateSam1')  activateComodin('sam',1);
+    else if(a==='activateSam2')  activateComodin('sam',2);
     else if(a==='activateChat0') activateComodin('chat',0);
     else if(a==='activateChat1') activateComodin('chat',1);
+    else if(a==='activateChat2') activateComodin('chat',2);
     else if(a==='closeAct')   closeActivation();
     else if(a==='reset')      resetAll();
   }catch(e){}
