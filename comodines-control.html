@@ -67,7 +67,7 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
 </head>
 <body>
 <h1>🃏 Comodines Control</h1>
-<div class="sub">2 comodines por lado — todos con igual probabilidad</div>
+<div class="sub">3 comodines por lado — todos con igual probabilidad</div>
 
 <div class="holders">
   <div class="holder">
@@ -75,6 +75,7 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
     <div class="hcards" id="samCards">
       <div class="hcard empty">Carta 1 — sin elegir</div>
       <div class="hcard empty">Carta 2 — sin elegir</div>
+      <div class="hcard empty">Carta 3 — sin elegir</div>
     </div>
   </div>
   <div class="holder ch">
@@ -82,6 +83,7 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
     <div class="hcards" id="chatCards">
       <div class="hcard empty">Carta 1 — sin elegir</div>
       <div class="hcard empty">Carta 2 — sin elegir</div>
+      <div class="hcard empty">Carta 3 — sin elegir</div>
     </div>
   </div>
 </div>
@@ -93,16 +95,22 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
 <div class="sel" id="selSam1"><div class="sel-title">⚔️ SAM — elige segunda carta:</div><div class="num-grid" id="ngSam1"></div></div>
 <div class="sel ch" id="selChat0"><div class="sel-title">💬 CHAT — asigna primera carta:</div><div class="num-grid" id="ngChat0"></div></div>
 <div class="sel ch" id="selChat1"><div class="sel-title">💬 CHAT — asigna segunda carta:</div><div class="num-grid" id="ngChat1"></div></div>
+<div class="sel" id="selSam2"><div class="sel-title">⚔️ SAM — elige tercera carta:</div><div class="num-grid" id="ngSam2"></div></div>
+<div class="sel ch" id="selChat2"><div class="sel-title">💬 CHAT — asigna tercera carta:</div><div class="num-grid" id="ngChat2"></div></div>
 
 <div class="ag">
-  <button class="ba rev1" id="bRevS0" disabled onclick="revelar('sam',0)">🟡 Revelar Sam 1</button>
-  <button class="ba rev1" id="bRevS1" disabled onclick="revelar('sam',1)">🟡 Revelar Sam 2</button>
-  <button class="ba rev2" id="bRevC0" disabled onclick="revelar('chat',0)">🟠 Revelar Chat 1</button>
-  <button class="ba rev2" id="bRevC1" disabled onclick="revelar('chat',1)">🟠 Revelar Chat 2</button>
-  <button class="ba act" id="bActS0" disabled onclick="activar('sam',0)">⚡ Activar Sam 1</button>
-  <button class="ba act" id="bActS1" disabled onclick="activar('sam',1)">⚡ Activar Sam 2</button>
-  <button class="ba act ch" id="bActC0" disabled onclick="activar('chat',0)">⚡ Activar Chat 1</button>
-  <button class="ba act ch" id="bActC1" disabled onclick="activar('chat',1)">⚡ Activar Chat 2</button>
+  <button class="ba rev1" id="bRevS0" disabled onclick="revelar('sam',0)">🟡 Sam 1</button>
+  <button class="ba rev1" id="bRevS1" disabled onclick="revelar('sam',1)">🟡 Sam 2</button>
+  <button class="ba rev1 wide" id="bRevS2" disabled onclick="revelar('sam',2)">🟡 Sam 3</button>
+  <button class="ba rev2" id="bRevC0" disabled onclick="revelar('chat',0)">🟠 Chat 1</button>
+  <button class="ba rev2" id="bRevC1" disabled onclick="revelar('chat',1)">🟠 Chat 2</button>
+  <button class="ba rev2 wide" id="bRevC2" disabled onclick="revelar('chat',2)">🟠 Chat 3</button>
+  <button class="ba act" id="bActS0" disabled onclick="activar('sam',0)">⚡ Sam 1</button>
+  <button class="ba act" id="bActS1" disabled onclick="activar('sam',1)">⚡ Sam 2</button>
+  <button class="ba act wide" id="bActS2" disabled onclick="activar('sam',2)">⚡ Sam 3</button>
+  <button class="ba act ch" id="bActC0" disabled onclick="activar('chat',0)">⚡ Chat 1</button>
+  <button class="ba act ch" id="bActC1" disabled onclick="activar('chat',1)">⚡ Chat 2</button>
+  <button class="ba act ch wide" id="bActC2" disabled onclick="activar('chat',2)">⚡ Chat 3</button>
   <button class="ba btn-compact wide" onclick="hacerCompacto()">⬛ Hacer pequeño</button>
   <button class="ba wide" onclick="cerrarActivacion()" style="background:rgba(255,180,0,.06);border-color:rgba(255,180,0,.25);color:rgba(255,180,0,.6);">✕ Cerrar activación</button>
   <button class="ba btn-hide" onclick="ocultarTodo()">🙈 Ocultar HUD</button>
@@ -130,14 +138,14 @@ const TODOS=[
 ];
 
 let mazo=[];
-let samPicks=[null,null],chatPicks=[null,null];
-let samUsed=[false,false],chatUsed=[false,false];
+let samPicks=[null,null,null],chatPicks=[null,null,null];
+let samUsed=[false,false,false],chatUsed=[false,false,false];
 let samStep=0,chatStep=0;
 
 function iniciarSorteo(){
   mazo=[...TODOS].sort(()=>Math.random()-.5);
-  samPicks=[null,null];chatPicks=[null,null];
-  samUsed=[false,false];chatUsed=[false,false];
+  samPicks=[null,null,null];chatPicks=[null,null,null];
+  samUsed=[false,false,false];chatUsed=[false,false,false];
   samStep=0;chatStep=0;
   updateHolderUI();updateBtns();
   hideAllSel();
@@ -148,7 +156,7 @@ function iniciarSorteo(){
 
 function showSel(id){document.getElementById(id).classList.add('show');}
 function hideSel(id){document.getElementById(id).classList.remove('show');}
-function hideAllSel(){['selSam0','selSam1','selChat0','selChat1'].forEach(id=>hideSel(id));}
+function hideAllSel(){['selSam0','selSam1','selSam2','selChat0','selChat1','selChat2'].forEach(id=>hideSel(id));}
 
 function renderGrid(gridId,side,slot){
   const g=document.getElementById(gridId);g.innerHTML='';
@@ -174,11 +182,13 @@ function pick(side,slot,idx){
     samPicks[slot]=mazo[idx];
     hideSel('selSam'+slot);
     if(slot===0&&samPicks[1]===null){showSel('selSam1');renderGrid('ngSam1','sam',1);}
-    else if(samPicks[0]!==null&&samPicks[1]!==null&&chatPicks[0]===null){showSel('selChat0');renderGrid('ngChat0','chat',0);}
+    else if(slot===1&&samPicks[2]===null){showSel('selSam2');renderGrid('ngSam2','sam',2);}
+    else if(samPicks[0]!==null&&samPicks[1]!==null&&samPicks[2]!==null&&chatPicks[0]===null){showSel('selChat0');renderGrid('ngChat0','chat',0);}
   } else {
     chatPicks[slot]=mazo[idx];
     hideSel('selChat'+slot);
     if(slot===0&&chatPicks[1]===null){showSel('selChat1');renderGrid('ngChat1','chat',1);}
+    else if(slot===1&&chatPicks[2]===null){showSel('selChat2');renderGrid('ngChat2','chat',2);}
   }
   updateHolderUI();updateBtns();
   setStatus(`${side==='sam'?'Sam':'Chat'} eligió carta ${slot+1}: ${mazo[idx].titulo}`,'ok');
@@ -207,8 +217,8 @@ function cerrarActivacion(){save({action:'closeAct'});setStatus('Activación cer
 function ocultarTodo(){save({action:'hide'});setStatus('HUD oculto','');}
 
 function resetEmergencia(){
-  samPicks=[null,null];chatPicks=[null,null];
-  samUsed=[false,false];chatUsed=[false,false];
+  samPicks=[null,null,null];chatPicks=[null,null,null];
+  samUsed=[false,false,false];chatUsed=[false,false,false];
   samStep=0;chatStep=0;
   hideAllSel();updateHolderUI();updateBtns();
   save({action:'reset'});
@@ -219,7 +229,7 @@ function updateHolderUI(){
   const sc=document.getElementById('samCards');
   const cc=document.getElementById('chatCards');
   sc.innerHTML='';cc.innerHTML='';
-  [0,1].forEach(i=>{
+  [0,1,2].forEach(i=>{
     const sd=document.createElement('div');
     if(samPicks[i]){sd.className='hcard'+(samUsed[i]?' used':'');sd.textContent=samPicks[i].emoji+' '+samPicks[i].titulo;}
     else{sd.className='hcard empty';sd.textContent='Carta '+(i+1)+' — sin elegir';}
@@ -232,11 +242,11 @@ function updateHolderUI(){
 }
 
 function updateBtns(){
-  [['bRevS0','sam',0],['bRevS1','sam',1],['bRevC0','chat',0],['bRevC1','chat',1]].forEach(([id,s,i])=>{
+  [['bRevS0','sam',0],['bRevS1','sam',1],['bRevS2','sam',2],['bRevC0','chat',0],['bRevC1','chat',1],['bRevC2','chat',2]].forEach(([id,s,i])=>{
     const picks=s==='sam'?samPicks:chatPicks;
     document.getElementById(id).disabled=!picks[i];
   });
-  [['bActS0','sam',0],['bActS1','sam',1],['bActC0','chat',0],['bActC1','chat',1]].forEach(([id,s,i])=>{
+  [['bActS0','sam',0],['bActS1','sam',1],['bActS2','sam',2],['bActC0','chat',0],['bActC1','chat',1],['bActC2','chat',2]].forEach(([id,s,i])=>{
     const picks=s==='sam'?samPicks:chatPicks;
     const used=s==='sam'?samUsed:chatUsed;
     document.getElementById(id).disabled=!picks[i]||used[i];
