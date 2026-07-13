@@ -132,25 +132,26 @@ function playHipHopLoop(a, start, bars, bar, beat, nodes){
     nodes.push(bass,bfilt,bg,lfo,lfoG);
   });
 
-  // SAXOFÓN — melodía pentatónica menor en loop de 2 bars
-  // A menor pentatónica: A3=220, C4=261.6, D4=293.7, E4=329.6, G4=392
+  // SAXOFÓN PROMINENTE — melodía hip-hop sax, más fuerte y expresiva
+  // F menor pentatónica: F3=174.6, Ab3=207.7, Bb3=233.1, C4=261.6, Eb4=311.1
   const saxMelody=[
-    {f:220,  d:0.4, o:0},
-    {f:261.6,d:0.2, o:0.5},
-    {f:293.7,d:0.3, o:0.75},
-    {f:329.6,d:0.4, o:1.1},
-    {f:261.6,d:0.3, o:1.6},
-    {f:220,  d:0.5, o:2.0},
-    {f:196,  d:0.3, o:2.6},
-    {f:220,  d:0.4, o:3.0},
-    // barra 2
-    {f:293.7,d:0.3, o:3.5},
-    {f:329.6,d:0.4, o:3.9},
-    {f:392,  d:0.3, o:4.4},
-    {f:329.6,d:0.2, o:4.8},
-    {f:293.7,d:0.5, o:5.1},
-    {f:261.6,d:0.3, o:5.7},
-    {f:220,  d:0.6, o:6.1},
+    // Frase 1 — pregunta
+    {f:261.6,d:0.5, o:0},
+    {f:311.1,d:0.3, o:0.6},
+    {f:349.2,d:0.4, o:1.0},
+    {f:311.1,d:0.2, o:1.5},
+    {f:261.6,d:0.6, o:1.8},
+    // Frase 2 — respuesta
+    {f:233.1,d:0.4, o:2.7},
+    {f:261.6,d:0.3, o:3.2},
+    {f:311.1,d:0.5, o:3.6},
+    {f:349.2,d:0.3, o:4.2},
+    {f:392.0,d:0.4, o:4.6},
+    {f:349.2,d:0.3, o:5.1},
+    {f:311.1,d:0.3, o:5.5},
+    {f:261.6,d:0.7, o:5.9},
+    // Nota larga de cierre
+    {f:233.1,d:0.8, o:6.8},
   ];
 
   for(let rep=0;rep<Math.ceil(bars/2);rep++){
@@ -159,25 +160,41 @@ function playHipHopLoop(a, start, bars, bar, beat, nodes){
     saxMelody.forEach(note=>{
       const nt=repT+note.o*beat;
       if(nt>t+bars*bar) return;
-      // Sax = sawtooth + bandpass (timbre de lengüeta)
+
+      // Sax 1: sawtooth con filtros (cuerpo del sax)
       const sax=a.createOscillator(); sax.type='sawtooth';
       sax.frequency.value=note.f;
-      // Vibrato sutil
-      const vib=a.createOscillator(); vib.type='sine'; vib.frequency.value=5.5;
-      const vibG=a.createGain(); vibG.gain.value=3;
+      // Vibrato más pronunciado para sonar más real
+      const vib=a.createOscillator(); vib.type='sine'; vib.frequency.value=5.8;
+      const vibG=a.createGain(); vibG.gain.value=note.f*0.015; // vibrato relativo
       vib.connect(vibG); vibG.connect(sax.frequency);
-      // Filtro de sax
-      const f1=a.createBiquadFilter(); f1.type='bandpass'; f1.frequency.value=1800; f1.Q.value=3;
-      const f2=a.createBiquadFilter(); f2.type='peaking'; f2.frequency.value=900; f2.Q.value=2; f2.gain.value=8;
+      // Filtros de sax — más warmth
+      const f1=a.createBiquadFilter(); f1.type='bandpass'; f1.frequency.value=1600; f1.Q.value=4;
+      const f2=a.createBiquadFilter(); f2.type='peaking'; f2.frequency.value=800; f2.Q.value=1.5; f2.gain.value=10;
+      const f3=a.createBiquadFilter(); f3.type='highshelf'; f3.frequency.value=4000; f3.gain.value=-4;
+
+      // Envelope con ataque más expresivo
       const sg=a.createGain();
       sg.gain.setValueAtTime(0,nt);
-      sg.gain.linearRampToValueAtTime(0.14,nt+0.04);
-      sg.gain.setValueAtTime(0.12,nt+note.d*beat-0.05);
+      sg.gain.linearRampToValueAtTime(0.22,nt+0.06); // más fuerte
+      sg.gain.setValueAtTime(0.19,nt+note.d*beat-0.08);
       sg.gain.linearRampToValueAtTime(0,nt+note.d*beat);
-      sax.connect(f1); f1.connect(f2); f2.connect(sg); sg.connect(masterGain);
-      sax.start(nt); sax.stop(nt+note.d*beat+0.05);
-      vib.start(nt); vib.stop(nt+note.d*beat+0.05);
-      nodes.push(sax,f1,f2,sg,vib,vibG);
+
+      sax.connect(f1); f1.connect(f2); f2.connect(f3); f3.connect(sg); sg.connect(masterGain);
+      sax.start(nt); sax.stop(nt+note.d*beat+0.08);
+      vib.start(nt); vib.stop(nt+note.d*beat+0.08);
+
+      // Sax 2: una octava arriba muy suave para brillo (breath)
+      const sax2=a.createOscillator(); sax2.type='sawtooth';
+      sax2.frequency.value=note.f*2;
+      const sg2=a.createGain();
+      sg2.gain.setValueAtTime(0,nt); sg2.gain.linearRampToValueAtTime(0.04,nt+0.06);
+      sg2.gain.linearRampToValueAtTime(0,nt+note.d*beat);
+      const f4=a.createBiquadFilter(); f4.type='lowpass'; f4.frequency.value=3000;
+      sax2.connect(f4); f4.connect(sg2); sg2.connect(masterGain);
+      sax2.start(nt); sax2.stop(nt+note.d*beat+0.08);
+
+      nodes.push(sax,f1,f2,f3,sg,vib,vibG,sax2,f4,sg2);
     });
   }
 }
