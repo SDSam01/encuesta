@@ -94,10 +94,10 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
   <div class="window-row">
     <span class="window-label">Ventana:</span>
     <div class="window-btns">
-      <button class="wbtn" onclick="setWindow(5,this)">5s</button>
-      <button class="wbtn on" onclick="setWindow(10,this)">10s</button>
-      <button class="wbtn" onclick="setWindow(20,this)">20s</button>
       <button class="wbtn" onclick="setWindow(30,this)">30s</button>
+      <button class="wbtn on" onclick="setWindow(60,this)">1min</button>
+      <button class="wbtn" onclick="setWindow(90,this)">90s</button>
+      <button class="wbtn" onclick="setWindow(120,this)">2min</button>
     </div>
   </div>
   <div class="window-row" style="margin-top:8px;">
@@ -148,29 +148,13 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 const LS_REP = 'rep_state';
 const LS_MSG = 'rep_message';
 
-let windowSecs  = 20;
+let windowSecs  = 60;
 let soloSubs    = false;
 let currentRep  = null;
 let recentUsers = {};
 
-// pastReps persiste en localStorage — se resetea cada día automáticamente
-function loadPastReps(){
-  try{
-    const raw = localStorage.getItem('past_reps_v2');
-    if(!raw) return new Set();
-    const data = JSON.parse(raw);
-    const today = new Date().toDateString();
-    if(data.date !== today) return new Set(); // nuevo día → reset
-    return new Set(data.ids||[]);
-  }catch(e){ return new Set(); }
-}
-function savePastReps(){
-  localStorage.setItem('past_reps_v2', JSON.stringify({
-    date: new Date().toDateString(),
-    ids: [...pastReps]
-  }));
-}
-let pastReps = loadPastReps();
+// pastReps — solo en memoria, se resetea al recargar OBS (por stream)
+let pastReps = new Set();
 
 // FIX: timeout automático para rep (45 min) — evita que quede pegado indefinidamente
 const REP_AUTO_CLEAR_MS = 45 * 60 * 1000;
@@ -285,57 +269,46 @@ function setSubs(val, btn){
 function buscarRep(){
   const now=Date.now();
 
-  // Pool principal: ventana activa seleccionada
-  let active=Object.entries(recentUsers)
-    .filter(([id,u])=>now-u.lastSeen<=windowSecs*1000&&(!soloSubs||u.isMember)&&!pastReps.has(id));
+  // Solo quien escribió "yo" y variaciones en la ventana activa
+  let yoPool={};
+  try{ yoPool=JSON.parse(localStorage.getItem('yo_pool')||'{}'); }catch(e){}
 
-  // Si el pool es muy pequeño (<5), ampliar a 3 minutos automáticamente
-  if(active.length<5){
-    const expanded=Object.entries(recentUsers)
-      .filter(([id,u])=>now-u.lastSeen<=180*1000&&(!soloSubs||u.isMember)&&!pastReps.has(id));
-    if(expanded.length>active.length) active=expanded;
-  }
+  // 1 entrada por persona (ya deduplicado en chat-reader), excluir los de este stream
+  let active=Object.entries(yoPool)
+    .filter(([id,u])=>now-u.ts<=windowSecs*1000&&!pastReps.has(id));
 
-  // Si aún no hay nadie (todos ya salieron), resetear exclusiones
   if(active.length===0){
-    const sinExcluir=Object.entries(recentUsers)
-      .filter(([_,u])=>now-u.lastSeen<=windowSecs*1000&&(!soloSubs||u.isMember));
-    if(sinExcluir.length>0){
-      pastReps.clear(); savePastReps(); updatePastRepsCount();
-      active=sinExcluir;
-      setStatus('♻️ Lista reiniciada — todos pueden volver a salir','ok');
-    } else {
-      setStatus(`⚠️ No hay usuarios activos en los últimos ${windowSecs}s`,'err');
+    // Fallback: ampliar a 5 minutos
+    active=Object.entries(yoPool)
+      .filter(([id,u])=>now-u.ts<=300*1000&&!pastReps.has(id));
+    if(active.length===0){
+      setStatus('⚠️ Nadie ha escrito "yo" recientemente','err');
       return;
     }
   }
 
   const [userId,user]=active[Math.floor(Math.random()*active.length)];
   pastReps.add(userId);
-  savePastReps();
   updatePastRepsCount();
   currentRep={userId, username:user.username, src:user.src};
-  lastRepQueueTs = Date.now();
+  lastRepQueueTs=Date.now();
 
   document.getElementById('repCard').classList.add('show');
   document.getElementById('repName').textContent=user.username;
-  document.getElementById('repSrc').textContent=user.src==='yt'?'▶ YOUTUBE':user.src==='kick'?'⚡ KICK':'🟣 TWITCH';
+  document.getElementById('repSrc').textContent=
+    user.src==='yt'?'▶ YOUTUBE':user.src==='kick'?'⚡ KICK':user.src==='tiktok'?'🎵 TIKTOK':'🟣 TWITCH';
   document.getElementById('repLast').textContent='Esperando mensaje...';
 
-  const candidates=Object.entries(recentUsers)
-    .filter(([_,u])=>now-u.lastSeen<=Math.max(windowSecs,30)*1000)
-    .map(([_,u])=>u.username).slice(0,25);
-
+  const candidates=active.map(([_,u])=>u.username).slice(0,25);
   localStorage.setItem(LS_REP, JSON.stringify({
     trigger:Date.now(), candidates,
     chosen:user.username,
     repUserId:userId, repUsername:user.username,
-    repIsMember:false,
-    clear:0,
+    repIsMember:false, clear:0,
   }));
 
   armRepAutoTimer();
-  setStatus(`🎤 ${user.username} es el nuevo representante`,'ok');
+  setStatus(`🎤 ${user.username} — ${active.length} personas escribieron "yo"`,'ok');
 }
 
 function activarModVip(){
@@ -360,7 +333,7 @@ function activarModVip(){
       setStatus(`⚠️ Sin suscriptores activos en ${windowSecs}s — amplía la ventana de tiempo`,'err');
       return;
     }
-    pastReps.clear(); savePastReps(); updatePastRepsCount();
+    pastReps.clear(); updatePastRepsCount();
   }
 
   const btn=document.getElementById('btnSiren');
@@ -372,7 +345,7 @@ function activarModVip(){
   setTimeout(()=>{
     try {
       const [userId,user]=activeSubs[Math.floor(Math.random()*activeSubs.length)];
-      pastReps.add(userId); savePastReps(); updatePastRepsCount();
+      pastReps.add(userId); updatePastRepsCount();
       currentRep={userId, username:user.username, src:user.src};
       lastRepQueueTs = Date.now();
 
@@ -499,7 +472,7 @@ function updatePastRepsCount(){
 }
 
 function resetPastReps(){
-  pastReps.clear(); savePastReps(); updatePastRepsCount();
+  pastReps.clear(); updatePastRepsCount();
   setStatus('♻️ Lista reiniciada — todos pueden volver a salir','ok');
 }
 
