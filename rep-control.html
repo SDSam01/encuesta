@@ -148,12 +148,29 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 const LS_REP = 'rep_state';
 const LS_MSG = 'rep_message';
 
-let windowSecs  = 10;
+let windowSecs  = 20;
 let soloSubs    = false;
 let currentRep  = null;
 let recentUsers = {};
-let pastReps    = new Set(); // usuarios que ya fueron rep este stream
-// (lastRepQueueTs se declara junto al interval del rep más abajo)
+
+// pastReps persiste en localStorage — se resetea cada día automáticamente
+function loadPastReps(){
+  try{
+    const raw = localStorage.getItem('past_reps_v2');
+    if(!raw) return new Set();
+    const data = JSON.parse(raw);
+    const today = new Date().toDateString();
+    if(data.date !== today) return new Set(); // nuevo día → reset
+    return new Set(data.ids||[]);
+  }catch(e){ return new Set(); }
+}
+function savePastReps(){
+  localStorage.setItem('past_reps_v2', JSON.stringify({
+    date: new Date().toDateString(),
+    ids: [...pastReps]
+  }));
+}
+let pastReps = loadPastReps();
 
 // FIX: timeout automático para rep (45 min) — evita que quede pegado indefinidamente
 const REP_AUTO_CLEAR_MS = 45 * 60 * 1000;
@@ -284,8 +301,7 @@ function buscarRep(){
     const sinExcluir=Object.entries(recentUsers)
       .filter(([_,u])=>now-u.lastSeen<=windowSecs*1000&&(!soloSubs||u.isMember));
     if(sinExcluir.length>0){
-      pastReps.clear();
-      updatePastRepsCount();
+      pastReps.clear(); savePastReps(); updatePastRepsCount();
       active=sinExcluir;
       setStatus('♻️ Lista reiniciada — todos pueden volver a salir','ok');
     } else {
@@ -296,6 +312,7 @@ function buscarRep(){
 
   const [userId,user]=active[Math.floor(Math.random()*active.length)];
   pastReps.add(userId);
+  savePastReps();
   updatePastRepsCount();
   currentRep={userId, username:user.username, src:user.src};
   lastRepQueueTs = Date.now();
@@ -343,7 +360,7 @@ function activarModVip(){
       setStatus(`⚠️ Sin suscriptores activos en ${windowSecs}s — amplía la ventana de tiempo`,'err');
       return;
     }
-    pastReps.clear(); updatePastRepsCount();
+    pastReps.clear(); savePastReps(); updatePastRepsCount();
   }
 
   const btn=document.getElementById('btnSiren');
@@ -355,7 +372,7 @@ function activarModVip(){
   setTimeout(()=>{
     try {
       const [userId,user]=activeSubs[Math.floor(Math.random()*activeSubs.length)];
-      pastReps.add(userId); updatePastRepsCount();
+      pastReps.add(userId); savePastReps(); updatePastRepsCount();
       currentRep={userId, username:user.username, src:user.src};
       lastRepQueueTs = Date.now();
 
@@ -482,7 +499,7 @@ function updatePastRepsCount(){
 }
 
 function resetPastReps(){
-  pastReps.clear(); updatePastRepsCount();
+  pastReps.clear(); savePastReps(); updatePastRepsCount();
   setStatus('♻️ Lista reiniciada — todos pueden volver a salir','ok');
 }
 
