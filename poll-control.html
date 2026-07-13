@@ -346,26 +346,54 @@ function startPoll(){
 
 function startDemo(){
   $('startBtn').disabled=true;
-  state.votes={A:0,B:0,C:0,D:0};
-  setLive(true);
+  const isComodin = state.numOpts === 10;
   localStorage.removeItem('poll_voters');
-  localStorage.setItem('poll_vote_delta',JSON.stringify({vA:0,vB:0,vC:0,vD:0,ts:Date.now()}));
   lastDeltaTs=0;
-  localStorage.setItem(LS,JSON.stringify({
-    active:true,question:$('question').value,
-    nameA:$('nameA').value,nameB:$('nameB').value,
-    nameC:$('nameC').value,nameD:$('nameD').value,
-    numOpts:state.numOpts,vA:0,vB:0,vC:0,vD:0,timerEnd:0,
-  }));
-  startTimer();
-  setStatus('🧪 Modo prueba activo','ok');
-  const opts=['A','B','C','D'].slice(0,state.numOpts);
-  let t=0;
-  const di=setInterval(()=>{
-    if(t>=20){clearInterval(di);return;}
-    if(state.timerEnd>0&&Date.now()>state.timerEnd){clearInterval(di);return;}
-    cv(opts[t++%opts.length],1);
-  },400);
+
+  if(isComodin){
+    // Modo comodines — votos numéricos v1-v10
+    const initVotes={};
+    for(let i=1;i<=10;i++) initVotes['v'+i]=0;
+    localStorage.setItem(LS,JSON.stringify({
+      active:true,question:$('question').value||'¿Qué carta eliges?',
+      numOpts:10,timerEnd:0,...initVotes
+    }));
+    localStorage.setItem('poll_vote_delta',JSON.stringify({ts:Date.now()}));
+    state.votes={};for(let i=1;i<=10;i++) state.votes[String(i)]=0;
+    setLive(true);startTimer();
+    setStatus('🧪 Modo prueba comodines activo','ok');
+    let t=0;
+    const di=setInterval(()=>{
+      if(t>=30){clearInterval(di);return;}
+      if(state.timerEnd>0&&Date.now()>state.timerEnd){clearInterval(di);return;}
+      // Votar número aleatorio 1-10
+      const num=Math.floor(Math.random()*10)+1;
+      const cur=JSON.parse(localStorage.getItem(LS)||'{}');
+      cur['v'+num]=(cur['v'+num]||0)+1;
+      localStorage.setItem(LS,JSON.stringify(cur));
+      t++;
+    },500);
+  } else {
+    // Modo normal A/B/C/D
+    state.votes={A:0,B:0,C:0,D:0};
+    setLive(true);
+    localStorage.setItem('poll_vote_delta',JSON.stringify({vA:0,vB:0,vC:0,vD:0,ts:Date.now()}));
+    localStorage.setItem(LS,JSON.stringify({
+      active:true,question:$('question').value,
+      nameA:$('nameA').value,nameB:$('nameB').value,
+      nameC:$('nameC').value,nameD:$('nameD').value,
+      numOpts:state.numOpts,vA:0,vB:0,vC:0,vD:0,timerEnd:0,
+    }));
+    startTimer();
+    setStatus('🧪 Modo prueba activo','ok');
+    const opts=['A','B','C','D'].slice(0,state.numOpts);
+    let t=0;
+    const di=setInterval(()=>{
+      if(t>=20){clearInterval(di);return;}
+      if(state.timerEnd>0&&Date.now()>state.timerEnd){clearInterval(di);return;}
+      cv(opts[t++%opts.length],1);
+    },400);
+  }
 }
 
 function stopPoll(){
