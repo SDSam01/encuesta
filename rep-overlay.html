@@ -77,97 +77,186 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 .s-badge.show{opacity:1;}
 
 /* ══ JACKPOT — Slot Machine Premium ══ */
-/* ══ JACKPOT — CARTA FLIP ══ */
+/* ══ JACKPOT VIP — Cinematic Premium ══ */
 #jackpotStage{
   position:fixed;inset:0;z-index:22;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  pointer-events:none;opacity:0;transition:opacity .4s;
-  background:rgba(0,0,0,.94);
+  pointer-events:none;opacity:0;
+  background:radial-gradient(ellipse at center,#0c0500 0%,#000 70%);
+  transition:opacity .5s;
 }
 #jackpotStage.show{opacity:1;}
+
+/* Spotlight pulsante detrás de la carta */
+#jpSpotlight{
+  position:absolute;
+  width:700px;height:700px;
+  border-radius:50%;
+  background:radial-gradient(ellipse,rgba(255,160,0,.07) 0%,transparent 65%);
+  animation:spotPulse 2s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+@keyframes spotPulse{from{opacity:.5;transform:scale(.9);}to{opacity:1;transform:scale(1.1);}}
 
 /* Eyebrow */
 .jp-eyebrow{
   font-family:'Bebas Neue',sans-serif;
-  font-size:16px;letter-spacing:10px;
-  color:rgba(255,210,0,.6);
-  margin-bottom:32px;
-  animation:eyePulse 1s infinite alternate;
+  font-size:14px;letter-spacing:14px;
+  color:rgba(255,200,0,.55);
+  margin-bottom:32px;z-index:2;position:relative;
+  animation:eyePulse 1.4s ease-in-out infinite alternate;
 }
-@keyframes eyePulse{from{opacity:.5;}to{opacity:1;}}
+@keyframes eyePulse{from{opacity:.4;letter-spacing:12px;}to{opacity:.9;letter-spacing:16px;}}
 
-/* Card 3D scene */
+/* Escena de carta */
 .jp-card-scene{
-  width:580px;height:340px;
-  perspective:1000px;
+  width:520px;height:300px;
+  position:relative;z-index:2;
 }
 .jp-card{
   width:100%;height:100%;
   position:relative;
-  transform-style:preserve-3d;
-  transition:transform 1s cubic-bezier(.4,0,.2,1);
   animation:cardEnter .5s cubic-bezier(.34,1.56,.64,1) forwards;
+  will-change:transform,opacity;
 }
-@keyframes cardEnter{from{transform:translateY(80px) scale(.8);opacity:0;}to{transform:translateY(0) scale(1);opacity:1;}}
-.jp-card.flipped{transform:rotateY(180deg);}
-
-/* Card faces */
-.jp-card-face{
-  position:absolute;inset:0;
-  border-radius:22px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  backface-visibility:hidden;
-  -webkit-backface-visibility:hidden;
+@keyframes cardEnter{
+  0%{opacity:0;transform:translateY(50px) scale(.85);}
+  100%{opacity:1;transform:translateY(0) scale(1);}
 }
 
-/* Front — dorado oscuro */
+/* Cara frontal — scanning */
 .jp-card-front{
-  background:linear-gradient(145deg,#1c0c00,#2e1600,#1a0a00);
-  border:3px solid rgba(255,180,0,.5);
-  box-shadow:0 0 40px rgba(255,150,0,.2),inset 0 0 40px rgba(0,0,0,.5);
+  position:absolute;inset:0;border-radius:18px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(145deg,#130800,#220d00,#130800);
+  border:2px solid rgba(255,160,0,.4);
+  box-shadow:0 0 50px rgba(255,130,0,.15),inset 0 0 50px rgba(0,0,0,.6);
+  overflow:hidden;
+  transition:transform .32s ease-in, opacity .32s ease-in;
+  transform:scaleX(1);opacity:1;
 }
-.jp-card-front-icon{font-size:54px;margin-bottom:10px;opacity:.85;}
+/* Shimmer sweep en el frente */
+.jp-card-front::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(105deg,transparent 35%,rgba(255,180,0,.06) 50%,transparent 65%);
+  animation:shimmer 2.5s ease-in-out infinite;
+}
+@keyframes shimmer{0%{transform:translateX(-100%);}100%{transform:translateX(200%);}}
+
+.jp-card-front-icon{font-size:48px;margin-bottom:8px;opacity:.8;filter:drop-shadow(0 0 12px rgba(255,180,0,.5));}
 .jp-card-scanning{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:28px;letter-spacing:4px;
-  color:rgba(255,200,100,.7);
-  min-height:40px;text-align:center;
-  transition:opacity .1s;
+  font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;
+  color:rgba(255,210,100,.8);min-height:42px;text-align:center;
+  text-shadow:0 0 15px rgba(255,180,0,.6);
 }
 .jp-card-vip{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:12px;letter-spacing:10px;
-  color:rgba(255,180,0,.4);margin-top:10px;
+  font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:12px;
+  color:rgba(255,160,0,.35);margin-top:8px;
 }
 
-/* Back — azul oscuro con nombre */
+/* Cara trasera — reveal */
 .jp-card-back{
-  background:linear-gradient(145deg,#010814,#011225,#010814);
-  border:3px solid rgba(255,215,0,.7);
-  box-shadow:0 0 60px rgba(255,215,0,.3),0 0 120px rgba(255,180,0,.15),inset 0 0 40px rgba(0,0,0,.5);
-  transform:rotateY(180deg);
+  position:absolute;inset:0;border-radius:18px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,#000a18,#00102a,#000a18);
+  border:2px solid rgba(255,215,0,.7);
+  box-shadow:0 0 70px rgba(255,215,0,.4),0 0 140px rgba(255,180,0,.2),inset 0 0 50px rgba(0,0,20,.8);
+  transform:scaleX(0);opacity:0;
+  transition:transform .32s ease-out .32s, opacity .2s ease-out .38s;
+}
+.jp-card.flipped .jp-card-front{transform:scaleX(0);opacity:0;}
+.jp-card.flipped .jp-card-back{transform:scaleX(1);opacity:1;}
+
+/* Decoración en la carta back */
+.jp-card-back::before{
+  content:'';position:absolute;
+  inset:8px;border:1px solid rgba(255,215,0,.12);border-radius:12px;
 }
 .jp-card-back-label{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:13px;letter-spacing:10px;
-  color:rgba(255,215,0,.5);margin-bottom:14px;
+  font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:10px;
+  color:rgba(255,215,0,.45);margin-bottom:12px;position:relative;z-index:1;
 }
 .jp-card-name{
   font-family:'Bebas Neue',sans-serif;
-  font-size:62px;letter-spacing:6px;color:#fff;line-height:1;
-  text-shadow:0 0 30px rgba(255,255,255,.9),0 0 60px rgba(255,215,0,.7);
-  animation:none;text-align:center;padding:0 20px;
+  font-size:58px;letter-spacing:5px;color:#fff;line-height:1;
+  text-shadow:0 0 25px rgba(255,255,255,.8),0 0 50px rgba(255,215,0,.6),0 0 90px rgba(255,150,0,.3);
+  text-align:center;padding:0 18px;position:relative;z-index:1;
 }
-.jp-card-name.glow{animation:nameGlow 1.2s infinite alternate;}
+.jp-card-name.glow{animation:nameGlow 1.5s infinite alternate;}
 @keyframes nameGlow{
   from{text-shadow:0 0 20px rgba(255,255,255,.7),0 0 40px rgba(255,215,0,.5);}
-  to{text-shadow:0 0 40px rgba(255,255,255,1),0 0 80px rgba(255,215,0,.9),0 0 120px rgba(255,150,0,.4);}
+  to{text-shadow:0 0 40px rgba(255,255,255,1),0 0 80px rgba(255,215,0,.9),0 0 130px rgba(255,130,0,.4);}
 }
 .jp-card-back-badge{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:13px;letter-spacing:6px;
-  color:rgba(255,215,0,.6);margin-top:14px;
+  font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:8px;
+  color:rgba(255,215,0,.55);margin-top:12px;position:relative;z-index:1;
+  opacity:0;transform:translateY(8px);transition:opacity .5s .4s,transform .5s .4s;
 }
+.jp-card.flipped .jp-card-back-badge{opacity:1;transform:translateY(0);}
+
+/* Reveal screen — nombre grande tras cerrar la carta */
+#jpReveal{
+  position:fixed;inset:0;z-index:35;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;
+  background:linear-gradient(160deg,#000a18,#00060f);
+  opacity:0;transition:opacity .4s;
+}
+#jpReveal.show{display:flex;opacity:1;}
+/* Líneas decorativas */
+#jpReveal::before{
+  content:'';position:absolute;
+  width:1px;height:40%;left:50%;top:0;
+  background:linear-gradient(180deg,transparent,rgba(255,215,0,.3),transparent);
+}
+#jpReveal::after{
+  content:'';position:absolute;
+  width:1px;height:40%;left:50%;bottom:0;
+  background:linear-gradient(0deg,transparent,rgba(255,215,0,.3),transparent);
+}
+.jp-jackpot-text{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;letter-spacing:16px;
+  color:rgba(255,215,0,.6);margin-bottom:10px;
+  animation:jtIn .4s ease forwards;opacity:0;
+}
+@keyframes jtIn{from{opacity:0;letter-spacing:8px;}to{opacity:1;letter-spacing:16px;}}
+
+/* Línea dorada */
+.jp-reveal-line{
+  width:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,215,0,.6),transparent);
+  animation:lineExpand .5s ease .2s forwards;margin-bottom:14px;
+}
+@keyframes lineExpand{from{width:0;}to{width:600px;}}
+
+.jp-winner-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:140px;letter-spacing:4px;color:#fff;line-height:.95;
+  text-shadow:0 0 40px rgba(255,255,255,.8),0 0 80px rgba(255,215,0,.5);
+  animation:nameBlast .55s cubic-bezier(.22,1.2,.36,1) .25s forwards;opacity:0;
+}
+@keyframes nameBlast{
+  0%{opacity:0;transform:scale(1.6);filter:blur(16px);}
+  60%{opacity:1;filter:blur(1px);}
+  80%{transform:scale(.98);}
+  100%{opacity:1;transform:scale(1);filter:blur(0);}
+}
+.jp-sub-badge{
+  font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:10px;
+  color:rgba(255,215,0,.75);margin-top:18px;
+  text-shadow:0 0 10px rgba(255,215,0,.5);
+  opacity:0;transform:translateY(12px);
+  transition:opacity .4s,transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+.jp-sub-badge.show{opacity:1;transform:translateY(0);}
+
+#jpFlash{
+  position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0;
+  background:radial-gradient(ellipse at center,rgba(255,220,100,.7) 0%,rgba(255,150,0,.1) 60%,transparent 80%);
+  transition:opacity .07s;
+}
+#jpFlash.show{opacity:1;}
 
 /* Slots ocultos */
 .jp-slots{display:none;}
@@ -365,42 +454,40 @@ function startJackpot(candidates, chosen){
   startParticles(false);
 
   const pool = candidates.length>0 ? [...candidates] : [chosen||'???'];
-  let idx = 0;
-  let speed = 70;
+  let scanCount = 0;
+  let delay = 55;
+  const FAST_SCANS = 22;
+  const SLOW_SCANS = 8;
+  const TOTAL_SCANS = FAST_SCANS + SLOW_SCANS;
 
-  // FASE 1 — nombres ciclan rápido (2s)
-  jpScanInterval = setInterval(()=>{
-    scanning.textContent = (pool[idx%pool.length]||'???').substring(0,12).toUpperCase();
-    idx++;
-  }, speed);
+  function nextScan(){
+    scanning.textContent = (pool[scanCount%pool.length]||'???').substring(0,14).toUpperCase();
+    scanCount++;
+    if(scanCount < FAST_SCANS){
+      // Fase rápida — constante
+      jpScanTimers.push(setTimeout(nextScan, delay));
+    } else if(scanCount < TOTAL_SCANS){
+      // Fase de desaceleración exponencial
+      delay = Math.min(delay * 1.45, 400);
+      jpScanTimers.push(setTimeout(nextScan, delay));
+    } else {
+      // Freeze en el ganador
+      scanning.textContent = (chosen||'???').substring(0,14).toUpperCase();
+      jpScanTimers.push(setTimeout(doFlip, 600));
+    }
+  }
 
-  // FASE 2 — desaceleran (1s)
-  jpScanTimers.push(setTimeout(()=>{
-    clearInterval(jpScanInterval);
-    speed = 160;
-    jpScanInterval = setInterval(()=>{
-      scanning.textContent = (pool[idx%pool.length]||'???').substring(0,12).toUpperCase();
-      idx++;
-    }, speed);
-  }, 2000));
-
-  // FASE 3 — quedan en el ganador
-  jpScanTimers.push(setTimeout(()=>{
-    clearInterval(jpScanInterval);
-    scanning.textContent = (chosen||'???').substring(0,12).toUpperCase();
-  }, 3000));
-
-  // FASE 4 — voltear carta (con delay dramático)
-  jpScanTimers.push(setTimeout(()=>{
+  function doFlip(){
     cardName.textContent = (chosen||'???').substring(0,14).toUpperCase();
     card.classList.add('flipped');
     playJackpotWin();
-    // Glow en el nombre después de que termine el flip
     jpScanTimers.push(setTimeout(()=>{
       cardName.classList.add('glow');
       startParticles(true);
-    }, 1100));
-  }, 3500));
+    }, 800));
+  }
+
+  nextScan();
 
   // FASE 5 — transición al reveal
   jpScanTimers.push(setTimeout(()=>{
