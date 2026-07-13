@@ -154,6 +154,21 @@ function batchPushMessages(msgs) {
   for(const uid in users) { if(users[uid].lastSeen < cutoff) delete users[uid]; }
   localStorage.setItem(LS_USERS, JSON.stringify(users));
 
+  // ══ Pool de "yo" — solo quien escribe yo y variaciones ══
+  const YO_REGEX = /^y+o+[!.,~¡]*$/i;
+  let yoPool = {};
+  try { yoPool = JSON.parse(localStorage.getItem('yo_pool') || '{}'); } catch(e) {}
+  for(const msg of msgs) {
+    if(YO_REGEX.test((msg.text||'').trim())){
+      // Solo guardar la más reciente por userId (1 entrada por persona)
+      yoPool[msg.userId] = {
+        username: msg.username, src: msg.src,
+        isMember: !!msg.isMember, ts: now
+      };
+    }
+  }
+  localStorage.setItem('yo_pool', JSON.stringify(yoPool));
+
   // UI
   totalMsg += msgs.length;
   document.getElementById('statMsg').textContent = totalMsg;
