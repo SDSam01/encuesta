@@ -111,6 +111,7 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
     <span class="cbadge cb-yt" id="dotYT">▶ YouTube</span>
     <span class="cbadge cb-kick" id="dotKick">⚡ Kick</span>
     <span class="cbadge" style="background:rgba(145,70,255,.1);color:#9146FF;border:1px solid rgba(145,70,255,.25);" id="dotTwitch">🟣 Twitch</span>
+    <span class="cbadge" style="background:rgba(255,0,80,.1);color:#ff0050;border:1px solid rgba(255,0,80,.25);" id="dotTiktok">🎵 TikTok</span>
   </div>
   <div class="candidates">
     <div class="cand-count" id="candCount">0 personas activas en el chat</div>
@@ -173,6 +174,10 @@ setInterval(()=>{
     if(cs.kickConnected) document.getElementById('dotKick').classList.add('on');
     if(cs.twitchConnected) document.getElementById('dotTwitch').classList.add('on');
     else document.getElementById('dotTwitch').classList.remove('on');
+    // TikTok — detectar via yo_pool reciente
+    const yoPool = JSON.parse(localStorage.getItem('yo_pool')||'{}');
+    const hasTiktok = Object.values(yoPool).some(u=>u.src==='tiktok'&&Date.now()-u.ts<120000);
+    document.getElementById('dotTiktok').classList.toggle('on', hasTiktok);
   } else {
     el.className='reader-status reader-err';
     el.textContent='⚠️ Chat Reader no conectado — ábrelo primero';
