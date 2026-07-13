@@ -200,8 +200,8 @@ function playHipHopLoop(a, start, bars, bar, beat, nodes){
 }
 
 // ══════════════════════════════════════════════
-// 1VS1: TRAP / 808 — hype LATAM, bass pesado
-// BPM: 140 — hi-hats rápidos, 808 boom
+// 1VS1: HIP-HOP JAZZ — boom-bap oscuro, bajo caminante
+// BPM: 88 — groove relajado con stabs de jazz
 // ══════════════════════════════════════════════
 function startVsMusic(){
   if(currentMode==='vs') return;
@@ -215,106 +215,122 @@ function startVsMusic(){
 }
 
 function scheduleVsLoop(a){
-  const BPM=140, beat=60/BPM, bar=beat*4;
+  const BPM=88, beat=60/BPM, bar=beat*4;
   let t=a.currentTime+0.05;
   const BARS=4;
   function loop(){
     if(currentMode!=='vs') return;
-    playTrapLoop(a,t,BARS,bar,beat,vsNodes);
+    playJazzHopLoop(a,t,BARS,bar,beat,vsNodes);
     t+=BARS*bar;
     pollLoopTimer=setTimeout(loop,(BARS*bar-0.08)*1000);
   }
   loop();
 }
 
-function playTrapLoop(a,start,bars,bar,beat,nodes){
+function playJazzHopLoop(a,start,bars,bar,beat,nodes){
   const t=start;
-  const sixteenth=beat/4;
+  const eighth=beat/2;
+  const swing=eighth*1.35; // swing feel
   const totalBeats=bars*4;
 
+  // ── KICK boom-bap — beats 1 y 3, con swing ──
   for(let i=0;i<totalBeats;i++){
     const bt=t+i*beat;
-    // 808 KICK — beats 1 y 3
     if(i%4===0||i%4===2){
-      const sub=a.createOscillator(); sub.type='sine';
-      sub.frequency.setValueAtTime(160,bt);
-      sub.frequency.exponentialRampToValueAtTime(i%4===0?35:45,bt+0.35);
-      const sg=a.createGain();
-      sg.gain.setValueAtTime(i%4===0?0.9:0.6,bt);
-      sg.gain.exponentialRampToValueAtTime(0.001,bt+0.4);
-      sub.connect(sg); sg.connect(masterGain);
-      sub.start(bt); sub.stop(bt+0.42); nodes.push(sub,sg);
-      // Click
-      const buf=a.createBuffer(1,Math.floor(a.sampleRate*0.018),a.sampleRate);
-      const d=buf.getChannelData(0);
-      for(let k=0;k<d.length;k++) d[k]=(Math.random()*2-1)*Math.pow(1-k/d.length,4);
-      const ns=a.createBufferSource(); ns.buffer=buf;
-      const ng=a.createGain(); ng.gain.setValueAtTime(0.25,bt);
-      ns.connect(ng); ng.connect(masterGain); ns.start(bt); nodes.push(ns,ng);
+      const kick=a.createOscillator(); kick.type='sine';
+      kick.frequency.setValueAtTime(120,bt);
+      kick.frequency.exponentialRampToValueAtTime(i%4===0?38:48,bt+0.28);
+      const kg=a.createGain();
+      kg.gain.setValueAtTime(i%4===0?0.75:0.55,bt);
+      kg.gain.exponentialRampToValueAtTime(0.001,bt+0.32);
+      kick.connect(kg); kg.connect(masterGain);
+      kick.start(bt); kick.stop(bt+0.34); nodes.push(kick,kg);
     }
-    // SNARE trap — beats 2 y 4
+    // SNARE en 2 y 4 — más suave, tipo cepillo
     if(i%4===1||i%4===3){
-      const sbuf=a.createBuffer(1,Math.floor(a.sampleRate*0.18),a.sampleRate);
+      const sbuf=a.createBuffer(1,Math.floor(a.sampleRate*0.14),a.sampleRate);
       const sd=sbuf.getChannelData(0);
-      for(let k=0;k<sd.length;k++) sd[k]=(Math.random()*2-1)*Math.pow(1-k/sd.length,1.6);
+      for(let k=0;k<sd.length;k++) sd[k]=(Math.random()*2-1)*Math.pow(1-k/sd.length,2.2);
       const ss=a.createBufferSource(); ss.buffer=sbuf;
-      const sf=a.createBiquadFilter(); sf.type='bandpass'; sf.frequency.value=700; sf.Q.value=0.7;
-      const sg2=a.createGain(); sg2.gain.setValueAtTime(0.4,bt); sg2.gain.exponentialRampToValueAtTime(0.001,bt+0.18);
+      const sf=a.createBiquadFilter(); sf.type='bandpass'; sf.frequency.value=600; sf.Q.value=0.5;
+      const sg2=a.createGain(); sg2.gain.setValueAtTime(0.28,bt); sg2.gain.exponentialRampToValueAtTime(0.001,bt+0.14);
       ss.connect(sf); sf.connect(sg2); sg2.connect(masterGain); ss.start(bt);
       nodes.push(ss,sf,sg2);
     }
   }
 
-  // HI-HATS TRAP — patrón 16avos con rolls
-  const hatPattern=[1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,1];
+  // ── HI-HATS con swing — patrón 8vos swingueados ──
   for(let b=0;b<bars;b++){
-    hatPattern.forEach((on,idx)=>{
-      if(!on) return;
-      const ht=t+b*bar+idx*sixteenth;
-      const hbuf=a.createBuffer(1,Math.floor(a.sampleRate*0.032),a.sampleRate);
-      const hd=hbuf.getChannelData(0);
-      for(let k=0;k<hd.length;k++) hd[k]=(Math.random()*2-1)*Math.pow(1-k/hd.length,3);
-      const hs=a.createBufferSource(); hs.buffer=hbuf;
-      const hf=a.createBiquadFilter(); hf.type='highpass'; hf.frequency.value=9000;
-      const hg=a.createGain(); hg.gain.setValueAtTime(idx%2===0?0.12:0.06,ht); hg.gain.exponentialRampToValueAtTime(0.001,ht+0.032);
-      hs.connect(hf); hf.connect(hg); hg.connect(masterGain); hs.start(ht); nodes.push(hs,hf,hg);
-    });
+    for(let s=0;s<4;s++){
+      const ht=t+b*bar+s*beat;
+      [0, swing].forEach((offset,idx)=>{
+        const htime=ht+offset;
+        if(htime>t+bars*bar) return;
+        const hbuf=a.createBuffer(1,Math.floor(a.sampleRate*0.022),a.sampleRate);
+        const hd=hbuf.getChannelData(0);
+        for(let k=0;k<hd.length;k++) hd[k]=(Math.random()*2-1)*Math.pow(1-k/hd.length,4);
+        const hs=a.createBufferSource(); hs.buffer=hbuf;
+        const hf=a.createBiquadFilter(); hf.type='highpass'; hf.frequency.value=10000;
+        const hg=a.createGain(); hg.gain.setValueAtTime(idx===0?0.09:0.05,htime);
+        hg.gain.exponentialRampToValueAtTime(0.001,htime+0.022);
+        hs.connect(hf); hf.connect(hg); hg.connect(masterGain); hs.start(htime);
+        nodes.push(hs,hf,hg);
+      });
+    }
   }
 
-  // BAJO 808 slide
-  const bassP=[{f:55,d:0.8},{f:55,d:0.3},{f:49,d:0.5},{f:52,d:0.8},{f:55,d:0.5},{f:41,d:1.0},{f:44,d:0.5},{f:49,d:0.5}];
-  bassP.forEach((note,i)=>{
-    const bt2=t+i*(bar/2);
-    if(bt2>t+bars*bar) return;
-    const bass=a.createOscillator(); bass.type='sawtooth';
-    bass.frequency.setValueAtTime(note.f,bt2);
-    if(i<bassP.length-1) bass.frequency.linearRampToValueAtTime(bassP[(i+1)%bassP.length].f*0.98,bt2+bar/2-0.05);
-    const bf=a.createBiquadFilter(); bf.type='lowpass'; bf.frequency.value=180;
+  // ── BAJO CAMINANTE — Dm7 feel (D-F-A-C) ──
+  // Re menor descendente y ascendente estilo jazz
+  const walkBass=[
+    {f:73.4,d:0.9},  // D2
+    {f:87.3,d:0.9},  // F2
+    {f:98.0,d:0.9},  // G2
+    {f:87.3,d:0.9},  // F2
+    {f:82.4,d:0.9},  // E2
+    {f:73.4,d:0.9},  // D2
+    {f:65.4,d:0.9},  // C2
+    {f:73.4,d:0.9},  // D2
+  ];
+  walkBass.forEach((note,i)=>{
+    const bt=t+i*beat*(bars/2);
+    if(bt>t+bars*bar) return;
+    const bass=a.createOscillator(); bass.type='triangle';
+    bass.frequency.value=note.f;
+    // Portamento leve al siguiente
+    const nextF=walkBass[(i+1)%walkBass.length].f;
+    bass.frequency.linearRampToValueAtTime(nextF*0.99,bt+beat-0.05);
+    const bf=a.createBiquadFilter(); bf.type='lowpass'; bf.frequency.value=200;
     const bg=a.createGain();
-    bg.gain.setValueAtTime(0,bt2); bg.gain.linearRampToValueAtTime(0.28,bt2+0.02);
-    bg.gain.setValueAtTime(0.25,bt2+bar/2-0.06); bg.gain.linearRampToValueAtTime(0,bt2+bar/2);
+    bg.gain.setValueAtTime(0,bt); bg.gain.linearRampToValueAtTime(0.3,bt+0.03);
+    bg.gain.setValueAtTime(0.26,bt+beat-0.07); bg.gain.linearRampToValueAtTime(0,bt+beat);
     bass.connect(bf); bf.connect(bg); bg.connect(masterGain);
-    bass.start(bt2); bass.stop(bt2+bar/2+0.05); nodes.push(bass,bf,bg);
+    bass.start(bt); bass.stop(bt+beat+0.05); nodes.push(bass,bf,bg);
   });
 
-  // MELODÍA TRAP synth — pentatónica menor
-  const mel=[
-    {f:440,d:0.15,o:0},{f:523,d:0.1,o:0.25},{f:440,d:0.2,o:0.5},
-    {f:392,d:0.15,o:1.0},{f:349,d:0.3,o:1.25},
-    {f:440,d:0.15,o:2.0},{f:523,d:0.1,o:2.25},{f:587,d:0.15,o:2.5},{f:523,d:0.15,o:2.75},
-    {f:440,d:0.3,o:3.0},{f:392,d:0.2,o:3.5},{f:349,d:0.4,o:3.75},
+  // ── JAZZ CHORD STABS — voicings de Dm7/Am7 en off-beats ──
+  // Stabs en los "y" de los tiempos — estilo soul/jazz hip-hop
+  const stabTimes=[0.5,1.5,2.5,3.5,4.5,6.5]; // en beats
+  const chords=[
+    [293.7,369.99,440,554.4],   // Dm9 voicing
+    [261.6,329.6,392,493.9],    // Cmaj7 voicing
+    [293.7,349.2,440,523.3],    // Dm7
+    [246.9,311.1,392,466.2],    // Bm7b5
   ];
-  for(let rep=0;rep<bars;rep++){
-    mel.forEach(note=>{
-      const nt=t+rep*bar+note.o*beat;
-      if(nt>t+bars*bar) return;
-      const o=a.createOscillator(); o.type='square'; o.frequency.value=note.f;
-      const f=a.createBiquadFilter(); f.type='lowpass'; f.frequency.value=note.f*2.5; f.Q.value=1;
-      const g=a.createGain();
-      g.gain.setValueAtTime(0,nt); g.gain.linearRampToValueAtTime(0.055,nt+0.01);
-      g.gain.setValueAtTime(0.05,nt+note.d*beat-0.03); g.gain.linearRampToValueAtTime(0,nt+note.d*beat);
-      o.connect(f); f.connect(g); g.connect(masterGain);
-      o.start(nt); o.stop(nt+note.d*beat+0.02); nodes.push(o,f,g);
+  for(let b=0;b<bars;b++){
+    stabTimes.forEach((stPos,si)=>{
+      const st=t+b*bar+stPos*beat;
+      if(st>t+bars*bar) return;
+      const chord=chords[si%chords.length];
+      chord.forEach(freq=>{
+        const o=a.createOscillator(); o.type='triangle';
+        o.frequency.value=freq/2; // una octava abajo para más jazz
+        const f=a.createBiquadFilter(); f.type='bandpass'; f.frequency.value=freq*1.2; f.Q.value=0.8;
+        const g=a.createGain();
+        g.gain.setValueAtTime(0,st); g.gain.linearRampToValueAtTime(0.028,st+0.015);
+        g.gain.exponentialRampToValueAtTime(0.001,st+0.2);
+        o.connect(f); f.connect(g); g.connect(masterGain);
+        o.start(st); o.stop(st+0.22); nodes.push(o,f,g);
+      });
     });
   }
 }
