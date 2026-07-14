@@ -68,7 +68,7 @@ input:focus{border-color:rgba(255,185,0,.4);}
     <span class="cbadge cb-yt" id="dotYT">▶ YouTube</span>
     <span class="cbadge cb-kick" id="dotKick">⚡ Kick</span>
     <span class="cbadge cb-twitch" id="dotTwitch">🟣 Twitch</span>
-    <span class="cbadge cb-tiktok" id="dotTiktok">🎵 TikTok</span>
+    <span class="cbadge cb-tiktok" id="dotTiktok" onclick="toggleTiktok()" style="cursor:pointer;" title="Clic para activar/desactivar TikTok">🎵 TikTok</span>
   </div>
   <button class="power-btn off" id="powerBtn" onclick="togglePower()">
     <span id="powerIcon">⏻</span>
@@ -599,18 +599,46 @@ function connectTwitch() {
 // ══ TikTok Bridge — lee mensajes del script local Node.js ══
 // Requiere tiktok-bridge.js corriendo en tu PC (node tiktok-bridge.js)
 // TikTok Bridge — tik.tools (node tiktok-bridge.js)
+// TikTok Bridge — tik.tools (node tiktok-bridge.js)
 const TIKTOK_BRIDGE_URL = 'http://localhost:3000/messages';
+const TIKTOK_CTRL_URL   = 'http://localhost:3000';
 let tiktokConnected = false;
+let tiktokEnabled   = false;
 let tiktokRetryTimer = null;
 
+async function toggleTiktok(){
+  if(tiktokEnabled){
+    // Desactivar
+    try{ await fetch(TIKTOK_CTRL_URL+'/disable'); }catch(e){}
+    tiktokEnabled=false;
+    tiktokConnected=false;
+    const dot=document.getElementById('dotTiktok');
+    dot.classList.remove('on');
+    dot.textContent='🎵 TikTok';
+    dot.style.opacity='0.5';
+  } else {
+    // Activar
+    try{ await fetch(TIKTOK_CTRL_URL+'/enable'); }catch(e){}
+    tiktokEnabled=true;
+    const dot=document.getElementById('dotTiktok');
+    dot.textContent='🎵 TikTok ⏳';
+    dot.style.opacity='1';
+  }
+}
+
 async function pollTikTok() {
+  if(!tiktokEnabled){
+    tiktokRetryTimer = setTimeout(pollTikTok, 3000);
+    return;
+  }
   try {
     const res = await fetch(TIKTOK_BRIDGE_URL, { signal: AbortSignal.timeout(2000) });
     if(!res.ok) throw new Error('status '+res.status);
     const msgs = await res.json();
     if(!tiktokConnected) {
       tiktokConnected = true;
-      document.getElementById('dotTiktok').classList.add('on');
+      const dot=document.getElementById('dotTiktok');
+      dot.classList.add('on'); dot.textContent='🎵 TikTok ✅';
       saveStatus(connected);
     }
     if(Array.isArray(msgs) && msgs.length > 0) {
@@ -619,7 +647,8 @@ async function pollTikTok() {
   } catch(e) {
     if(tiktokConnected) {
       tiktokConnected = false;
-      document.getElementById('dotTiktok').classList.remove('on');
+      const dot2=document.getElementById('dotTiktok');
+      dot2.classList.remove('on'); dot2.textContent='🎵 TikTok';
       saveStatus(connected);
     }
   }
