@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Quiz Control</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0a0f;font-family:'Inter',sans-serif;color:#fff;padding:12px;}
+h1{font-size:13px;font-weight:700;color:#FFD000;margin-bottom:2px;}
+.sub{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:12px;}
+
+/* Vidas */
+.section{background:rgba(255,255,255,.04);border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,.07);margin-bottom:8px;}
+.section-title{font-size:9px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,.35);margin-bottom:8px;}
+
+/* Selector de vidas */
+.vida-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:4px;}
+.vbtn{padding:8px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;
+  font-family:'Inter',sans-serif;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);transition:.15s;}
+.vbtn:hover{background:rgba(255,255,255,.1);}
+.vbtn.active{background:rgba(255,208,0,.15);border-color:rgba(255,208,0,.5);color:#FFD000;}
+
+/* Contador de racha */
+.streak-display{
+  text-align:center;padding:10px;border-radius:8px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  margin-bottom:8px;
+}
+.streak-num{font-size:48px;font-weight:900;color:#FFD000;line-height:1;}
+.streak-label{font-size:9px;letter-spacing:3px;color:rgba(255,255,255,.3);margin-top:2px;}
+.streak-rep{font-size:11px;font-weight:700;color:rgba(255,255,255,.5);margin-top:4px;}
+
+/* Botones quiz */
+.quiz-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.btn-correct{
+  padding:16px 8px;border-radius:10px;font-size:14px;font-weight:900;
+  cursor:pointer;font-family:'Inter',sans-serif;
+  background:rgba(74,222,128,.12);border:2px solid rgba(74,222,128,.5);
+  color:#4ade80;transition:.15s;text-align:center;line-height:1.2;
+}
+.btn-correct:hover{background:rgba(74,222,128,.25);}
+.btn-wrong{
+  padding:16px 8px;border-radius:10px;font-size:14px;font-weight:900;
+  cursor:pointer;font-family:'Inter',sans-serif;
+  background:rgba(248,113,113,.12);border:2px solid rgba(248,113,113,.5);
+  color:#f87171;transition:.15s;text-align:center;line-height:1.2;
+}
+.btn-wrong:hover{background:rgba(248,113,113,.25);}
+
+/* Reset */
+.btn-reset{
+  width:100%;padding:7px;border-radius:8px;font-size:10px;font-weight:700;
+  cursor:pointer;font-family:'Inter',sans-serif;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.35);transition:.15s;
+}
+.btn-reset:hover{background:rgba(255,255,255,.08);}
+
+/* Historial */
+.historial{max-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
+.hist-item{font-size:9px;padding:4px 7px;border-radius:5px;display:flex;justify-content:space-between;}
+.hist-item.c{background:rgba(74,222,128,.08);color:#4ade80;}
+.hist-item.w{background:rgba(248,113,113,.08);color:#f87171;}
+
+.status{font-size:10px;text-align:center;color:rgba(255,255,255,.3);padding:4px;min-height:14px;}
+.status.ok{color:#4ade80;}.status.err{color:#f87171;}
+</style>
+</head>
+<body>
+<h1>🧠 Quiz Control</h1>
+<div class="sub">El rep responde — si falla pierde ½ vida y cambia</div>
+
+<!-- Vidas iniciales -->
+<div class="section">
+  <div class="section-title">VIDAS AL INICIAR</div>
+  <div class="vida-grid">
+    <button class="vbtn" onclick="setVidas(6)">3 ❤️</button>
+    <button class="vbtn active" onclick="setVidas(10)">5 ❤️</button>
+    <button class="vbtn" onclick="setVidas(16)">8 ❤️</button>
+  </div>
+</div>
+
+<!-- Racha del rep -->
+<div class="streak-display">
+  <div class="streak-num" id="streakNum">0</div>
+  <div class="streak-label">ACIERTOS SEGUIDOS</div>
+  <div class="streak-rep" id="streakRep">Sin rep activo</div>
+</div>
+
+<!-- Botones quiz -->
+<div class="quiz-btns">
+  <button class="btn-correct" onclick="correcto()">✓<br>ACERTÓ</button>
+  <button class="btn-wrong" onclick="incorrecto()">✗<br>FALLÓ</button>
+</div>
+
+<button class="btn-reset" onclick="resetQuiz()">↺ Reset racha y quiz</button>
+
+<!-- Historial -->
+<div class="section" style="margin-top:8px;">
+  <div class="section-title">HISTORIAL</div>
+  <div class="historial" id="historial"></div>
+</div>
+
+<div class="status" id="statusBar"></div>
+
+<script>
+const LS_BATTLE = 'battle_state';
+const LS_REP    = 'rep_state';
+
+let streak = 0;
+let vidasMax = 10; // 5 corazones = 10 medias vidas
+let historial = [];
+let currentRepName = 'Sin rep activo';
+
+function setVidas(v){
+  vidasMax = v;
+  document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  // Aplicar al battle_state
+  try{
+    const s = JSON.parse(localStorage.getItem(LS_BATTLE)||'{}');
+    s.chatHp = v; s.dannyHp = v;
+    localStorage.setItem(LS_BATTLE, JSON.stringify(s));
+  }catch(e){}
+  setStatus(`Vidas ajustadas a ${v/2}`, 'ok');
+}
+
+function correcto(){
+  streak++;
+  updateStreak();
+  // Mostrar paloma en overlay
+  const s = JSON.parse(localStorage.getItem(LS_BATTLE)||'{}');
+  s.quizTs = Date.now();
+  s.quizCorrect = true;
+  localStorage.setItem(LS_BATTLE, JSON.stringify(s));
+  addHistorial(true);
+  setStatus(`✓ Acierto — racha: ${streak}`, 'ok');
+}
+
+function incorrecto(){
+  // Mostrar X en overlay + quitar ½ vida
+  let s = {};
+  try{ s = JSON.parse(localStorage.getItem(LS_BATTLE)||'{}'); }catch(e){}
+  const oldHp = s.chatHp || vidasMax;
+  s.chatHp = Math.max(0, oldHp - 1);
+  s.chatHit = Date.now();
+  s.quizTs = Date.now();
+  s.quizCorrect = false;
+  localStorage.setItem(LS_BATTLE, JSON.stringify(s));
+
+  addHistorial(false);
+  setStatus(`✗ Fallo — -½ vida Chat (${s.chatHp/2} restantes)`, 'err');
+
+  // Cambiar rep automáticamente
+  setTimeout(()=>cambiarRep(), 800);
+
+  streak = 0;
+  updateStreak();
+}
+
+function cambiarRep(){
+  // Disparar búsqueda de nuevo rep
+  try{
+    const repState = JSON.parse(localStorage.getItem(LS_REP)||'{}');
+    repState.clear = Date.now();
+    localStorage.setItem(LS_REP, JSON.stringify(repState));
+  }catch(e){}
+  currentRepName = 'Buscando nuevo rep...';
+  updateStreak();
+  setStatus('Cambiando representante...', '');
+}
+
+function resetQuiz(){
+  streak = 0;
+  historial = [];
+  currentRepName = 'Sin rep activo';
+  updateStreak();
+  renderHistorial();
+  setStatus('Quiz reiniciado', '');
+}
+
+function updateStreak(){
+  document.getElementById('streakNum').textContent = streak;
+  document.getElementById('streakRep').textContent = currentRepName;
+}
+
+function addHistorial(correct){
+  historial.unshift({
+    correct,
+    rep: currentRepName,
+    streak: correct ? streak : 0,
+    ts: Date.now()
+  });
+  if(historial.length > 20) historial.pop();
+  renderHistorial();
+}
+
+function renderHistorial(){
+  const el = document.getElementById('historial');
+  el.innerHTML = historial.map(h=>`
+    <div class="hist-item ${h.correct?'c':'w'}">
+      <span>${h.correct?'✓':'✗'} ${h.rep.substring(0,16)}</span>
+      <span>${h.correct?'Racha: '+h.streak:'Falló'}</span>
+    </div>`).join('');
+}
+
+function setStatus(msg,type){
+  const el=document.getElementById('statusBar');
+  el.textContent=msg; el.className='status '+(type||'');
+}
+
+// Leer rep activo desde rep_state
+setInterval(()=>{
+  try{
+    const rs = JSON.parse(localStorage.getItem(LS_REP)||'{}');
+    if(rs.repUsername && rs.repUsername !== currentRepName && !rs.clear){
+      currentRepName = rs.repUsername;
+      document.getElementById('streakRep').textContent = currentRepName;
+    }
+  }catch(e){}
+},500);
+</script>
+</body>
+</html>
