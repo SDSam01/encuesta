@@ -42,7 +42,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 }
 .char-container.visible{opacity:1;}
 
-/* Hat overlay — mismo tamaño que el sprite, alineación automática */
+/* Hat overlay — mismo tamaño que el sprite, offset para alinear con char-idle */
 .char-hat{
   position:absolute;inset:0;
   width:300px;height:450px;
@@ -50,6 +50,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
   background-repeat:no-repeat;
   background-position:bottom center;
   pointer-events:none;
+  transform:translateY(-124px); /* offset: cabeza de char-idle está 124px más arriba que MODELO_BASE */
 }
 #char1{left:16px;}
 #char2{right:16px;}
@@ -130,8 +131,8 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 }
 .speech.show{opacity:1;transform:scale(1) translateY(0);}
 /* Posiciones */
-#speech1{bottom:510px;left:16px;}
-#speech2{bottom:510px;right:16px;}
+#speech1{bottom:500px;left:16px;}
+#speech2{bottom:500px;right:16px;}
 #speech2::after{left:auto;right:24px;}
 
 /* REP BADGE */
@@ -144,8 +145,8 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
   white-space:nowrap;
 }
 /* Nombre justo encima de la cabeza del personaje */
-#rep1{bottom:458px;left:16px;transform:translateX(-10px);}
-#rep2{bottom:458px;right:16px;transform:translateX(10px);}
+#rep1{bottom:455px;left:16px;transform:translateX(-10px);}
+#rep2{bottom:455px;right:16px;transform:translateX(10px);}
 #rep1.show{opacity:1;transform:translateX(0);}
 #rep2.show{opacity:1;transform:translateX(0);}
 
@@ -457,7 +458,7 @@ setInterval(()=>{
       document.getElementById('qBox').classList.add('show');
       if(!prev.showQuestion)sfxQ();
     }
-    else if(!s.showQuestion){document.getElementById('qBox').classList.remove('show');}
+    else if(!s.showQuestion){document.getElementById('qBox').classList.remove('show');if(prev.showQuestion){AC.resume();n(400,.05,.1,'sine');setTimeout(()=>n(300,.1,.08,'sine'),60);}}
     // Actualizar respuestas en tiempo real
     if(s.showQuestion&&s.question&&(s.answer1!==prev.answer1||s.answer2!==prev.answer2||s.revealed!==prev.revealed)){
       renderQ(s.question, s.answer1||null, s.answer2||null, !!s.revealed);
