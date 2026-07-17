@@ -41,6 +41,16 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
   transition:opacity .5s ease;
 }
 .char-container.visible{opacity:1;}
+
+/* Hat overlay — mismo tamaño que el sprite, alineación automática */
+.char-hat{
+  position:absolute;inset:0;
+  width:300px;height:450px;
+  background-size:contain;
+  background-repeat:no-repeat;
+  background-position:bottom center;
+  pointer-events:none;
+}
 #char1{left:16px;}
 #char2{right:16px;}
 
@@ -221,9 +231,11 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 
 <div class="char-container" id="char1">
   <div class="char-sprite frame-idle idle-bounce" id="sprite1"></div>
+  <div class="char-hat" id="hat1"></div>
 </div>
 <div class="char-container" id="char2">
   <div class="char-sprite frame-idle idle-bounce" id="sprite2"></div>
+  <div class="char-hat" id="hat2"></div>
 </div>
 
 <div id="qBox">
@@ -254,6 +266,20 @@ function confetti(){
   }
 }
 
+// ══ HATS ══
+const HATS=[
+  'gorro.png',
+  'corona.png',
+  'casco_seguridad.png',
+  'boina.png',
+  'gorra_atras.png',
+  'gorrra_adelante.png',
+  'gorro_fiesta.png',
+  'sombrero.png',
+];
+
+function randomHat(){ return HATS[Math.floor(Math.random()*HATS.length)]; }
+
 // ══ HUES ══
 const HUES=[0,30,60,90,120,150,180,210,240,270,300,330];
 function randomHueClass(){return 'hue-'+HUES[Math.floor(Math.random()*HUES.length)];}
@@ -278,6 +304,9 @@ function initChar(idx,hue){
   hueClasses[idx-1]=hue;
   setFrame(sprite,'idle');
   sprite.classList.add('idle-bounce');
+  // Sombrero aleatorio
+  const hat=document.getElementById('hat'+idx);
+  if(hat) hat.style.backgroundImage=`url('${randomHat()}')`;
   cont.classList.remove('enter-l','enter-r','visible');
   void cont.offsetWidth;
   cont.classList.add(idx===1?'enter-l':'enter-r');
