@@ -37,31 +37,31 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 /* Display at 260x520, scale=0.831, bg-size=1042x1042 */
 .char-container{
   position:fixed;bottom:0;
-  width:260px;height:520px;
+  width:280px;height:560px;
   z-index:20;
 }
 #char1{left:10px;}
 #char2{right:10px;}
 
 .char-sprite{
-  width:260px;height:520px;
+  width:280px;height:560px;
   background-image:url('trivia-sprites.png');
-  background-size:1042px 1042px;
+  background-size:1040px 1040px;
   background-repeat:no-repeat;
   background-position:0 0;
   image-rendering:auto;
   transform-origin:bottom center;
 }
 
-/* FRAMES — bg-position por pose */
+/* FRAMES — bg-size:1040x1040, cell:260x520 */
 .frame-idle      {background-position:0px 0px;}
 .frame-talk      {background-position:-260px 0px;}
-.frame-wave      {background-position:-521px 0px;}
-.frame-celebrate {background-position:-781px 0px;}
-.frame-victory   {background-position:0px -521px;}
-.frame-scared    {background-position:-260px -521px;}
-.frame-run1      {background-position:-521px -521px;}
-.frame-run2      {background-position:-781px -521px;}
+.frame-wave      {background-position:-520px 0px;}
+.frame-celebrate {background-position:-780px 0px;}
+.frame-victory   {background-position:0px -520px;}
+.frame-scared    {background-position:-260px -520px;}
+.frame-run1      {background-position:-520px -520px;}
+.frame-run2      {background-position:-780px -520px;}
 
 /* COLORIZACIÓN — sepia+hue-rotate para dar color al modelo blanco/gris */
 .hue-0   {filter:sepia(1) hue-rotate(0deg) saturate(3) brightness(1.05);}
@@ -83,17 +83,18 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 @keyframes charEnterL{from{transform:translateX(-350px);opacity:0;}to{transform:translateX(0);opacity:1;}}
 @keyframes charEnterR{from{transform:translateX(350px);opacity:0;}to{transform:translateX(0);opacity:1;}}
 
-.char-sprite.idle-bounce{animation:idleBounce 1.8s ease-in-out infinite;}
-@keyframes idleBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+/* Idle: solo respiración muy sutil, NO flota */
+.char-sprite.idle-bounce{animation:idleBreath 3s ease-in-out infinite;}
+@keyframes idleBreath{0%,100%{transform:scaleY(1) scaleX(1);}50%{transform:scaleY(1.012) scaleX(0.994);}}
 
-.char-sprite.walking{animation:walkAnim .4s steps(1) infinite;}
+.char-sprite.walking{animation:walkAnim .45s steps(1) infinite;}
 @keyframes walkAnim{0%{background-position:-521px -521px;}50%{background-position:-781px -521px;}}
 
-.char-sprite.jumping{animation:jumpAnim .5s ease-in-out 2;}
-@keyframes jumpAnim{0%{transform:translateY(0) scaleY(1);}40%{transform:translateY(-80px) scaleY(1.08);}80%{transform:translateY(0) scaleY(.85);}100%{transform:translateY(0) scaleY(1);}}
+.char-sprite.jumping{animation:jumpAnim .55s ease-in-out 2;}
+@keyframes jumpAnim{0%{transform:translateY(0) scaleY(1);}40%{transform:translateY(-40px) scaleY(1.05);}80%{transform:translateY(0) scaleY(.92);}100%{transform:translateY(0) scaleY(1);}}
 
-.char-sprite.celebrating{animation:celebrateAnim .4s ease-in-out 4 alternate;}
-@keyframes celebrateAnim{from{transform:translateY(0) rotate(-5deg);}to{transform:translateY(-15px) rotate(5deg);}}
+.char-sprite.celebrating{animation:celebrateAnim .5s ease-in-out 4 alternate;}
+@keyframes celebrateAnim{from{transform:rotate(-4deg) scaleX(0.97);}to{transform:rotate(4deg) scaleX(1.03);}}
 
 /* Burbuja de habla */
 .speech{
@@ -111,15 +112,17 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 /* REP BADGE */
 .rep-badge{
   position:fixed;z-index:25;
-  font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:3px;
-  background:rgba(0,0,0,.72);border-radius:8px;padding:5px 16px;
-  border:1px solid rgba(255,255,255,.1);color:#fff;
+  font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;
+  background:rgba(0,0,0,.78);border-radius:8px;padding:5px 16px;
+  border:1px solid rgba(255,255,255,.12);color:#fff;
   opacity:0;transition:opacity .4s,transform .4s cubic-bezier(.34,1.56,.64,1);
+  white-space:nowrap;
 }
-#rep1{bottom:530px;left:30px;transform:translateY(10px);}
-#rep2{bottom:530px;right:30px;transform:translateY(10px);}
-#rep1.show{opacity:1;transform:translateY(0);}
-#rep2.show{opacity:1;transform:translateY(0);}
+/* Nombre justo encima de la cabeza del personaje */
+#rep1{bottom:548px;left:20px;transform:translateX(-10px);}
+#rep2{bottom:548px;right:20px;transform:translateX(10px);}
+#rep1.show{opacity:1;transform:translateX(0);}
+#rep2.show{opacity:1;transform:translateX(0);}
 
 /* ══ PREGUNTA — zona 9:16 abajo ══ */
 #qBox{
@@ -148,6 +151,22 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 #qBox.show .q-opt:nth-child(4){opacity:1;transform:none;transition-delay:.56s;}
 .q-key{width:27px;height:27px;border-radius:6px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0;}
 .q-opt.correct{background:rgba(74,222,128,.2);border-color:#4ade80;animation:optBounce .4s ease;}
+/* Answer selections per team */
+.q-opt.sel-t1{border-color:rgba(6,214,160,.8);box-shadow:inset 0 0 0 2px rgba(6,214,160,.4);}
+.q-opt.sel-t2{border-color:rgba(255,107,107,.8);box-shadow:inset 0 0 0 2px rgba(255,107,107,.4);}
+.q-opt.sel-t1.sel-t2{border-color:rgba(255,208,0,.8);box-shadow:inset 0 0 0 2px rgba(255,208,0,.4);}
+.team-marker{font-size:10px;font-weight:900;padding:2px 5px;border-radius:4px;display:inline-flex;align-items:center;gap:2px;}
+.tm1{background:rgba(6,214,160,.25);color:#06d6a0;}
+.tm2{background:rgba(255,107,107,.25);color:#ff6b6b;}
+.q-opt-markers{display:flex;gap:4px;margin-left:auto;flex-shrink:0;}
+/* Reveal animation per team */
+.q-opt .reveal-mark{
+  font-size:18px;font-weight:900;margin-left:auto;
+  opacity:0;transform:scale(0);
+  transition:opacity .3s,transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+.q-opt.revealed-correct .reveal-mark{opacity:1;transform:scale(1);color:#4ade80;}
+.q-opt.revealed-wrong .reveal-mark{opacity:1;transform:scale(1);color:#f87171;}
 .q-opt.correct .q-key{background:#4ade80;color:#000;}
 .q-opt.wrong{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.4);}
 @keyframes optBounce{0%{transform:scale(1);}50%{transform:scale(1.04);}100%{transform:scale(1);}}
@@ -308,15 +327,44 @@ function showResult(correct,winner=''){
 }
 
 // ══ PREGUNTA ══
-function renderQ(q,answer=null){
+function renderQ(q, t1ans=null, t2ans=null, revealed=false){
   document.getElementById('qCat').textContent=q.categoria||'';
   document.getElementById('qText').textContent=q.pregunta||'';
   const opts=document.getElementById('qOpts');opts.innerHTML='';
   ['A','B','C','D'].forEach(k=>{
+    const isT1=t1ans===k, isT2=t2ans===k;
+    const isCorrect=revealed&&k===q.correcta;
+    const isWrong=revealed&&k!==q.correcta&&(isT1||isT2);
     const d=document.createElement('div');
-    d.className='q-opt'+(answer&&k===answer?' correct':answer?' wrong':'');
-    d.innerHTML=`<div class="q-key">${k}</div><span>${q.opciones?.[k]||''}</span>`;
+    let cls='q-opt';
+    if(isT1&&isT2) cls+=' sel-t1 sel-t2';
+    else if(isT1) cls+=' sel-t1';
+    else if(isT2) cls+=' sel-t2';
+    if(revealed&&isCorrect) cls+=' correct';
+    if(revealed&&isWrong&&!isCorrect) cls+=' wrong';
+    d.className=cls;
+
+    // Markers de equipo
+    let markers='';
+    if(isT1) markers+=`<span class="team-marker tm1">E1</span>`;
+    if(isT2) markers+=`<span class="team-marker tm2">E2</span>`;
+
+    // Reveal mark
+    let revMark='';
+    if(revealed&&(isT1||isT2)){
+      const correct=k===q.correcta;
+      revMark=`<span class="reveal-mark">${correct?'✓':'✗'}</span>`;
+    }
+
+    d.innerHTML=`<div class="q-key">${k}</div><span>${q.opciones?.[k]||''}</span><div class="q-opt-markers">${markers}</div>${revMark}`;
     opts.appendChild(d);
+
+    // Animación de reveal con delay
+    if(revealed){
+      setTimeout(()=>{
+        d.classList.add(isCorrect?'revealed-correct':isWrong?'revealed-wrong':'');
+      },200);
+    }
   });
 }
 
@@ -344,8 +392,16 @@ setInterval(()=>{
     if(s.hue1&&s.hue1!==prev.hue1) initChar(1,s.hue1);
     if(s.hue2&&s.hue2!==prev.hue2) initChar(2,s.hue2);
     // Pregunta
-    if(s.showQuestion&&s.question){renderQ(s.question);document.getElementById('qBox').classList.add('show');if(!prev.showQuestion)sfxQ();}
+    if(s.showQuestion&&s.question){
+      renderQ(s.question, s.answer1||null, s.answer2||null, !!s.revealed);
+      document.getElementById('qBox').classList.add('show');
+      if(!prev.showQuestion)sfxQ();
+    }
     else if(!s.showQuestion){document.getElementById('qBox').classList.remove('show');}
+    // Actualizar respuestas en tiempo real
+    if(s.showQuestion&&s.question&&(s.answer1!==prev.answer1||s.answer2!==prev.answer2||s.revealed!==prev.revealed)){
+      renderQ(s.question, s.answer1||null, s.answer2||null, !!s.revealed);
+    }
     // Resultado
     if(s.result&&s.result!==prev.result){
       if(s.result==='correct')showResult(true);
