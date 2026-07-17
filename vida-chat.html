@@ -21,6 +21,34 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 }
 #flashGreen.show{opacity:1;}
 
+/* ══ QUIZ — Paloma y X en el centro ══ */
+#quizResult{
+  position:fixed;inset:0;z-index:200;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;opacity:0;
+}
+#quizResult.show{animation:quizFadeInOut 2s cubic-bezier(.4,0,.2,1) forwards;}
+@keyframes quizFadeInOut{
+  0%{opacity:0;transform:scale(.5);}
+  20%{opacity:1;transform:scale(1.1);}
+  40%{transform:scale(1);}
+  75%{opacity:1;}
+  100%{opacity:0;transform:scale(.95);}
+}
+#quizIcon{
+  font-size:260px;line-height:1;
+  filter:drop-shadow(0 0 40px currentColor);
+}
+#quizLabel{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:52px;letter-spacing:16px;
+  margin-top:10px;
+}
+#quizResult.correct #quizIcon{ color:#4ade80; }
+#quizResult.correct #quizLabel{ color:#4ade80; text-shadow:0 0 30px rgba(74,222,128,.7); }
+#quizResult.wrong #quizIcon{ color:#f87171; }
+#quizResult.wrong #quizLabel{ color:#f87171; text-shadow:0 0 30px rgba(248,113,113,.7); }
+
 @keyframes chatShake{
   0%,100%{transform:translate(0,0);}
   15%{transform:translate(12px,-8px) rotate(1deg);}
@@ -89,6 +117,10 @@ body.shake{animation:chatShake .5s cubic-bezier(.36,.07,.19,.97);}
 <body>
 <div id="flashRed"></div>
 <div id="flashGreen"></div>
+<div id="quizResult">
+  <div id="quizIcon">✓</div>
+  <div id="quizLabel">CORRECTO</div>
+</div>
 <div id="deadScreen"><div class="dead-text">CHAT MUERTO</div></div>
 <div id="widget">
   <div class="w-bg">
@@ -99,6 +131,23 @@ body.shake{animation:chatShake .5s cubic-bezier(.36,.07,.19,.97);}
 <script>
 const LS='battle_state';
 let lastHit=0,lastHeal=0,lastHp=6,lastDead=false,hideTimeout=null;
+let lastQuizTs=0;
+
+function showQuizResult(correct){
+  const el=document.getElementById('quizResult');
+  const icon=document.getElementById('quizIcon');
+  const label=document.getElementById('quizLabel');
+  el.classList.remove('show','correct','wrong');
+  void el.offsetWidth;
+  if(correct){
+    icon.textContent='✓'; label.textContent='CORRECTO';
+    el.classList.add('show','correct');
+  } else {
+    icon.textContent='✗'; label.textContent='INCORRECTO';
+    el.classList.add('show','wrong');
+  }
+  setTimeout(()=>el.classList.remove('show','correct','wrong'),2100);
+}
 const AC=new (window.AudioContext||window.webkitAudioContext)();
 
 function playHit(){
@@ -213,6 +262,11 @@ setInterval(()=>{
     if(s.chatHp!==lastHp&&s.chatHit===lastHit&&s.chatHeal===lastHeal){
       lastHp=s.chatHp;renderHearts(s.chatHp);
       if(hideTimeout)clearTimeout(hideTimeout);document.getElementById('widget').classList.remove('visible');
+    }
+    // Quiz result detection
+    if(s.quizTs&&s.quizTs!==lastQuizTs){
+      lastQuizTs=s.quizTs;
+      showQuizResult(s.quizCorrect);
     }
     if(s.chatHidden){document.getElementById('widget').classList.remove('visible');document.getElementById('deadScreen').classList.remove('show');return;}
     if(s.chatDead&&!lastDead){lastDead=true;document.getElementById('deadScreen').classList.add('show');document.getElementById('widget').classList.add('visible');if(hideTimeout)clearTimeout(hideTimeout);}
