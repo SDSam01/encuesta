@@ -50,18 +50,12 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
   background-repeat:no-repeat;
   background-position:bottom center;
   pointer-events:none;
-  transform:translateY(-124px); /* offset: cabeza de char-idle está 124px más arriba que MODELO_BASE */
+  transform:translateY(-134px); /* offset: cabeza de char-idle está 124px más arriba que MODELO_BASE */
 }
 #char1{left:16px;}
 #char2{right:16px;}
 
-.char-sprite{
-  width:300px;height:450px;
-  background-repeat:no-repeat;
-  background-size:contain;
-  background-position:bottom center;
-  transform-origin:bottom center;
-}
+
 
 /* FRAMES — imagen individual por pose */
 .frame-idle      {background-image:url('char-idle.png');}
@@ -72,6 +66,27 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 .frame-scared    {background-image:url('char-scared.png');}
 .frame-run1      {background-image:url('char-run1.png');}
 .frame-run2      {background-image:url('char-run2.png');}
+
+/* char-body — wrapper animado que mueve sprite+hat juntos */
+.char-body{
+  position:relative;
+  width:300px;height:450px;
+  transform-origin:bottom center;
+}
+.char-body.idle-bounce{animation:idleBreath 3s ease-in-out infinite;}
+.char-body.jumping{animation:jumpAnim .55s ease-in-out 2;}
+.char-body.celebrating{animation:celebrateAnim .5s ease-in-out 4 alternate;}
+.char-body.walking{animation:walkBodyAnim .45s ease-in-out infinite alternate;}
+@keyframes walkBodyAnim{from{transform:translateX(-8px);}to{transform:translateX(8px);}}
+
+/* sprite y hat ahora no tienen animación propia */
+.char-sprite{
+  position:absolute;inset:0;
+  width:300px;height:450px;
+  background-repeat:no-repeat;
+  background-size:contain;
+  background-position:bottom center;
+}
 
 /* COLORIZACIÓN */
 .hue-0   {filter:sepia(1) hue-rotate(0deg) saturate(3) brightness(1.05);}
@@ -94,22 +109,22 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 @keyframes charEnterR{from{transform:translateX(320px);opacity:0;}to{transform:translateX(0);opacity:1;}}
 
 /* Idle — respiración sutil, NO flota */
-.char-sprite.idle-bounce{animation:idleBreath 3s ease-in-out infinite;}
+
 @keyframes idleBreath{0%,100%{transform:scaleY(1) scaleX(1);}50%{transform:scaleY(1.012) scaleX(0.994);}}
 
 /* Walk — alterna run1/run2 */
-.char-sprite.walking{animation:walkAnim .45s steps(1) infinite;}
+
 @keyframes walkAnim{
   0%,49%{background-image:url('char-run1.png');}
   50%,100%{background-image:url('char-run2.png');}
 }
 
 /* Jump */
-.char-sprite.jumping{animation:jumpAnim .55s ease-in-out 2;}
+
 @keyframes jumpAnim{0%{transform:translateY(0) scaleY(1);}40%{transform:translateY(-30px) scaleY(1.04);}80%{transform:translateY(0) scaleY(.93);}100%{transform:translateY(0) scaleY(1);}}
 
 /* Celebrate */
-.char-sprite.celebrating{animation:celebrateAnim .5s ease-in-out 4 alternate;}
+
 @keyframes celebrateAnim{from{transform:rotate(-3deg);}to{transform:rotate(3deg);}}
 
 /* Burbuja de habla */
@@ -117,7 +132,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 .speech{
   position:fixed;z-index:26;
   background:rgba(255,255,255,.95);border-radius:12px;padding:7px 16px;
-  font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:#111;
+  font-family:'Inter',sans-serif;font-size:16px;font-weight:700;color:#111;
   max-width:280px;word-break:break-word;line-height:1.3;
   opacity:0;transform:scale(.8) translateY(6px);
   transition:opacity .2s,transform .25s cubic-bezier(.34,1.56,.64,1);
@@ -138,7 +153,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 /* REP BADGE */
 .rep-badge{
   position:fixed;z-index:25;
-  font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;
+  font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:3px;
   background:rgba(0,0,0,.78);border-radius:8px;padding:5px 16px;
   border:1px solid rgba(255,255,255,.12);color:#fff;
   opacity:0;transition:opacity .4s,transform .4s cubic-bezier(.34,1.56,.64,1);
@@ -208,6 +223,21 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 .rwin #rIcon{font-size:140px;}
 .rwin #rLabel{font-size:84px;color:#FFD000;}
 
+/* Resultado sobre el personaje */
+.char-result{
+  position:fixed;z-index:50;pointer-events:none;
+  font-size:100px;line-height:1;text-align:center;
+  opacity:0;transform:scale(.5) translateY(20px);
+  transition:opacity .2s, transform .3s cubic-bezier(.34,1.56,.64,1);
+  filter:drop-shadow(0 0 20px currentColor);
+}
+.char-result.show{opacity:1;transform:scale(1) translateY(0);}
+.char-result.correct{color:#4ade80;}
+.char-result.wrong{color:#f87171;}
+/* Posición sobre cabeza de cada personaje */
+#cres1{left:60px;bottom:475px;}
+#cres2{right:60px;bottom:475px;}
+
 /* CONFETTI */
 .cfti{position:fixed;width:9px;height:9px;border-radius:2px;z-index:55;pointer-events:none;animation:cfFall linear forwards;}
 @keyframes cfFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(1200px) rotate(720deg);opacity:0;}}
@@ -231,12 +261,16 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 <div class="speech" id="speech2"></div>
 
 <div class="char-container" id="char1">
-  <div class="char-sprite frame-idle idle-bounce" id="sprite1"></div>
-  <div class="char-hat" id="hat1"></div>
+  <div class="char-body" id="body1">
+    <div class="char-sprite frame-idle" id="sprite1"></div>
+    <div class="char-hat" id="hat1"></div>
+  </div>
 </div>
 <div class="char-container" id="char2">
-  <div class="char-sprite frame-idle idle-bounce" id="sprite2"></div>
-  <div class="char-hat" id="hat2"></div>
+  <div class="char-body" id="body2">
+    <div class="char-sprite frame-idle" id="sprite2"></div>
+    <div class="char-hat" id="hat2"></div>
+  </div>
 </div>
 
 <div id="qBox">
@@ -245,7 +279,11 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
   <div class="q-opts" id="qOpts"></div>
 </div>
 
+<!-- Flash central para winner -->
 <div id="rFlash"><div id="rIcon">✓</div><div id="rLabel">CORRECTO</div></div>
+<!-- Resultado por personaje -->
+<div class="char-result" id="cres1"></div>
+<div class="char-result" id="cres2"></div>
 
 <script>
 // ══ AUDIO ══
@@ -304,7 +342,8 @@ function initChar(idx,hue){
   sprite.classList.add(hue);
   hueClasses[idx-1]=hue;
   setFrame(sprite,'idle');
-  sprite.classList.add('idle-bounce');
+  const body=document.getElementById('body'+idx);
+  if(body){body.classList.remove('idle-bounce','walking','jumping','celebrating');body.classList.add('idle-bounce');}
   // Sombrero aleatorio
   const hat=document.getElementById('hat'+idx);
   if(hat) hat.style.backgroundImage=`url('${randomHat()}')`;
@@ -332,44 +371,66 @@ function scheduleAction(idx){
 }
 function doAction(idx){
   const sprite=document.getElementById('sprite'+idx);
+  const body=document.getElementById('body'+idx);
   const action=IDLE_ACTIONS[Math.floor(Math.random()*IDLE_ACTIONS.length)];
   // Reset
-  sprite.classList.remove('idle-bounce','walking','jumping','celebrating');
+  body.classList.remove('idle-bounce','walking','jumping','celebrating');
 
   if(action==='wave'){
     setFrame(sprite,'wave');
-    setTimeout(()=>{setFrame(sprite,'idle');sprite.classList.add('idle-bounce');},1800);
+    setTimeout(()=>{setFrame(sprite,'idle');body.classList.add('idle-bounce');},1800);
   } else if(action==='walk'){
-    sprite.classList.add('walking');
-    setTimeout(()=>{sprite.classList.remove('walking');setFrame(sprite,'idle');sprite.classList.add('idle-bounce');},2400);
+    setFrame(sprite,'run1');
+    body.classList.add('walking');
+    let step=false;const wiv=setInterval(()=>{step=!step;setFrame(sprite,step?'run2':'run1');},250);
+    setTimeout(()=>{clearInterval(wiv);body.classList.remove('walking');setFrame(sprite,'idle');body.classList.add('idle-bounce');},2200);
   } else if(action==='jump'){
     setFrame(sprite,'celebrate');
-    sprite.classList.add('jumping');
-    setTimeout(()=>{sprite.classList.remove('jumping');setFrame(sprite,'idle');sprite.classList.add('idle-bounce');},1200);
+    body.classList.add('jumping');
+    setTimeout(()=>{body.classList.remove('jumping');setFrame(sprite,'idle');body.classList.add('idle-bounce');},1200);
   } else if(action==='celebrate'){
     setFrame(sprite,'victory');
-    sprite.classList.add('celebrating');
-    setTimeout(()=>{sprite.classList.remove('celebrating');setFrame(sprite,'idle');sprite.classList.add('idle-bounce');},2000);
+    body.classList.add('celebrating');
+    setTimeout(()=>{body.classList.remove('celebrating');setFrame(sprite,'idle');body.classList.add('idle-bounce');},2000);
   } else {
-    setFrame(sprite,'idle');sprite.classList.add('idle-bounce');
+    setFrame(sprite,'idle');body.classList.add('idle-bounce');
   }
   scheduleAction(idx);
 }
 
 // ══ RESULTADO ══
-function showResult(correct,winner=''){
+function showCharResult(teamIdx, correct){
+  const el=document.getElementById('cres'+teamIdx);
+  if(!el)return;
+  el.className='char-result';void el.offsetWidth;
+  el.textContent=correct?'✓':'✗';
+  el.classList.add('show',correct?'correct':'wrong');
+  setTimeout(()=>el.className='char-result',2500);
+}
+
+function showResult(correct,winner='',t1ok=null,t2ok=null){
   const el=document.getElementById('rFlash');
   const ic=document.getElementById('rIcon'),lb=document.getElementById('rLabel');
   el.className='';void el.offsetWidth;
-  if(winner){ic.textContent='🏆';lb.textContent=winner+' GANA';el.classList.add('show','rwin');confetti();}
-  else if(correct){
-    ic.textContent='✓';lb.textContent='CORRECTO';el.classList.add('show','rc');sfxOk();confetti();
+  if(winner){
+    ic.textContent='🏆';lb.textContent=winner+' GANA';
+    el.classList.add('show','rwin');confetti();
+  } else if(correct){
+    sfxOk();confetti();
+    // Mostrar resultado sobre cada personaje
+    if(t1ok!==null) showCharResult(1,t1ok);
+    if(t2ok!==null) showCharResult(2,t2ok);
+    // Solo flash central si ambos acertaron o ninguno tiene respuesta marcada
+    if(t1ok===null&&t2ok===null){ic.textContent='✓';lb.textContent='CORRECTO';el.classList.add('show','rc');}
     // Personajes celebran
-    [1,2].forEach(i=>{const s=document.getElementById('sprite'+i);s.classList.remove('idle-bounce','walking','jumping','celebrating');setFrame(s,'victory');s.classList.add('celebrating');setTimeout(()=>{setFrame(s,'idle');s.classList.add('idle-bounce');},3000);});
+    [1,2].forEach(i=>{const s=document.getElementById('sprite'+i);const b=document.getElementById('body'+i);if(b){b.classList.remove('idle-bounce','celebrating');setFrame(s,'victory');b.classList.add('celebrating');setTimeout(()=>{setFrame(s,'idle');b.classList.add('idle-bounce');},3000);}});
   } else {
-    ic.textContent='✗';lb.textContent='INCORRECTO';el.classList.add('show','rw');sfxFail();
-    // Personaje fallador se asusta (el 2 por defecto)
-    const s=document.getElementById('sprite2');s.classList.remove('idle-bounce');setFrame(s,'scared');setTimeout(()=>{setFrame(s,'idle');s.classList.add('idle-bounce');},2500);
+    sfxFail();
+    if(t1ok!==null) showCharResult(1,t1ok);
+    if(t2ok!==null) showCharResult(2,t2ok);
+    if(t1ok===null&&t2ok===null){ic.textContent='✗';lb.textContent='INCORRECTO';el.classList.add('show','rw');}
+    // Personaje que falló se asusta
+    [1,2].forEach(i=>{if((i===1&&t1ok===false)||(i===2&&t2ok===false)){const s=document.getElementById('sprite'+i);const b=document.getElementById('body'+i);if(b){b.classList.remove('idle-bounce');setFrame(s,'scared');setTimeout(()=>{setFrame(s,'idle');b.classList.add('idle-bounce');},2500);}}});
   }
   setTimeout(()=>el.className='',2600);
 }
@@ -465,8 +526,8 @@ setInterval(()=>{
     }
     // Resultado
     if(s.result&&s.result!==prev.result){
-      if(s.result==='correct')showResult(true);
-      else if(s.result==='wrong')showResult(false);
+      if(s.result==='correct')showResult(true,'',(s.answer1&&s.question?.correcta)?s.answer1===s.question.correcta:null,(s.answer2&&s.question?.correcta)?s.answer2===s.question.correcta:null);
+      else if(s.result==='wrong')showResult(false,'',s.answer1&&s.question?.correcta?s.answer1===s.question.correcta:null,s.answer2&&s.question?.correcta?s.answer2===s.question.correcta:null);
       else if(s.result==='winner')showResult(false,s.winnerName||'');
     }
     prev=JSON.parse(JSON.stringify(s));
@@ -505,6 +566,7 @@ setInterval(()=>{
         if(t===1) lastSeen1=u.lastSeen; else lastSeen2=u.lastSeen;
         // Cambiar a pose hablando
         const sp=document.getElementById('sprite'+t);
+        const bd=document.getElementById('body'+t);
         setFrame(sp,'talk');
         // Mostrar burbuja con texto
         const bub=document.getElementById('speech'+t);
@@ -516,7 +578,6 @@ setInterval(()=>{
         setTimeout(()=>{
           bub.classList.remove('show');
           setFrame(sp,'idle');
-          sp.classList.add('idle-bounce');
         },Math.max(2000,(u.text||'').length*60));
       }
     });
