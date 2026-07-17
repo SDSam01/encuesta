@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Trivia Control</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0a0f;font-family:'Inter',sans-serif;color:#fff;padding:12px;max-width:500px;font-size:13px;}
+h1{font-size:13px;font-weight:700;color:#FFD000;margin-bottom:2px;}
+.sub{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:10px;}
+.section{background:rgba(255,255,255,.04);border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,.07);margin-bottom:8px;}
+.st{font-size:9px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,.3);margin-bottom:8px;text-transform:uppercase;}
+input[type=text]{width:100%;padding:7px 10px;border-radius:7px;font-size:12px;font-family:'Inter',sans-serif;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#fff;outline:none;margin-bottom:5px;}
+input[type=text]::placeholder{color:rgba(255,255,255,.25);}
+.teams-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.team-card{background:rgba(255,255,255,.04);border-radius:9px;padding:9px;border:1px solid rgba(255,255,255,.08);}
+.team-card.t1{border-left:3px solid #4488ff;}
+.team-card.t2{border-left:3px solid #f87171;}
+.team-label{font-size:9px;letter-spacing:3px;font-weight:700;margin-bottom:6px;}
+.t1 .team-label{color:#4488ff;}.t2 .team-label{color:#f87171;}
+
+/* Botones */
+.btn{padding:8px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;border:1px solid;transition:.15s;text-align:center;width:100%;margin-bottom:5px;}
+.btn:hover:not(:disabled){opacity:.8;}
+.btn:disabled{opacity:.3;cursor:not-allowed;}
+.btn-start{background:rgba(255,208,0,.15);border-color:rgba(255,208,0,.5);color:#FFD000;}
+.btn-gen{background:rgba(68,136,255,.12);border-color:rgba(68,136,255,.4);color:#4488ff;}
+.btn-show{background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.4);color:#4ade80;}
+.btn-cor{background:rgba(74,222,128,.15);border-color:rgba(74,222,128,.6);color:#4ade80;font-size:13px;}
+.btn-fal{background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.6);color:#f87171;font-size:13px;}
+.btn-hide{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);color:rgba(255,255,255,.35);font-size:10px;}
+.btn-reset{background:rgba(255,80,80,.07);border-color:rgba(255,80,80,.3);color:rgba(255,100,100,.7);font-size:10px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+
+/* Pregunta preview */
+.q-preview{background:rgba(68,136,255,.06);border:1px solid rgba(68,136,255,.2);border-radius:9px;padding:10px;margin-bottom:8px;display:none;}
+.q-preview.show{display:block;}
+.q-pregunta{font-weight:700;color:#fff;margin-bottom:8px;line-height:1.4;font-size:12px;}
+.q-opts{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px;}
+.q-opt{font-size:10px;padding:4px 8px;background:rgba(255,255,255,.05);border-radius:5px;color:rgba(255,255,255,.7);}
+.q-opt.correct-opt{background:rgba(74,222,128,.15);color:#4ade80;font-weight:700;}
+.q-dato{font-size:9px;color:rgba(255,200,0,.6);font-style:italic;line-height:1.4;}
+
+/* Marcador mini */
+.mini-score{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.03);border-radius:8px;padding:8px 12px;margin-bottom:6px;}
+.ms-team{text-align:center;}
+.ms-name{font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.4);}
+.ms-pts{font-size:32px;font-weight:900;color:#FFD000;}
+.ms-sep{font-size:18px;color:rgba(255,255,255,.2);}
+
+/* Segmentados */
+.seg-counts{display:flex;gap:6px;margin-bottom:6px;}
+.seg-badge{flex:1;text-align:center;padding:6px;border-radius:7px;font-size:10px;font-weight:700;}
+.seg-badge.t1b{background:rgba(68,136,255,.1);border:1px solid rgba(68,136,255,.3);color:#4488ff;}
+.seg-badge.t2b{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#f87171;}
+
+/* Estado */
+.status{font-size:10px;text-align:center;color:rgba(255,255,255,.3);padding:5px;min-height:16px;}
+.status.ok{color:#4ade80;}.status.err{color:#f87171;}.status.loading{color:#FFD000;}
+
+/* Meta */
+.meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:6px;}
+.meta-btn{padding:6px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);}
+.meta-btn.active{background:rgba(255,208,0,.15);border-color:rgba(255,208,0,.5);color:#FFD000;}
+</style>
+</head>
+<body>
+<h1>🧠 Trivia Control</h1>
+<div class="sub">Panel privado — configura equipos, preguntas y resultados</div>
+
+<!-- EQUIPOS -->
+<div class="section">
+  <div class="st">Configurar Equipos</div>
+  <div class="teams-grid">
+    <div class="team-card t1">
+      <div class="team-label">⬅ EQUIPO 1</div>
+      <input type="text" id="name1" placeholder="Nombre (ej: Hombres)" value="Equipo 1">
+      <input type="text" id="kw1" placeholder="Palabra clave (ej: hombre)">
+    </div>
+    <div class="team-card t2">
+      <div class="team-label">EQUIPO 2 ➡</div>
+      <input type="text" id="name2" placeholder="Nombre (ej: Mujeres)" value="Equipo 2">
+      <input type="text" id="kw2" placeholder="Palabra clave (ej: mujer)">
+    </div>
+  </div>
+  <div class="st">Meta de puntos</div>
+  <div class="meta-grid">
+    <button class="meta-btn" onclick="setMeta(5,this)">5 pts</button>
+    <button class="meta-btn active" onclick="setMeta(10,this)">10 pts</button>
+    <button class="meta-btn" onclick="setMeta(15,this)">15 pts</button>
+  </div>
+  <button class="btn btn-start" onclick="iniciarJuego()">🎮 Iniciar juego — mostrar overlay</button>
+</div>
+
+<!-- MARCADOR -->
+<div class="mini-score">
+  <div class="ms-team">
+    <div class="ms-name" id="mName1">EQUIPO 1</div>
+    <div class="ms-pts" id="mPts1">0</div>
+  </div>
+  <div class="ms-sep">VS</div>
+  <div class="ms-team">
+    <div class="ms-name" id="mName2">EQUIPO 2</div>
+    <div class="ms-pts" id="mPts2">0</div>
+  </div>
+</div>
+
+<!-- SEGMENTADOS -->
+<div class="section">
+  <div class="st">Participantes segmentados</div>
+  <div class="seg-counts">
+    <div class="seg-badge t1b" id="seg1">Equipo 1: 0</div>
+    <div class="seg-badge t2b" id="seg2">Equipo 2: 0</div>
+  </div>
+  <div class="two-col">
+    <button class="btn btn-start" onclick="buscarRep(1)" id="bRep1" disabled>⚡ Nuevo Rep E1</button>
+    <button class="btn btn-start" onclick="buscarRep(2)" id="bRep2" disabled>⚡ Nuevo Rep E2</button>
+  </div>
+</div>
+
+<!-- PREGUNTA -->
+<div class="section">
+  <div class="st">Generar pregunta</div>
+  <select id="catSelect" style="width:100%;padding:7px 10px;border-radius:7px;font-size:12px;font-family:'Inter',sans-serif;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#fff;outline:none;margin-bottom:8px;">
+    <option value="1">🌍 Cultura General</option>
+    <option value="2">🎵 Música</option>
+    <option value="3">⚽ Deportes</option>
+    <option value="4">📱 Internet y Memes</option>
+    <option value="5">🎬 Series y Cine</option>
+    <option value="6">🤯 Historia Viral</option>
+    <option value="7">🌎 LATAM</option>
+    <option value="8">🎮 Gaming</option>
+  </select>
+  <button class="btn btn-gen" id="btnGen" onclick="generarPregunta()">🤖 Generar pregunta con Ollama</button>
+  <button class="btn btn-gen" onclick="generarPregunta(true)" style="font-size:10px;opacity:.7;">🔄 Generar otra (descartar actual)</button>
+
+  <!-- Preview de la pregunta -->
+  <div class="q-preview" id="qPreview">
+    <div class="q-pregunta" id="pvPregunta"></div>
+    <div class="q-opts" id="pvOpts"></div>
+    <div class="q-dato" id="pvDato"></div>
+    <button class="btn btn-show" onclick="mostrarPregunta()" id="btnShow">📺 Mostrar en stream</button>
+    <button class="btn btn-hide" onclick="ocultarPregunta()">🙈 Ocultar pregunta</button>
+  </div>
+</div>
+
+<!-- RESULTADO -->
+<div class="section">
+  <div class="st">Resultado</div>
+  <div class="two-col" style="margin-bottom:6px;">
+    <button class="btn btn-cor" onclick="resultado(true)" id="btnCor" disabled>✓ ACERTÓ</button>
+    <button class="btn btn-fal" onclick="resultado(false)" id="btnFal" disabled>✗ FALLÓ</button>
+  </div>
+  <div class="two-col">
+    <button class="btn btn-hide" onclick="ocultarOverlay()">🙈 Ocultar overlay</button>
+    <button class="btn btn-reset" onclick="resetTodo()">🔄 Reset total</button>
+  </div>
+</div>
+
+<div class="status" id="statusBar">Configura los equipos y presiona Iniciar</div>
+
+<script>
+const LS='trivia_state';
+const YO_POOL='yo_pool'; // Reusamos el chat_users para detectar palabras clave
+let meta=10, currentQ=null, state={};
+let seg1={}, seg2={};
+
+// ── Segmentación por palabra clave ──
+// Escuchar nuevos mensajes del chat
+setInterval(()=>{
+  try{
+    const users=JSON.parse(localStorage.getItem('chat_users')||'{}');
+    const kw1=(document.getElementById('kw1').value||'').trim().toLowerCase();
+    const kw2=(document.getElementById('kw2').value||'').trim().toLowerCase();
+    if(!kw1||!kw2) return;
+    Object.entries(users).forEach(([uid,u])=>{
+      const txt=(u.text||'').toLowerCase().trim();
+      if(txt===kw1&&!seg2[uid]) seg1[uid]=u;
+      if(txt===kw2&&!seg1[uid]) seg2[uid]=u;
+    });
+    document.getElementById('seg1').textContent=`${document.getElementById('name1').value}: ${Object.keys(seg1).length}`;
+    document.getElementById('seg2').textContent=`${document.getElementById('name2').value}: ${Object.keys(seg2).length}`;
+    document.getElementById('bRep1').disabled=Object.keys(seg1).length===0;
+    document.getElementById('bRep2').disabled=Object.keys(seg2).length===0;
+  }catch(e){}
+},1000);
+
+function setMeta(v,btn){
+  meta=v;
+  document.querySelectorAll('.meta-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function iniciarJuego(){
+  const s={
+    active:true,
+    team1:{name:document.getElementById('name1').value,pts:0,lives:6,repName:'',repUserId:''},
+    team2:{name:document.getElementById('name2').value,pts:0,lives:6,repName:'',repUserId:''},
+    meta, question:null, showQuestion:false, result:null,
+    avatar1Seed:Math.random()*99999|0,
+    avatar2Seed:Math.random()*99999|0,
+    ts:Date.now()
+  };
+  state=s;
+  save(s);
+  updateMiniScore();
+  document.getElementById('mName1').textContent=s.team1.name;
+  document.getElementById('mName2').textContent=s.team2.name;
+  setStatus('Juego iniciado — overlay visible','ok');
+}
+
+function buscarRep(team){
+  const pool=team===1?seg1:seg2;
+  const entries=Object.entries(pool);
+  if(!entries.length){setStatus('Sin participantes en ese equipo','err');return;}
+  const [uid,u]=entries[Math.floor(Math.random()*entries.length)];
+  const newSeed=Math.random()*99999|0;
+  if(!state.team1) return;
+  if(team===1){
+    state.team1.repName=u.username;
+    state.team1.repUserId=uid;
+    state.avatar1Seed=newSeed;
+  } else {
+    state.team2.repName=u.username;
+    state.team2.repUserId=uid;
+    state.avatar2Seed=newSeed;
+  }
+  save({...state,ts:Date.now()});
+  setStatus(`Rep E${team}: ${u.username}`,'ok');
+}
+
+async function generarPregunta(force=false){
+  const btn=document.getElementById('btnGen');
+  btn.disabled=true;
+  setStatus('🤖 Generando pregunta con Ollama...','loading');
+  const cat=document.getElementById('catSelect').value;
+  try{
+    const res=await fetch(`http://localhost:3002/generar?cat=${cat}`);
+    const data=await res.json();
+    if(!data.ok) throw new Error(data.error||'Error de Ollama');
+    currentQ=data.data;
+    renderPreview(currentQ);
+    document.getElementById('btnCor').disabled=false;
+    document.getElementById('btnFal').disabled=false;
+    setStatus('✅ Pregunta lista — revísala antes de mostrar','ok');
+  }catch(e){
+    setStatus('❌ Error: '+e.message,'err');
+  }
+  btn.disabled=false;
+}
+
+function renderPreview(q){
+  document.getElementById('pvPregunta').textContent=q.pregunta;
+  const optsEl=document.getElementById('pvOpts');
+  optsEl.innerHTML='';
+  ['A','B','C','D'].forEach(k=>{
+    const d=document.createElement('div');
+    d.className='q-opt'+(k===q.correcta?' correct-opt':'');
+    d.textContent=`${k}) ${q.opciones[k]}`;
+    optsEl.appendChild(d);
+  });
+  document.getElementById('pvDato').textContent='💡 '+q.dato;
+  document.getElementById('qPreview').classList.add('show');
+}
+
+function mostrarPregunta(){
+  if(!currentQ) return;
+  state.question=currentQ;
+  state.showQuestion=true;
+  save({...state,ts:Date.now()});
+  setStatus('Pregunta visible en stream','ok');
+}
+
+function ocultarPregunta(){
+  state.showQuestion=false;
+  save({...state,ts:Date.now()});
+}
+
+function resultado(correcto){
+  if(!state.team1) return;
+  // Detectar qué equipo está respondiendo actualmente
+  // Por simplicidad: se aplica al equipo que tiene rep activo
+  // Si ambos tienen rep, mostrar botones separados sería ideal
+  // Por ahora aplicamos al equipo 2 (el "chat") — ajustable
+  if(correcto){
+    state.team2.pts=(state.team2.pts||0)+1;
+    state.result='correct';
+    state.showQuestion=false;
+    if(state.team2.pts>=meta){
+      state.result='winner';
+      state.winnerName=state.team2.name;
+    }
+  } else {
+    state.team2.lives=Math.max(0,(state.team2.lives||6)-1);
+    state.result='wrong';
+    state.showQuestion=false;
+    // Auto cambiar rep
+    setTimeout(()=>buscarRep(2),1000);
+  }
+  save({...state,ts:Date.now()});
+  updateMiniScore();
+}
+
+function ocultarOverlay(){
+  state.active=false;
+  save({...state,ts:Date.now()});
+}
+
+function resetTodo(){
+  seg1={}; seg2={};
+  currentQ=null;
+  state={};
+  document.getElementById('qPreview').classList.remove('show');
+  document.getElementById('mPts1').textContent='0';
+  document.getElementById('mPts2').textContent='0';
+  document.getElementById('btnCor').disabled=true;
+  document.getElementById('btnFal').disabled=true;
+  localStorage.removeItem(LS);
+  setStatus('Reset completo','');
+}
+
+function updateMiniScore(){
+  document.getElementById('mPts1').textContent=state.team1?.pts||0;
+  document.getElementById('mPts2').textContent=state.team2?.pts||0;
+}
+
+function save(s){
+  localStorage.setItem(LS,JSON.stringify(s));
+}
+
+function setStatus(msg,type){
+  const el=document.getElementById('statusBar');
+  el.textContent=msg; el.className='status '+(type||'');
+}
+
+// Verificar bridge al cargar
+fetch('http://localhost:3002/ping').then(r=>r.json()).then(d=>{
+  if(d.ok) setStatus('✅ Ollama conectado — '+d.models?.join(', '),'ok');
+  else setStatus('⚠️ '+d.error,'err');
+}).catch(()=>setStatus('⚠️ Trivia bridge no corre — node trivia-bridge.js','err'));
+</script>
+</body>
+</html>
