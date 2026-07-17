@@ -97,17 +97,27 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 @keyframes celebrateAnim{from{transform:rotate(-4deg) scaleX(0.97);}to{transform:rotate(4deg) scaleX(1.03);}}
 
 /* Burbuja de habla */
+/* Burbuja — posición fixed encima del nombre */
 .speech{
-  position:absolute;bottom:505px;
-  background:rgba(255,255,255,.92);border-radius:10px;padding:5px 13px;
-  font-family:'Inter',sans-serif;font-size:12px;font-weight:700;color:#111;
-  white-space:nowrap;opacity:0;transform:scale(.8) translateY(6px);
-  transition:opacity .2s,transform .2s;pointer-events:none;
+  position:fixed;z-index:26;
+  background:rgba(255,255,255,.95);border-radius:12px;padding:7px 16px;
+  font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:#111;
+  max-width:280px;word-break:break-word;line-height:1.3;
+  opacity:0;transform:scale(.8) translateY(6px);
+  transition:opacity .2s,transform .25s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;
+  box-shadow:0 4px 16px rgba(0,0,0,.2);
 }
-.speech::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:7px solid transparent;border-top-color:rgba(255,255,255,.92);border-bottom:none;}
+.speech::after{
+  content:'';position:absolute;top:100%;left:24px;
+  border:8px solid transparent;
+  border-top-color:rgba(255,255,255,.95);border-bottom:none;
+}
 .speech.show{opacity:1;transform:scale(1) translateY(0);}
-#char1 .speech{left:60px;}
-#char2 .speech{right:60px;}
+/* Posiciones */
+#speech1{bottom:600px;left:20px;}
+#speech2{bottom:600px;right:20px;}
+#speech2::after{left:auto;right:24px;}
 
 /* REP BADGE */
 .rep-badge{
@@ -201,14 +211,14 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 
 <div class="rep-badge" id="rep1"></div>
 <div class="rep-badge" id="rep2"></div>
+<div class="speech" id="speech1"></div>
+<div class="speech" id="speech2"></div>
 
 <div class="char-container" id="char1">
   <div class="char-sprite frame-idle idle-bounce" id="sprite1"></div>
-  <div class="speech" id="speech1"></div>
 </div>
 <div class="char-container" id="char2">
   <div class="char-sprite frame-idle idle-bounce" id="sprite2"></div>
-  <div class="speech" id="speech2"></div>
 </div>
 
 <div id="qBox">
@@ -412,7 +422,24 @@ setInterval(()=>{
   }catch(e){}
 },250);
 
+// ══ TTS ══
+let ttsLastMsg='';
+function speakRep(text){
+  if(!text||text===ttsLastMsg) return;
+  ttsLastMsg=text;
+  window.speechSynthesis.cancel();
+  const utt=new SpeechSynthesisUtterance();
+  utt.lang='es-MX'; utt.pitch=1.1; utt.rate=0.95; utt.volume=0.85;
+  utt.text=text.substring(0,120);
+  const voices=window.speechSynthesis.getVoices();
+  const v=voices.find(v=>v.lang.startsWith('es'))||voices[0];
+  if(v) utt.voice=v;
+  window.speechSynthesis.speak(utt);
+}
+window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
+
 // ══ HABLA ══
+let lastSeen1=0, lastSeen2=0;
 setInterval(()=>{
   try{
     const users=JSON.parse(localStorage.getItem('chat_users')||'{}');
@@ -420,18 +447,30 @@ setInterval(()=>{
     const now=Date.now();
     [1,2].forEach(t=>{
       const uid=t===1?s.team1?.repUserId:s.team2?.repUserId;
+      const lastSeen=t===1?lastSeen1:lastSeen2;
       if(!uid||!users[uid])return;
-      if(now-users[uid].lastSeen<1800){
+      const u=users[uid];
+      if(now-u.lastSeen<1800 && u.lastSeen!==lastSeen){
+        if(t===1) lastSeen1=u.lastSeen; else lastSeen2=u.lastSeen;
+        // Cambiar a pose hablando
         const sp=document.getElementById('sprite'+t);
-        const bub=document.getElementById('speech'+t);
         setFrame(sp,'talk');
-        bub.textContent=(users[uid].text||'...').substring(0,20);
+        // Mostrar burbuja con texto
+        const bub=document.getElementById('speech'+t);
+        bub.textContent=u.text||'...';
         bub.classList.add('show');
-        setTimeout(()=>{bub.classList.remove('show');setFrame(sp,'idle');sp.classList.add('idle-bounce');},1800);
+        // TTS
+        speakRep(u.text||'');
+        // Volver a idle
+        setTimeout(()=>{
+          bub.classList.remove('show');
+          setFrame(sp,'idle');
+          sp.classList.add('idle-bounce');
+        },Math.max(2000,(u.text||'').length*60));
       }
     });
   }catch(e){}
-},600);
+},400);
 
 // Init
 initChar(1,'hue-210');
