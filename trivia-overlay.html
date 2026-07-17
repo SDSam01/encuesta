@@ -32,38 +32,37 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 @keyframes numPop{0%{transform:scale(1);}50%{transform:scale(1.7);}100%{transform:scale(1);}}
 .sb-vs{font-family:'Bebas Neue',sans-serif;font-size:20px;color:rgba(255,255,255,.25);}
 
-/* ══ SPRITE CHARACTER ══ */
-/* Sprite sheet: 1254x1254, 4x2 grid, cell=313x627 */
-/* Display at 260x520, scale=0.831, bg-size=1042x1042 */
+/* Characters hidden by default */
 .char-container{
   position:fixed;bottom:0;
-  width:280px;height:560px;
+  width:300px;height:450px;
   z-index:20;
+  opacity:0;
+  transition:opacity .5s ease;
 }
-#char1{left:10px;}
-#char2{right:10px;}
+.char-container.visible{opacity:1;}
+#char1{left:16px;}
+#char2{right:16px;}
 
 .char-sprite{
-  width:280px;height:560px;
-  background-image:url('trivia-sprites.png');
-  background-size:1040px 1040px;
+  width:300px;height:450px;
   background-repeat:no-repeat;
-  background-position:0 0;
-  image-rendering:auto;
+  background-size:contain;
+  background-position:bottom center;
   transform-origin:bottom center;
 }
 
-/* FRAMES — bg-size:1040x1040, cell:260x520 */
-.frame-idle      {background-position:0px 0px;}
-.frame-talk      {background-position:-260px 0px;}
-.frame-wave      {background-position:-520px 0px;}
-.frame-celebrate {background-position:-780px 0px;}
-.frame-victory   {background-position:0px -520px;}
-.frame-scared    {background-position:-260px -520px;}
-.frame-run1      {background-position:-520px -520px;}
-.frame-run2      {background-position:-780px -520px;}
+/* FRAMES — imagen individual por pose */
+.frame-idle      {background-image:url('char-idle.png');}
+.frame-talk      {background-image:url('char-talk.png');}
+.frame-wave      {background-image:url('char-wave.png');}
+.frame-celebrate {background-image:url('char-celebrate.png');}
+.frame-victory   {background-image:url('char-victory.png');}
+.frame-scared    {background-image:url('char-scared.png');}
+.frame-run1      {background-image:url('char-run1.png');}
+.frame-run2      {background-image:url('char-run2.png');}
 
-/* COLORIZACIÓN — sepia+hue-rotate para dar color al modelo blanco/gris */
+/* COLORIZACIÓN */
 .hue-0   {filter:sepia(1) hue-rotate(0deg) saturate(3) brightness(1.05);}
 .hue-30  {filter:sepia(1) hue-rotate(30deg) saturate(3) brightness(1.05);}
 .hue-60  {filter:sepia(1) hue-rotate(60deg) saturate(3) brightness(1.05);}
@@ -77,24 +76,30 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 .hue-300 {filter:sepia(1) hue-rotate(300deg) saturate(3) brightness(1.05);}
 .hue-330 {filter:sepia(1) hue-rotate(330deg) saturate(3) brightness(1.05);}
 
-/* ANIMACIONES DE PERSONAJE */
+/* ANIMACIONES */
 .char-container.enter-l{animation:charEnterL .6s cubic-bezier(.34,1.56,.64,1) forwards;}
 .char-container.enter-r{animation:charEnterR .6s cubic-bezier(.34,1.56,.64,1) forwards;}
-@keyframes charEnterL{from{transform:translateX(-350px);opacity:0;}to{transform:translateX(0);opacity:1;}}
-@keyframes charEnterR{from{transform:translateX(350px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+@keyframes charEnterL{from{transform:translateX(-320px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+@keyframes charEnterR{from{transform:translateX(320px);opacity:0;}to{transform:translateX(0);opacity:1;}}
 
-/* Idle: solo respiración muy sutil, NO flota */
+/* Idle — respiración sutil, NO flota */
 .char-sprite.idle-bounce{animation:idleBreath 3s ease-in-out infinite;}
 @keyframes idleBreath{0%,100%{transform:scaleY(1) scaleX(1);}50%{transform:scaleY(1.012) scaleX(0.994);}}
 
+/* Walk — alterna run1/run2 */
 .char-sprite.walking{animation:walkAnim .45s steps(1) infinite;}
-@keyframes walkAnim{0%{background-position:-521px -521px;}50%{background-position:-781px -521px;}}
+@keyframes walkAnim{
+  0%,49%{background-image:url('char-run1.png');}
+  50%,100%{background-image:url('char-run2.png');}
+}
 
+/* Jump */
 .char-sprite.jumping{animation:jumpAnim .55s ease-in-out 2;}
-@keyframes jumpAnim{0%{transform:translateY(0) scaleY(1);}40%{transform:translateY(-40px) scaleY(1.05);}80%{transform:translateY(0) scaleY(.92);}100%{transform:translateY(0) scaleY(1);}}
+@keyframes jumpAnim{0%{transform:translateY(0) scaleY(1);}40%{transform:translateY(-30px) scaleY(1.04);}80%{transform:translateY(0) scaleY(.93);}100%{transform:translateY(0) scaleY(1);}}
 
+/* Celebrate */
 .char-sprite.celebrating{animation:celebrateAnim .5s ease-in-out 4 alternate;}
-@keyframes celebrateAnim{from{transform:rotate(-4deg) scaleX(0.97);}to{transform:rotate(4deg) scaleX(1.03);}}
+@keyframes celebrateAnim{from{transform:rotate(-3deg);}to{transform:rotate(3deg);}}
 
 /* Burbuja de habla */
 /* Burbuja — posición fixed encima del nombre */
@@ -115,8 +120,8 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 }
 .speech.show{opacity:1;transform:scale(1) translateY(0);}
 /* Posiciones */
-#speech1{bottom:420px;left:16px;}
-#speech2{bottom:420px;right:16px;}
+#speech1{bottom:510px;left:16px;}
+#speech2{bottom:510px;right:16px;}
 #speech2::after{left:auto;right:24px;}
 
 /* REP BADGE */
@@ -129,8 +134,8 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
   white-space:nowrap;
 }
 /* Nombre justo encima de la cabeza del personaje */
-#rep1{bottom:368px;left:16px;transform:translateX(-10px);}
-#rep2{bottom:368px;right:16px;transform:translateX(10px);}
+#rep1{bottom:458px;left:16px;transform:translateX(-10px);}
+#rep2{bottom:458px;right:16px;transform:translateX(10px);}
 #rep1.show{opacity:1;transform:translateX(0);}
 #rep2.show{opacity:1;transform:translateX(0);}
 
@@ -266,22 +271,25 @@ let hueClasses=['hue-0','hue-0'];
 function initChar(idx,hue){
   const sprite=document.getElementById('sprite'+idx);
   const cont=document.getElementById('char'+idx);
-  // Quitar animaciones anteriores
   sprite.className='char-sprite';
   void sprite.offsetWidth;
-  // Hue
   HUES.forEach(h=>sprite.classList.remove('hue-'+h));
   sprite.classList.add(hue);
   hueClasses[idx-1]=hue;
-  // Entrada + idle
   setFrame(sprite,'idle');
   sprite.classList.add('idle-bounce');
-  cont.classList.remove('enter-l','enter-r');
+  cont.classList.remove('enter-l','enter-r','visible');
   void cont.offsetWidth;
   cont.classList.add(idx===1?'enter-l':'enter-r');
+  setTimeout(()=>cont.classList.add('visible'),50);
   sfxEnter();
-  // Programar acciones
   scheduleAction(idx);
+}
+
+function hideChar(idx){
+  const cont=document.getElementById('char'+idx);
+  cont.classList.remove('visible');
+  if(actionTimers[idx-1]){clearTimeout(actionTimers[idx-1]);actionTimers[idx-1]=null;}
 }
 
 // ══ ESTADO MACHINE ══
@@ -386,21 +394,34 @@ setInterval(()=>{
     const raw=localStorage.getItem(LS);if(!raw)return;
     const s=JSON.parse(raw);if(!s.ts||s.ts===lastTs)return;
     lastTs=s.ts;
+
+    // Si no hay juego activo — ocultar todo
+    if(!s.active){
+      document.getElementById('scoreboard').classList.remove('show');
+      document.getElementById('qBox').classList.remove('show');
+      document.getElementById('rep1').classList.remove('show');
+      document.getElementById('rep2').classList.remove('show');
+      hideChar(1);hideChar(2);
+      prev=JSON.parse(JSON.stringify(s));return;
+    }
+
     // Marcador
-    document.getElementById('scoreboard').classList.toggle('show',!!s.active);
+    document.getElementById('scoreboard').classList.add('show');
     document.getElementById('sbn1').textContent=s.team1?.name||'E1';
     document.getElementById('sbn2').textContent=s.team2?.name||'E2';
     const p1=s.team1?.pts||0,p2=s.team2?.pts||0;
     const e1=document.getElementById('sbp1'),e2=document.getElementById('sbp2');
     if(e1.textContent!==String(p1)){e1.textContent=p1;e1.classList.remove('pop');void e1.offsetWidth;e1.classList.add('pop');sfxPop();}
     if(e2.textContent!==String(p2)){e2.textContent=p2;e2.classList.remove('pop');void e2.offsetWidth;e2.classList.add('pop');sfxPop();}
-    // Reps
+    // Reps y personajes
     const r1=document.getElementById('rep1'),r2=document.getElementById('rep2');
-    r1.textContent=s.team1?.repName||'';r1.classList.toggle('show',!!(s.team1?.repName&&s.active));
-    r2.textContent=s.team2?.repName||'';r2.classList.toggle('show',!!(s.team2?.repName&&s.active));
-    // Chars — nuevo rep = nueva hue
-    if(s.hue1&&s.hue1!==prev.hue1) initChar(1,s.hue1);
-    if(s.hue2&&s.hue2!==prev.hue2) initChar(2,s.hue2);
+    r1.textContent=s.team1?.repName||'';r1.classList.toggle('show',!!s.team1?.repName);
+    r2.textContent=s.team2?.repName||'';r2.classList.toggle('show',!!s.team2?.repName);
+    // Chars — solo aparecen cuando hay rep
+    if(!s.team1?.repName) hideChar(1);
+    if(!s.team2?.repName) hideChar(2);
+    if(s.hue1&&s.hue1!==prev.hue1&&s.team1?.repName) initChar(1,s.hue1);
+    if(s.hue2&&s.hue2!==prev.hue2&&s.team2?.repName) initChar(2,s.hue2);
     // Pregunta
     if(s.showQuestion&&s.question){
       renderQ(s.question, s.answer1||null, s.answer2||null, !!s.revealed);
@@ -472,9 +493,7 @@ setInterval(()=>{
   }catch(e){}
 },400);
 
-// Init
-initChar(1,'hue-210');
-initChar(2,'hue-0');
+// No auto-init — personajes se muestran solo cuando hay rep asignado
 </script>
 </body>
 </html>
