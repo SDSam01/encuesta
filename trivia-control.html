@@ -187,6 +187,9 @@ setInterval(()=>{
   }catch(e){}
 },1000);
 
+const HUES=[0,30,60,90,120,150,180,210,240,270,300,330];
+function randomHue(){return 'hue-'+HUES[Math.floor(Math.random()*HUES.length)];}
+
 function setMeta(v,btn){
   meta=v;
   document.querySelectorAll('.meta-btn').forEach(b=>b.classList.remove('active'));
@@ -221,11 +224,11 @@ function buscarRep(team){
   if(team===1){
     state.team1.repName=u.username;
     state.team1.repUserId=uid;
-    state.avatar1Seed=newSeed;
+    state.hue1=randomHue();
   } else {
     state.team2.repName=u.username;
     state.team2.repUserId=uid;
-    state.avatar2Seed=newSeed;
+    state.hue2=randomHue();
   }
   save({...state,ts:Date.now()});
   setStatus(`Rep E${team}: ${u.username}`,'ok');
