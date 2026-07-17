@@ -101,6 +101,7 @@ input[type=text]::placeholder{color:rgba(255,255,255,.25);}
   </div>
   <button class="btn btn-start" onclick="iniciarJuego()">🎮 Iniciar juego — mostrar overlay</button>
   <button class="btn btn-hide" onclick="modoDemo()" style="margin-top:2px;">🧪 Modo prueba (sin stream)</button>
+  <button class="btn btn-hide" onclick="testHabla()" style="margin-top:2px;">💬 Test habla de reps</button>
 </div>
 
 <!-- MARCADOR -->
@@ -187,7 +188,10 @@ input[type=text]::placeholder{color:rgba(255,255,255,.25);}
   <div class="st">Resultado</div>
   <div class="two-col" style="margin-bottom:6px;">
     <button class="btn btn-cor" onclick="resultado(true)" id="btnCor" disabled>✓ ACERTÓ</button>
-    <button class="btn btn-fal" onclick="resultado(false)" id="btnFal" disabled>✗ FALLÓ</button>
+    <button class="btn btn-fal" onclick="resultado(false,1)" id="btnFal1" disabled>✗ Falló E1</button>
+  </div>
+  <div style="margin-bottom:6px;">
+    <button class="btn btn-fal" onclick="resultado(false,2)" id="btnFal2" disabled style="background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.6);color:#f87171;">✗ Falló E2</button>
   </div>
   <div class="two-col">
     <button class="btn btn-hide" onclick="ocultarOverlay()">🙈 Ocultar overlay</button>
@@ -318,10 +322,13 @@ function mostrarPregunta(){
   setStatus('Pregunta visible en stream','ok');
 }
 
+const AC2=new(window.AudioContext||window.webkitAudioContext)();
+function clickSfx(){AC2.resume();const t=AC2.currentTime;const o=AC2.createOscillator(),g=AC2.createGain();o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.08);o.connect(g);g.connect(AC2.destination);o.start(t);o.stop(t+.1);}
+
 function setAnswer(team, opt){
+  clickSfx();
   if(team===1){
     state.answer1=opt;
-    // Update buttons
     ['A','B','C','D'].forEach(o=>document.getElementById('a1'+o).classList.toggle('sel1',o===opt));
   } else {
     state.answer2=opt;
@@ -368,26 +375,30 @@ function ocultarPregunta(){
   save({...state,ts:Date.now()});
 }
 
-function resultado(correcto){
+function resultado(correcto, failTeam=null){
   if(!state.team1) return;
-  // Detectar qué equipo está respondiendo actualmente
-  // Por simplicidad: se aplica al equipo que tiene rep activo
-  // Si ambos tienen rep, mostrar botones separados sería ideal
-  // Por ahora aplicamos al equipo 2 (el "chat") — ajustable
+  state.showQuestion=false;
   if(correcto){
-    state.team2.pts=(state.team2.pts||0)+1;
+    // Ambos equipos que acertaron suman punto
+    const t1ok=state.answer1&&state.answer1===currentQ?.correcta;
+    const t2ok=state.answer2&&state.answer2===currentQ?.correcta;
+    if(t1ok) state.team1.pts=(state.team1.pts||0)+1;
+    if(t2ok) state.team2.pts=(state.team2.pts||0)+1;
+    // Si no hay respuestas marcadas, sumar al que no falló
+    if(!t1ok&&!t2ok){ state.team2.pts=(state.team2.pts||0)+1; }
     state.result='correct';
-    state.showQuestion=false;
-    if(state.team2.pts>=meta){
-      state.result='winner';
-      state.winnerName=state.team2.name;
-    }
+    const meta=state.meta||10;
+    if((state.team1.pts||0)>=meta){state.result='winner';state.winnerName=state.team1.name;}
+    if((state.team2.pts||0)>=meta){state.result='winner';state.winnerName=state.team2.name;}
   } else {
-    state.team2.lives=Math.max(0,(state.team2.lives||6)-1);
-    state.result='wrong';
-    state.showQuestion=false;
-    // Auto cambiar rep
-    setTimeout(()=>buscarRep(2),1000);
+    const team=failTeam||2;
+    if(team===1){
+      state.result='wrong';
+      setTimeout(()=>buscarRep(1),1000);
+    } else {
+      state.result='wrong';
+      setTimeout(()=>buscarRep(2),1000);
+    }
   }
   save({...state,ts:Date.now()});
   updateMiniScore();
@@ -426,7 +437,25 @@ function modoDemo(){
     document.getElementById('btnCor').disabled=false;
     document.getElementById('btnFal').disabled=false;
     setStatus('🧪 Modo prueba activo — datos falsos','ok');
+    // Simular habla del rep
+    setTimeout(()=>{
+      const users=JSON.parse(localStorage.getItem('chat_users')||'{}');
+      if(state.team1?.repUserId) users[state.team1.repUserId]={username:state.team1.repName||'Carlos',src:'yt',text:'Yo creo que es la B!',lastSeen:Date.now(),isMember:false};
+      if(state.team2?.repUserId) users[state.team2.repUserId]={username:state.team2.repName||'María',src:'yt',text:'Definitivamente la A!',lastSeen:Date.now(),isMember:false};
+      localStorage.setItem('chat_users',JSON.stringify(users));
+    },3000);
   },1200);
+}
+
+function testHabla(){
+  try{
+    const users=JSON.parse(localStorage.getItem('chat_users')||'{}');
+    const frases=['Yo creo que es la B!','Es obvio que es la A!','Hmm... la C quizás?','100% la D','No sé... B?'];
+    if(state.team1?.repUserId){users[state.team1.repUserId]={username:state.team1.repName||'Rep1',src:'yt',text:frases[Math.floor(Math.random()*frases.length)],lastSeen:Date.now(),isMember:false};}
+    if(state.team2?.repUserId){users[state.team2.repUserId]={username:state.team2.repName||'Rep2',src:'yt',text:frases[Math.floor(Math.random()*frases.length)],lastSeen:Date.now(),isMember:false};}
+    localStorage.setItem('chat_users',JSON.stringify(users));
+    setStatus('💬 Simulando habla de reps','ok');
+  }catch(e){setStatus('Inicia el juego primero','err');}
 }
 
 function ocultarOverlay(){
