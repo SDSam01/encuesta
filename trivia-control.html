@@ -91,6 +91,7 @@ input[type=text]::placeholder{color:rgba(255,255,255,.25);}
     <button class="meta-btn" onclick="setMeta(15,this)">15 pts</button>
   </div>
   <button class="btn btn-start" onclick="iniciarJuego()">🎮 Iniciar juego — mostrar overlay</button>
+  <button class="btn btn-hide" onclick="modoDemo()" style="margin-top:2px;">🧪 Modo prueba (sin stream)</button>
 </div>
 
 <!-- MARCADOR -->
@@ -300,6 +301,42 @@ function resultado(correcto){
   }
   save({...state,ts:Date.now()});
   updateMiniScore();
+}
+
+function modoDemo(){
+  // Equipos de prueba
+  document.getElementById('name1').value='Hombres';
+  document.getElementById('kw1').value='hombre';
+  document.getElementById('name2').value='Mujeres';
+  document.getElementById('kw2').value='mujer';
+
+  // Participantes falsos
+  const fakeUsers1=['Carlos','Miguel','Diego','Juan','Pedro','Luis','Andrés','Roberto'];
+  const fakeUsers2=['María','Laura','Ana','Sofia','Valentina','Camila','Isabella','Gabriela'];
+  fakeUsers1.forEach((n,i)=>{ seg1['demo_h_'+i]={username:n,src:'yt',text:'hombre',lastSeen:Date.now(),isMember:false}; });
+  fakeUsers2.forEach((n,i)=>{ seg2['demo_m_'+i]={username:n,src:'yt',text:'mujer',lastSeen:Date.now(),isMember:false}; });
+
+  // Iniciar juego
+  iniciarJuego();
+
+  // Sacar reps automáticamente
+  setTimeout(()=>buscarRep(1),500);
+  setTimeout(()=>buscarRep(2),800);
+
+  // Pregunta de prueba
+  setTimeout(()=>{
+    currentQ={
+      pregunta:'¿En qué año llegó el ser humano a la Luna por primera vez?',
+      opciones:{A:'1965',B:'1969',C:'1972',D:'1971'},
+      correcta:'B',
+      dato:'La misión Apollo 11 aterrizó el 20 de julio de 1969. Neil Armstrong fue el primero en pisarla.',
+      categoria:'🌍 Cultura General'
+    };
+    renderPreview(currentQ);
+    document.getElementById('btnCor').disabled=false;
+    document.getElementById('btnFal').disabled=false;
+    setStatus('🧪 Modo prueba activo — datos falsos','ok');
+  },1200);
 }
 
 function ocultarOverlay(){
