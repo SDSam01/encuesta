@@ -56,6 +56,15 @@ input[type=text]::placeholder{color:rgba(255,255,255,.25);}
 .seg-badge.t2b{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#f87171;}
 
 /* Estado */
+.ans-btn{
+  padding:7px 4px;border-radius:7px;font-size:13px;font-weight:900;
+  cursor:pointer;font-family:'Inter',sans-serif;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+  color:rgba(255,255,255,.6);transition:.15s;text-align:center;
+}
+.ans-btn:hover{background:rgba(255,255,255,.14);}
+.ans-btn.sel1{background:rgba(6,214,160,.2);border-color:#06d6a0;color:#06d6a0;}
+.ans-btn.sel2{background:rgba(255,107,107,.2);border-color:#ff6b6b;color:#ff6b6b;}
 .status{font-size:10px;text-align:center;color:rgba(255,255,255,.3);padding:5px;min-height:16px;}
 .status.ok{color:#4ade80;}.status.err{color:#f87171;}.status.loading{color:#FFD000;}
 
@@ -143,6 +152,33 @@ input[type=text]::placeholder{color:rgba(255,255,255,.25);}
     <div class="q-dato" id="pvDato"></div>
     <button class="btn btn-show" onclick="mostrarPregunta()" id="btnShow">📺 Mostrar en stream</button>
     <button class="btn btn-hide" onclick="ocultarPregunta()">🙈 Ocultar pregunta</button>
+  </div>
+
+  <!-- Respuestas por equipo -->
+  <div id="answerSection" style="display:none;margin-top:8px;">
+    <div class="st" style="margin-bottom:6px;">RESPUESTA DE CADA EQUIPO</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
+      <div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:#06d6a0;margin-bottom:4px;">⬅ <span id="ansName1">EQUIPO 1</span></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;">
+          <button class="ans-btn" id="a1A" onclick="setAnswer(1,'A')">A</button>
+          <button class="ans-btn" id="a1B" onclick="setAnswer(1,'B')">B</button>
+          <button class="ans-btn" id="a1C" onclick="setAnswer(1,'C')">C</button>
+          <button class="ans-btn" id="a1D" onclick="setAnswer(1,'D')">D</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:#ff6b6b;margin-bottom:4px;"><span id="ansName2">EQUIPO 2</span> ➡</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;">
+          <button class="ans-btn" id="a2A" onclick="setAnswer(2,'A')">A</button>
+          <button class="ans-btn" id="a2B" onclick="setAnswer(2,'B')">B</button>
+          <button class="ans-btn" id="a2C" onclick="setAnswer(2,'C')">C</button>
+          <button class="ans-btn" id="a2D" onclick="setAnswer(2,'D')">D</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn" style="background:rgba(255,208,0,.12);border-color:rgba(255,208,0,.4);color:#FFD000;margin-bottom:4px;" onclick="revelarRespuestas()">👁 Revelar respuestas</button>
+    <button class="btn btn-hide" onclick="resetAnswers()">↺ Limpiar respuestas</button>
   </div>
 </div>
 
@@ -272,8 +308,59 @@ function mostrarPregunta(){
   if(!currentQ) return;
   state.question=currentQ;
   state.showQuestion=true;
+  state.answer1=null; state.answer2=null; state.revealed=false;
   save({...state,ts:Date.now()});
+  // Mostrar sección de respuestas
+  document.getElementById('answerSection').style.display='block';
+  document.getElementById('ansName1').textContent=state.team1?.name||'E1';
+  document.getElementById('ansName2').textContent=state.team2?.name||'E2';
+  resetAnswerBtns();
   setStatus('Pregunta visible en stream','ok');
+}
+
+function setAnswer(team, opt){
+  if(team===1){
+    state.answer1=opt;
+    // Update buttons
+    ['A','B','C','D'].forEach(o=>document.getElementById('a1'+o).classList.toggle('sel1',o===opt));
+  } else {
+    state.answer2=opt;
+    ['A','B','C','D'].forEach(o=>document.getElementById('a2'+o).classList.toggle('sel2',o===opt));
+  }
+  save({...state,ts:Date.now()});
+  setStatus(`E${team} eligió ${opt}`,'ok');
+}
+
+function revelarRespuestas(){
+  if(!currentQ) return;
+  state.revealed=true;
+  save({...state,ts:Date.now()});
+  // Resultado automático basado en respuestas
+  const correct=currentQ.correcta;
+  const t1ok=state.answer1===correct;
+  const t2ok=state.answer2===correct;
+  if(t1ok&&!t2ok){state.team1.pts=(state.team1.pts||0)+1;state.result='correct';}
+  else if(t2ok&&!t1ok){state.team2.pts=(state.team2.pts||0)+1;state.result='correct';}
+  else if(t1ok&&t2ok){state.team1.pts=(state.team1.pts||0)+1;state.team2.pts=(state.team2.pts||0)+1;state.result='correct';}
+  else{state.result='wrong';}
+  if((state.team1.pts||0)>=(state.meta||10)){state.result='winner';state.winnerName=state.team1.name;}
+  if((state.team2.pts||0)>=(state.meta||10)){state.result='winner';state.winnerName=state.team2.name;}
+  save({...state,ts:Date.now()});
+  updateMiniScore();
+  setStatus(`Respuesta correcta: ${correct} — revelado`,'ok');
+}
+
+function resetAnswers(){
+  state.answer1=null;state.answer2=null;state.revealed=false;
+  save({...state,ts:Date.now()});
+  resetAnswerBtns();
+}
+
+function resetAnswerBtns(){
+  ['A','B','C','D'].forEach(o=>{
+    document.getElementById('a1'+o)?.classList.remove('sel1','sel2');
+    document.getElementById('a2'+o)?.classList.remove('sel1','sel2');
+  });
 }
 
 function ocultarPregunta(){
