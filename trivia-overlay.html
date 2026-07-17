@@ -6,490 +6,472 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@700;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-family:'Bebas Neue',sans-serif;}
+body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 
-/* ══ LAYOUT ══ */
-#stage{position:fixed;inset:0;display:flex;align-items:flex-end;}
-.team-zone{width:420px;height:1080px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;}
-#center{flex:1;height:1080px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:30px 20px;}
-
-/* ══ MARCADOR ══ */
+/* ══ MARCADOR FÚTBOL ══ */
 #scoreboard{
-  display:flex;gap:40px;align-items:center;
-  background:rgba(0,0,0,.7);border-radius:20px;padding:16px 36px;
-  border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(8px);
-  opacity:0;transform:translateY(-20px);transition:opacity .5s,transform .5s;
+  position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-120px);
+  z-index:30;
+  background:rgba(0,0,0,.82);
+  border-radius:0 0 16px 16px;
+  padding:8px 32px 10px;
+  border:1px solid rgba(255,255,255,.1);
+  border-top:none;
+  backdrop-filter:blur(10px);
+  display:flex;align-items:center;gap:24px;
+  transition:transform .6s cubic-bezier(.34,1.56,.64,1);
+  white-space:nowrap;
 }
-#scoreboard.show{opacity:1;transform:translateY(0);}
-.score-team{display:flex;flex-direction:column;align-items:center;gap:4px;}
-.score-name{font-size:20px;letter-spacing:6px;color:rgba(255,255,255,.7);}
-.score-pts{font-size:72px;line-height:1;color:#fff;}
-.score-sep{font-size:48px;color:rgba(255,255,255,.2);}
-.score-target{font-size:11px;letter-spacing:4px;color:rgba(255,255,255,.3);}
+#scoreboard.show{transform:translateX(-50%) translateY(0);}
+.sb-team{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:5px;color:rgba(255,255,255,.75);}
+.sb-score{
+  font-family:'Bebas Neue',sans-serif;font-size:42px;color:#fff;
+  display:flex;align-items:center;gap:10px;line-height:1;
+}
+.sb-pts{
+  display:inline-block;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1);
+}
+.sb-pts.pop{animation:scorePop .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes scorePop{0%{transform:scale(1);}50%{transform:scale(1.6);}100%{transform:scale(1);}}
+.sb-sep{font-size:22px;color:rgba(255,255,255,.25);font-family:'Bebas Neue',sans-serif;}
+.sb-meta{font-size:9px;letter-spacing:3px;color:rgba(255,255,255,.25);font-family:'Bebas Neue',sans-serif;text-align:center;}
 
-/* ══ PREGUNTA ══ */
-#questionBox{
-  width:100%;max-width:960px;
-  background:rgba(0,0,0,.85);border-radius:20px;
-  padding:28px 36px;border:1px solid rgba(255,255,255,.12);
-  backdrop-filter:blur(12px);
-  opacity:0;transform:scale(.92);
+/* ══ NOMBRES DE REPS ══ */
+.rep-badge{
+  position:fixed;z-index:25;
+  font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:4px;
+  background:rgba(0,0,0,.7);border-radius:8px;padding:5px 16px;
+  border:1px solid rgba(255,255,255,.12);color:#fff;
+  opacity:0;
   transition:opacity .4s,transform .4s cubic-bezier(.34,1.56,.64,1);
+  white-space:nowrap;
 }
-#questionBox.show{opacity:1;transform:scale(1);}
-.q-cat{font-size:11px;letter-spacing:8px;color:rgba(255,200,0,.7);margin-bottom:10px;}
-.q-text{font-family:'Inter',sans-serif;font-size:24px;font-weight:700;color:#fff;line-height:1.4;margin-bottom:20px;}
-.q-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.q-opt{
-  display:flex;align-items:center;gap:10px;
-  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
-  border-radius:10px;padding:10px 14px;
-  font-family:'Inter',sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,.85);
-  transition:background .3s,border-color .3s;
-}
-.q-opt-key{
-  width:32px;height:32px;border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;font-weight:900;color:#fff;
-  background:rgba(255,255,255,.12);flex-shrink:0;
-}
-.q-opt.correct{background:rgba(74,222,128,.2);border-color:#4ade80;}
-.q-opt.correct .q-opt-key{background:#4ade80;color:#000;}
-.q-opt.wrong{background:rgba(248,113,113,.15);border-color:#f87171;}
+#repBadge1{left:40px;top:400px;transform:translateX(-40px);}
+#repBadge2{right:40px;top:400px;transform:translateX(40px);}
+#repBadge1.show{opacity:1;transform:translateX(0);}
+#repBadge2.show{opacity:1;transform:translateX(0);}
 
-/* ══ RESULTADO FLASH ══ */
-#resultFlash{
-  position:fixed;inset:0;z-index:50;pointer-events:none;
+/* ══ AVATARES ══ */
+.avatar-wrap{
+  position:fixed;bottom:30px;
+  width:220px;height:340px;
+  z-index:20;
+  transform-origin:center bottom;
+  animation:avatarIdle 2.2s ease-in-out infinite;
+}
+#avatar1{left:20px;}
+#avatar2{right:20px;}
+.avatar-wrap.enter-left{animation:enterLeft .6s cubic-bezier(.34,1.56,.64,1) forwards, avatarIdle 2.2s ease-in-out infinite 0.7s;}
+.avatar-wrap.enter-right{animation:enterRight .6s cubic-bezier(.34,1.56,.64,1) forwards, avatarIdle 2.2s ease-in-out infinite 0.7s;}
+@keyframes enterLeft{from{transform:translateX(-300px) scale(.8);opacity:0;}to{transform:translateX(0) scale(1);opacity:1;}}
+@keyframes enterRight{from{transform:translateX(300px) scale(.8);opacity:0;}to{transform:translateX(0) scale(1);opacity:1;}}
+@keyframes avatarIdle{0%,100%{transform:translateY(0) scaleX(1);}50%{transform:translateY(-10px) scaleX(1.02);}}
+@keyframes avatarWalk{0%{transform:translateX(-15px);}100%{transform:translateX(15px);}}
+@keyframes avatarJump{0%{transform:translateY(0) scaleY(1);}35%{transform:translateY(-70px) scaleY(1.1);}75%{transform:translateY(0) scaleY(.82);}100%{transform:translateY(0) scaleY(1);}}
+@keyframes avatarDance{0%{transform:rotate(-10deg);}100%{transform:rotate(10deg);}}
+@keyframes avatarWiggle{0%{transform:skewX(-8deg);}100%{transform:skewX(8deg);}}
+
+/* Burbuja de habla */
+.speech-bubble{
+  position:absolute;top:-40px;left:50%;transform:translateX(-50%) scale(.8);
+  background:#fff;border-radius:10px;padding:5px 12px;
+  font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:#000;
+  white-space:nowrap;opacity:0;transition:opacity .2s,transform .2s;
+  pointer-events:none;
+}
+.speech-bubble::after{
+  content:'';position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);
+  border:6px solid transparent;border-top-color:#fff;border-bottom:none;
+}
+.speech-bubble.show{opacity:1;transform:translateX(-50%) scale(1);}
+
+/* ══ PREGUNTA — Zona 9:16 abajo ══ */
+#questionBox{
+  position:fixed;
+  bottom:-400px;
+  left:50%;transform:translateX(-50%);
+  width:640px;
+  background:rgba(8,8,15,.92);
+  border-radius:20px;
+  padding:22px 24px;
+  border:1px solid rgba(255,255,255,.1);
+  backdrop-filter:blur(16px);
+  z-index:40;
+  transition:bottom .5s cubic-bezier(.34,1.56,.64,1);
+}
+#questionBox.show{bottom:30px;}
+
+.q-cat{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:12px;letter-spacing:8px;
+  color:rgba(255,208,0,.8);margin-bottom:10px;
+  opacity:0;transform:translateY(-6px);
+  transition:opacity .3s .1s,transform .3s .1s;
+}
+#questionBox.show .q-cat{opacity:1;transform:translateY(0);}
+
+.q-text{
+  font-family:'Inter',sans-serif;font-size:20px;font-weight:700;
+  color:#fff;line-height:1.4;margin-bottom:16px;
+  opacity:0;transform:translateY(8px);
+  transition:opacity .35s .2s,transform .35s .2s;
+}
+#questionBox.show .q-text{opacity:1;transform:translateY(0);}
+
+.q-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.q-opt{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:10px;padding:9px 12px;
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;
+  color:rgba(255,255,255,.8);
+  opacity:0;transform:translateX(20px);
+  transition:background .3s,border-color .3s,opacity .3s,transform .3s;
+}
+#questionBox.show .q-opt:nth-child(1){opacity:1;transform:translateX(0);transition-delay:.3s;}
+#questionBox.show .q-opt:nth-child(2){opacity:1;transform:translateX(0);transition-delay:.38s;}
+#questionBox.show .q-opt:nth-child(3){opacity:1;transform:translateX(0);transition-delay:.46s;}
+#questionBox.show .q-opt:nth-child(4){opacity:1;transform:translateX(0);transition-delay:.54s;}
+.q-opt.correct{background:rgba(74,222,128,.2);border-color:#4ade80;animation:optPulse .4s ease;}
+.q-opt.wrong{background:rgba(248,113,113,.15);border-color:#f87171;}
+@keyframes optPulse{0%{transform:scale(1);}50%{transform:scale(1.04);}100%{transform:scale(1);}}
+.q-key{
+  width:28px;height:28px;border-radius:7px;
   display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:900;background:rgba(255,255,255,.1);
+  flex-shrink:0;
+}
+.q-opt.correct .q-key{background:#4ade80;color:#000;}
+
+/* ══ FLASH RESULTADO ══ */
+#resultFlash{
+  position:fixed;inset:0;z-index:60;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
   opacity:0;
 }
-#resultFlash.show{animation:flashAnim 2.2s cubic-bezier(.4,0,.2,1) forwards;}
-@keyframes flashAnim{
-  0%{opacity:0;} 15%{opacity:1;} 75%{opacity:1;} 100%{opacity:0;}
-}
-#resultIcon{font-size:280px;line-height:1;filter:drop-shadow(0 0 40px currentColor);}
-#resultLabel{
-  position:absolute;bottom:320px;font-size:60px;letter-spacing:16px;
-  text-align:center;
-}
-.flash-correct #resultIcon{color:#4ade80;}
-.flash-correct #resultLabel{color:#4ade80;text-shadow:0 0 30px rgba(74,222,128,.7);}
-.flash-wrong #resultIcon{color:#f87171;}
-.flash-wrong #resultLabel{color:#f87171;text-shadow:0 0 30px rgba(248,113,113,.7);}
-.flash-winner #resultIcon{font-size:160px;}
-.flash-winner #resultLabel{font-size:80px;color:#FFD000;text-shadow:0 0 40px rgba(255,208,0,.8);}
+#resultFlash.show{animation:flashIn 2.4s cubic-bezier(.4,0,.2,1) forwards;}
+@keyframes flashIn{0%{opacity:0;}12%{opacity:1;}78%{opacity:1;}100%{opacity:0;}}
+#rIcon{font-size:260px;line-height:1;filter:drop-shadow(0 0 50px currentColor);}
+#rLabel{font-family:'Bebas Neue',sans-serif;font-size:64px;letter-spacing:18px;margin-top:8px;}
+.flash-c #rIcon,.flash-c #rLabel{color:#4ade80;}
+.flash-w #rIcon,.flash-w #rLabel{color:#f87171;}
+.flash-win #rIcon{font-size:140px;}
+.flash-win #rLabel{font-size:82px;color:#FFD000;text-shadow:0 0 40px rgba(255,208,0,.8);}
 
-/* ══ NOMBRE DEL REP ══ */
-.rep-name-badge{
-  font-size:20px;letter-spacing:4px;color:#fff;
-  background:rgba(0,0,0,.6);border-radius:10px;padding:6px 18px;
-  border:1px solid rgba(255,255,255,.15);
-  margin-bottom:10px;
-  opacity:0;transform:translateY(10px);
-  transition:opacity .4s,transform .4s;
-  white-space:nowrap;max-width:380px;overflow:hidden;text-overflow:ellipsis;
-  text-align:center;
+/* ══ CONFETTI ══ */
+.confetti{
+  position:fixed;width:10px;height:10px;border-radius:2px;
+  z-index:55;pointer-events:none;
+  animation:confettiFall linear forwards;
 }
-.rep-name-badge.show{opacity:1;transform:translateY(0);}
-
-/* ══ AVATAR CONTAINER ══ */
-.avatar-wrap{
-  width:380px;height:680px;position:relative;
-  cursor:default;
+@keyframes confettiFall{
+  0%{transform:translateY(-20px) rotate(0deg);opacity:1;}
+  100%{transform:translateY(1200px) rotate(720deg);opacity:0;}
 }
-.avatar-wrap.talking .mouth-happy,
-.avatar-wrap.talking .mouth-serious{animation:talk .18s ease-in-out infinite alternate;}
-@keyframes talk{from{transform:scaleY(1);}to{transform:scaleY(1.6) translateY(2px);}}
-
-/* ══ VIDAS DEL EQUIPO ══ */
-.team-lives{
-  display:flex;gap:6px;margin-bottom:8px;
-}
-.life-heart{font-size:22px;transition:transform .2s,opacity .3s;}
-.life-heart.lost{opacity:.2;transform:scale(.8);}
-
-/* ══ ESTADO "HABLANDO" (burbuja) ══ */
-.talking-bubble{
-  position:absolute;top:60px;
-  background:rgba(255,255,255,.9);border-radius:12px;padding:6px 14px;
-  font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:#000;
-  opacity:0;transform:scale(.8);
-  transition:opacity .2s,transform .2s;
-  white-space:nowrap;z-index:10;
-}
-.talking-bubble.show{opacity:1;transform:scale(1);}
-#team1 .talking-bubble{right:-10px;}
-#team2 .talking-bubble{left:-10px;}
 </style>
 </head>
 <body>
-<div id="stage">
 
-  <!-- EQUIPO 1 — Izquierda -->
-  <div class="team-zone" id="team1">
-    <div class="talking-bubble" id="bubble1">...</div>
-    <div class="rep-name-badge" id="repName1">—</div>
-    <div class="team-lives" id="lives1"></div>
-    <div class="avatar-wrap" id="avatar1"></div>
+<!-- MARCADOR -->
+<div id="scoreboard">
+  <div class="sb-team" id="sbName1">EQUIPO 1</div>
+  <div class="sb-score">
+    <div class="sb-pts" id="sbPts1">0</div>
+    <div class="sb-sep">—</div>
+    <div class="sb-pts" id="sbPts2">0</div>
   </div>
-
-  <!-- CENTRO -->
-  <div id="center">
-    <div id="scoreboard">
-      <div class="score-team" id="scoreLeft">
-        <div class="score-name" id="teamName1">EQUIPO 1</div>
-        <div class="score-pts" id="pts1">0</div>
-        <div class="score-target">META: <span id="meta1">10</span></div>
-      </div>
-      <div class="score-sep">VS</div>
-      <div class="score-team" id="scoreRight">
-        <div class="score-name" id="teamName2">EQUIPO 2</div>
-        <div class="score-pts" id="pts2">0</div>
-        <div class="score-target">META: <span id="meta2">10</span></div>
-      </div>
-    </div>
-
-    <div id="questionBox">
-      <div class="q-cat" id="qCat">🌍 CATEGORÍA</div>
-      <div class="q-text" id="qText">La pregunta aparecerá aquí...</div>
-      <div class="q-options" id="qOptions"></div>
-    </div>
-
-    <div style="height:40px;"></div>
-  </div>
-
-  <!-- EQUIPO 2 — Derecha -->
-  <div class="team-zone" id="team2">
-    <div class="talking-bubble" id="bubble2">...</div>
-    <div class="rep-name-badge" id="repName2">—</div>
-    <div class="team-lives" id="lives2"></div>
-    <div class="avatar-wrap" id="avatar2"></div>
-  </div>
+  <div class="sb-team" id="sbName2">EQUIPO 2</div>
 </div>
 
-<!-- Flash de resultado -->
+<!-- REP BADGES -->
+<div class="rep-badge" id="repBadge1">REP</div>
+<div class="rep-badge" id="repBadge2">REP</div>
+
+<!-- AVATARES -->
+<div class="avatar-wrap" id="avatar1">
+  <div class="speech-bubble" id="bubble1">...</div>
+</div>
+<div class="avatar-wrap" id="avatar2">
+  <div class="speech-bubble" id="bubble2">...</div>
+</div>
+
+<!-- PREGUNTA -->
+<div id="questionBox">
+  <div class="q-cat" id="qCat">🌍 CATEGORÍA</div>
+  <div class="q-text" id="qText">Esperando pregunta...</div>
+  <div class="q-options" id="qOpts"></div>
+</div>
+
+<!-- RESULTADO -->
 <div id="resultFlash">
-  <div id="resultIcon">✓</div>
-  <div id="resultLabel">CORRECTO</div>
+  <div id="rIcon">✓</div>
+  <div id="rLabel">CORRECTO</div>
 </div>
 
 <script>
-// ══ AVATAR GENERATOR ══
-const SKIN_COLORS=['#f4a261','#e76f51','#2a9d8f','#e9c46a','#264653','#a8dadc','#ff6b6b','#c77dff','#4cc9f0','#f72585','#7b2d8b','#06d6a0','#ffd166','#ef476f','#118ab2'];
-const EYE_STYLES=['round','almond','wide','dot'];
-const ACCESSORIES=['none','none','none','hat','cap','glasses','crown','cat_ears','headband'];
-const BODY_PATTERNS=['plain','plain','stripes','dots','gradient'];
-const MOUTH_STYLES=['happy','grin','serious','smirk'];
+// ══ AUDIO ══
+const AC=new(window.AudioContext||window.webkitAudioContext)();
+function note(freq,dur,vol=0.3,type='sine',t=AC.currentTime){
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+dur+0.05);
+}
+function sfxQuestion(){AC.resume();const t=AC.currentTime;note(400,.08,.15,'sine',t);note(600,.08,.15,'sine',t+.1);note(900,.25,.18,'sine',t+.2);}
+function sfxCorrect(){AC.resume();const t=AC.currentTime;[523,659,784,1047].forEach((f,i)=>note(f,.25,.2,'triangle',t+i*.1));}
+function sfxWrong(){AC.resume();const t=AC.currentTime;[400,320,250].forEach((f,i)=>note(f,.2,.2,'sawtooth',t+i*.12));}
+function sfxScore(){AC.resume();note(880,.1,.15,'sine');setTimeout(()=>note(1100,.15,.2,'sine'),80);}
+function sfxAvatarIn(){AC.resume();const t=AC.currentTime;note(300,.05,.1,'sine',t);note(600,.1,.15,'sine',t+.06);note(900,.2,.12,'sine',t+.14);}
 
-function seededRand(seed){
-  let s=seed;
-  return function(){s=(s*1664525+1013904223)&0x7fffffff;return s/0x7fffffff;};
+// ══ CONFETTI ══
+function spawnConfetti(){
+  const colors=['#FFD000','#4ade80','#60a5fa','#f87171','#c084fc','#fb923c'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div');
+    el.className='confetti';
+    el.style.left=Math.random()*1920+'px';
+    el.style.top='-20px';
+    el.style.background=colors[Math.floor(Math.random()*colors.length)];
+    el.style.animationDuration=(1.5+Math.random()*2)+'s';
+    el.style.animationDelay=Math.random()*0.8+'s';
+    el.style.transform=`rotate(${Math.random()*360}deg)`;
+    el.style.width=el.style.height=(6+Math.random()*8)+'px';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),3500);
+  }
 }
 
-function generateAvatar(seed, side){
-  const r=seededRand(seed);
-  const skin=SKIN_COLORS[Math.floor(r()*SKIN_COLORS.length)];
-  const detail=SKIN_COLORS[Math.floor(r()*SKIN_COLORS.length)];
-  const eyeStyle=EYE_STYLES[Math.floor(r()*EYE_STYLES.length)];
-  const acc=ACCESSORIES[Math.floor(r()*ACCESSORIES.length)];
-  const pattern=BODY_PATTERNS[Math.floor(r()*BODY_PATTERNS.length)];
-  const mouthStyle=MOUTH_STYLES[Math.floor(r()*MOUTH_STYLES.length)];
-  const bodyColor=SKIN_COLORS[Math.floor(r()*SKIN_COLORS.length)];
-  const cheekColor='rgba(255,100,100,0.3)';
-  const flip=side===2?'scale(-1,1)':'';
+// ══ AVATAR GENERATOR ══
+const SKINS=['#FF6B6B','#FF8E53','#FFC107','#4CAF50','#26C6DA','#7E57C2','#EC407A','#FF7043','#66BB6A','#29B6F6','#AB47BC','#EF5350','#42A5F5','#26A69A','#FFA726','#D4E157'];
+const EYE_TYPES=['round','wide','dot','almond'];
+const ACCS=['none','none','none','halo','crown','cap','glasses','cat_ears'];
+const PATTERNS=['plain','plain','dots','stripes'];
+const MOUTHS=['happy','grin','tiny_smile'];
 
-  // SVG del avatar
-  const w=300,h=580;
-  let accSVG='';
-  if(acc==='hat') accSVG=`<polygon points="150,10 220,70 80,70" fill="${detail}"/><rect x="60" y="68" width="180" height="18" rx="4" fill="${detail}"/>`;
-  else if(acc==='cap') accSVG=`<ellipse cx="150" cy="58" rx="75" ry="22" fill="${detail}"/><ellipse cx="210" cy="65" rx="38" ry="14" fill="${detail}"/>`;
-  else if(acc==='glasses') accSVG=`<circle cx="110" cy="145" r="28" fill="none" stroke="${detail}" stroke-width="5"/><circle cx="190" cy="145" r="28" fill="none" stroke="${detail}" stroke-width="5"/><line x1="138" y1="145" x2="162" y2="145" stroke="${detail}" stroke-width="5"/>`;
-  else if(acc==='crown') accSVG=`<polygon points="90,65 110,30 130,55 150,20 170,55 190,30 210,65" fill="#FFD000" stroke="#FFA000" stroke-width="2"/>`;
-  else if(acc==='cat_ears') accSVG=`<polygon points="95,52 115,12 130,52" fill="${detail}"/><polygon points="170,52 185,12 205,52" fill="${detail}"/><polygon points="102,48 115,22 126,48" fill="rgba(255,180,200,0.7)"/><polygon points="176,48 185,22 197,48" fill="rgba(255,180,200,0.7)"/>`;
-  else if(acc==='headband') accSVG=`<rect x="72" y="72" width="156" height="20" rx="10" fill="${detail}"/>`;
+function seededR(s){let v=s;return()=>{v=(v*1664525+1013904223)&0x7fffffff;return v/0x7fffffff;};}
+
+function buildAvatar(seed){
+  const r=seededR(seed);
+  const skin=SKINS[Math.floor(r()*SKINS.length)];
+  const body=SKINS[Math.floor(r()*SKINS.length)];
+  const acc=ACCS[Math.floor(r()*ACCS.length)];
+  const eyes=EYE_TYPES[Math.floor(r()*EYE_TYPES.length)];
+  const mouth=MOUTHS[Math.floor(r()*MOUTHS.length)];
+  const pat=PATTERNS[Math.floor(r()*PATTERNS.length)];
+  const detail=SKINS[Math.floor(r()*SKINS.length)];
+  const accCol=SKINS[Math.floor(r()*SKINS.length)];
 
   let eyeSVG='';
-  if(eyeStyle==='round'){
-    eyeSVG=`<circle cx="110" cy="148" r="18" fill="white"/><circle cx="110" cy="150" r="10" fill="#1a1a2e"/><circle cx="114" cy="146" r="4" fill="white"/>
-             <circle cx="190" cy="148" r="18" fill="white"/><circle cx="190" cy="150" r="10" fill="#1a1a2e"/><circle cx="194" cy="146" r="4" fill="white"/>`;
-  } else if(eyeStyle==='almond'){
-    eyeSVG=`<ellipse cx="110" cy="148" rx="20" ry="13" fill="white"/><ellipse cx="110" cy="150" rx="11" ry="9" fill="#1a1a2e"/><circle cx="114" cy="147" r="3" fill="white"/>
-             <ellipse cx="190" cy="148" rx="20" ry="13" fill="white"/><ellipse cx="190" cy="150" rx="11" ry="9" fill="#1a1a2e"/><circle cx="194" cy="147" r="3" fill="white"/>`;
-  } else if(eyeStyle==='wide'){
-    eyeSVG=`<circle cx="108" cy="146" r="22" fill="white"/><circle cx="108" cy="148" r="13" fill="#1a1a2e"/><circle cx="113" cy="143" r="5" fill="white"/>
-             <circle cx="192" cy="146" r="22" fill="white"/><circle cx="192" cy="148" r="13" fill="#1a1a2e"/><circle cx="197" cy="143" r="5" fill="white"/>`;
+  if(eyes==='round'||eyes==='wide'){
+    const r2=eyes==='wide'?24:18;
+    eyeSVG=`<circle cx="88" cy="95" r="${r2}" fill="white"/><circle cx="88" cy="97" r="${r2-8}" fill="#1a1a2e"/><circle cx="${88+5}" cy="${95-4}" r="${Math.floor(r2/3)}" fill="white"/>
+    <circle cx="142" cy="95" r="${r2}" fill="white"/><circle cx="142" cy="97" r="${r2-8}" fill="#1a1a2e"/><circle cx="${142+5}" cy="${95-4}" r="${Math.floor(r2/3)}" fill="white"/>`;
+  } else if(eyes==='dot'){
+    eyeSVG=`<circle cx="88" cy="97" r="10" fill="#1a1a2e"/><circle cx="91" cy="94" r="4" fill="white"/>
+    <circle cx="142" cy="97" r="10" fill="#1a1a2e"/><circle cx="145" cy="94" r="4" fill="white"/>`;
   } else {
-    eyeSVG=`<circle cx="110" cy="150" r="10" fill="#1a1a2e"/><circle cx="113" cy="147" r="3" fill="white"/>
-             <circle cx="190" cy="150" r="10" fill="#1a1a2e"/><circle cx="193" cy="147" r="3" fill="white"/>`;
+    eyeSVG=`<ellipse cx="88" cy="95" rx="20" ry="13" fill="white"/><ellipse cx="88" cy="97" rx="11" ry="9" fill="#1a1a2e"/><circle cx="92" cy="93" r="3" fill="white"/>
+    <ellipse cx="142" cy="95" rx="20" ry="13" fill="white"/><ellipse cx="142" cy="97" rx="11" ry="9" fill="#1a1a2e"/><circle cx="146" cy="93" r="3" fill="white"/>`;
   }
 
   let mouthSVG='';
-  if(mouthStyle==='happy') mouthSVG=`<path class="mouth-happy" d="M120,185 Q150,210 180,185" fill="none" stroke="#1a1a2e" stroke-width="5" stroke-linecap="round"/>`;
-  else if(mouthStyle==='grin') mouthSVG=`<path class="mouth-happy" d="M115,183 Q150,215 185,183" fill="none" stroke="#1a1a2e" stroke-width="5" stroke-linecap="round"/><line x1="130" y1="196" x2="170" y2="196" stroke="#1a1a2e" stroke-width="2"/>`;
-  else if(mouthStyle==='serious') mouthSVG=`<line class="mouth-serious" x1="125" y1="192" x2="175" y2="192" stroke="#1a1a2e" stroke-width="5" stroke-linecap="round"/>`;
-  else mouthSVG=`<path class="mouth-happy" d="M125,183 Q148,205 175,188" fill="none" stroke="#1a1a2e" stroke-width="5" stroke-linecap="round"/>`;
+  if(mouth==='happy') mouthSVG=`<path class="mouth" d="M98,118 Q115,134 132,118" fill="none" stroke="#1a1a2e" stroke-width="4" stroke-linecap="round"/>`;
+  else if(mouth==='grin') mouthSVG=`<path class="mouth" d="M94,116 Q115,136 136,116" fill="none" stroke="#1a1a2e" stroke-width="4" stroke-linecap="round"/>`;
+  else mouthSVG=`<path class="mouth" d="M102,120 Q115,128 128,120" fill="none" stroke="#1a1a2e" stroke-width="3" stroke-linecap="round"/>`;
 
-  // Patrón del cuerpo
-  let patternDef='', patternFill=`fill="${bodyColor}"`;
-  if(pattern==='stripes'){
-    patternDef=`<pattern id="str${seed}" patternUnits="userSpaceOnUse" width="20" height="20" patternTransform="rotate(45)"><rect width="10" height="20" fill="${bodyColor}"/><rect x="10" width="10" height="20" fill="${detail}"/></pattern>`;
-    patternFill=`fill="url(#str${seed})"`;
-  } else if(pattern==='dots'){
-    patternDef=`<pattern id="dot${seed}" patternUnits="userSpaceOnUse" width="25" height="25"><rect width="25" height="25" fill="${bodyColor}"/><circle cx="12" cy="12" r="5" fill="${detail}"/></pattern>`;
-    patternFill=`fill="url(#dot${seed})"`;
-  } else if(pattern==='gradient'){
-    patternDef=`<linearGradient id="grad${seed}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${bodyColor}"/><stop offset="100%" stop-color="${detail}"/></linearGradient>`;
-    patternFill=`fill="url(#grad${seed})"`;
+  let accSVG='';
+  if(acc==='crown') accSVG=`<polygon points="65,42 80,18 95,36 115,12 135,36 150,18 165,42" fill="#FFD700" stroke="#FFA000" stroke-width="2"/>`;
+  else if(acc==='halo') accSVG=`<ellipse cx="115" cy="30" rx="45" ry="12" fill="none" stroke="#FFD700" stroke-width="5" opacity=".9"/>`;
+  else if(acc==='cap') accSVG=`<ellipse cx="115" cy="55" rx="55" ry="16" fill="${accCol}"/><ellipse cx="150" cy="62" rx="28" ry="11" fill="${accCol}"/>`;
+  else if(acc==='glasses') accSVG=`<circle cx="88" cy="95" r="24" fill="none" stroke="${accCol}" stroke-width="4"/><circle cx="142" cy="95" r="24" fill="none" stroke="${accCol}" stroke-width="4"/><line x1="112" y1="95" x2="118" y2="95" stroke="${accCol}" stroke-width="4"/>`;
+  else if(acc==='cat_ears') accSVG=`<polygon points="68,46 82,14 96,46" fill="${accCol}"/><polygon points="134,46 148,14 162,46" fill="${accCol}"/>`;
+
+  let bodyFill=`fill="${body}"`;
+  let patDef='';
+  if(pat==='dots'){
+    patDef=`<pattern id="dp${seed}" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="${body}"/><circle cx="8" cy="8" r="3.5" fill="${detail}" opacity=".5"/></pattern>`;
+    bodyFill=`fill="url(#dp${seed})"`;
+  } else if(pat==='stripes'){
+    patDef=`<pattern id="sp${seed}" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><rect width="6" height="12" fill="${body}"/><rect x="6" width="6" height="12" fill="${detail}"/></pattern>`;
+    bodyFill=`fill="url(#sp${seed})"`;
   }
 
-  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;transform:${flip}">
-  <defs>${patternDef}</defs>
-  <!-- Sombra -->
-  <ellipse cx="150" cy="${h-20}" rx="80" ry="14" fill="rgba(0,0,0,0.2)"/>
-  <!-- Pierna izquierda -->
-  <ellipse class="leg left-leg" cx="112" cy="${h-80}" rx="32" ry="70" ${patternFill}/>
-  <!-- Pierna derecha -->
-  <ellipse class="leg right-leg" cx="188" cy="${h-80}" rx="32" ry="70" ${patternFill}/>
-  <!-- Cuerpo -->
-  <ellipse class="body" cx="150" cy="${h-200}" rx="95" ry="130" ${patternFill}/>
-  <!-- Brazo izquierdo -->
-  <ellipse class="arm left-arm" cx="42" cy="${h-295}" rx="28" ry="70" ${patternFill} transform="rotate(-15,42,${h-295})"/>
-  <!-- Brazo derecho -->
-  <ellipse class="arm right-arm" cx="258" cy="${h-295}" rx="28" ry="70" ${patternFill} transform="rotate(15,258,${h-295})"/>
-  <!-- Mano izquierda -->
-  <circle cx="28" cy="${h-240}" r="20" ${patternFill}/>
-  <!-- Mano derecha -->
-  <circle cx="272" cy="${h-240}" r="20" ${patternFill}/>
-  <!-- Cuello -->
-  <rect x="130" y="${h-370}" width="40" height="35" rx="10" fill="${skin}"/>
-  <!-- Cabeza -->
-  <circle cx="150" cy="${h-420}" r="88" fill="${skin}"/>
-  <!-- Cachetes -->
-  <circle cx="88" cy="${h-400}" r="20" fill="${cheekColor}"/>
-  <circle cx="212" cy="${h-400}" r="20" fill="${cheekColor}"/>
-  <!-- Ojos -->
-  ${eyeSVG.replace(/cy="(\d+)"/g,(_,n)=>`cy="${h-580+parseInt(n)}"`).replace(/cx="(\d+)"/g,(_,n)=>`cx="${n}"`)}
-  <!-- Nariz -->
-  <ellipse cx="150" cy="${h-450}" rx="6" ry="4" fill="rgba(0,0,0,0.15)"/>
-  <!-- Boca -->
-  ${mouthSVG.replace(/cy="(\d+)"/g,(_,n)=>`cy="${h-580+parseInt(n)}"`).replace(/y1="(\d+)"/g,(_,n)=>`y1="${h-580+parseInt(n)}"`).replace(/y2="(\d+)"/g,(_,n)=>`y2="${h-580+parseInt(n)}"`)}
-  <!-- Accesorio -->
-  ${accSVG.replace(/cy="(\d+)"/g,(_,n)=>`cy="${h-580+parseInt(n)}"`).replace(/points="([^"]+)"/g,(m,pts)=>`points="${pts.split(' ').map(p=>{const[px,py]=p.split(',');return `${px},${h-580+parseInt(py)}`;}).join(' ')}"`)}
+  return `<svg viewBox="0 0 230 380" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+<defs>${patDef}</defs>
+<ellipse cx="115" cy="370" rx="70" ry="10" fill="rgba(0,0,0,0.15)"/>
+<!-- Piernas -->
+<ellipse cx="88" cy="310" rx="26" ry="60" ${bodyFill}/>
+<ellipse cx="142" cy="310" rx="26" ry="60" ${bodyFill}/>
+<!-- Cuerpo -->
+<ellipse class="body-el" cx="115" cy="220" rx="80" ry="100" ${bodyFill}/>
+<!-- Brazos -->
+<ellipse class="left-arm" cx="28" cy="198" rx="22" ry="60" ${bodyFill} transform="rotate(-10,28,198)"/>
+<ellipse class="right-arm" cx="202" cy="198" rx="22" ry="60" ${bodyFill} transform="rotate(10,202,198)"/>
+<circle cx="18" cy="158" r="17" ${bodyFill}/>
+<circle cx="212" cy="158" r="17" ${bodyFill}/>
+<!-- Cuello -->
+<rect x="100" y="143" width="30" height="28" rx="8" fill="${skin}"/>
+<!-- Cabeza -->
+<circle cx="115" cy="100" r="78" fill="${skin}"/>
+<!-- Cachetes -->
+<circle cx="62" cy="112" r="16" fill="rgba(255,100,100,0.28)"/>
+<circle cx="168" cy="112" r="16" fill="rgba(255,100,100,0.28)"/>
+<!-- Accesorio -->
+${accSVG}
+<!-- Ojos -->
+${eyeSVG}
+<!-- Nariz -->
+<ellipse cx="115" cy="108" rx="5" ry="4" fill="rgba(0,0,0,0.12)"/>
+<!-- Boca -->
+${mouthSVG}
 </svg>`;
 }
 
-// ══ ESTADO DEL JUEGO ══
-const LS = 'trivia_state';
-let lastTs = 0;
-let state = {
-  team1: { name:'EQUIPO 1', pts:0, lives:6, repName:'', repUserId:'' },
-  team2: { name:'EQUIPO 2', pts:0, lives:6, repName:'', repUserId:'' },
-  meta: 10,
-  question: null,
-  showQuestion: false,
-  result: null,
-  active: false,
-  avatar1Seed: Math.random()*9999|0,
-  avatar2Seed: Math.random()*9999|0,
-};
+// ══ ESTADO ══
+const LS='trivia_state';
+let lastTs=0;
+let gs={};
 
-// ══ RENDER ══
-function renderLives(teamIdx, lives) {
-  const max = 6;
-  const el = document.getElementById('lives'+teamIdx);
-  el.innerHTML = '';
-  for(let i=0;i<max;i++){
-    const h=document.createElement('span');
-    h.className='life-heart'+(i>=lives?' lost':'');
-    h.textContent='❤️';
-    el.appendChild(h);
-  }
-}
-
-function renderQuestion(q, showAnswer=false, correctOpt=null) {
-  if(!q) return;
-  document.getElementById('qCat').textContent = q.categoria || '';
-  document.getElementById('qText').textContent = q.pregunta || '';
-  const opts = document.getElementById('qOptions');
-  opts.innerHTML = '';
-  ['A','B','C','D'].forEach(key => {
-    const div=document.createElement('div');
-    div.className='q-opt'+(showAnswer&&key===correctOpt?' correct':showAnswer?' wrong':'');
-    div.innerHTML=`<div class="q-opt-key">${key}</div><span>${q.opciones?.[key]||''}</span>`;
-    opts.appendChild(div);
-  });
-  document.getElementById('questionBox').classList.toggle('show', true);
-}
-
-function showResult(correct, winnerName='') {
-  const el=document.getElementById('resultFlash');
-  const icon=document.getElementById('resultIcon');
-  const label=document.getElementById('resultLabel');
-  el.className='';
+function initAvatar(el,seed,side){
+  const bubble=el.querySelector('.speech-bubble');
+  el.innerHTML=buildAvatar(seed)+'<div class="speech-bubble"></div>';
+  el.style.animation='none';
   void el.offsetWidth;
-  if(winnerName) {
-    icon.textContent='🏆'; label.textContent=winnerName+' GANA';
-    el.classList.add('show','flash-winner');
-  } else if(correct) {
-    icon.textContent='✓'; label.textContent='CORRECTO';
-    el.classList.add('show','flash-correct');
-  } else {
-    icon.textContent='✗'; label.textContent='INCORRECTO';
-    el.classList.add('show','flash-wrong');
-  }
-  setTimeout(()=>el.className='',2400);
+  el.classList.remove('enter-left','enter-right');
+  void el.offsetWidth;
+  el.classList.add(side===1?'enter-left':'enter-right');
+  sfxAvatarIn();
+  setTimeout(()=>scheduleAction(el),1500);
 }
 
-function updateUI() {
-  // Marcador
-  document.getElementById('teamName1').textContent=state.team1.name;
-  document.getElementById('teamName2').textContent=state.team2.name;
-  document.getElementById('pts1').textContent=state.team1.pts;
-  document.getElementById('pts2').textContent=state.team2.pts;
-  document.getElementById('meta1').textContent=state.meta;
-  document.getElementById('meta2').textContent=state.meta;
-  document.getElementById('scoreboard').classList.toggle('show',state.active);
-  renderLives(1,state.team1.lives);
-  renderLives(2,state.team2.lives);
-  // Nombres de reps
-  const r1=document.getElementById('repName1');
-  const r2=document.getElementById('repName2');
-  r1.textContent=state.team1.repName||'—';
-  r2.textContent=state.team2.repName||'—';
-  r1.classList.toggle('show',!!state.team1.repName&&state.active);
-  r2.classList.toggle('show',!!state.team2.repName&&state.active);
-  // Pregunta
-  if(!state.showQuestion) document.getElementById('questionBox').classList.remove('show');
-  else renderQuestion(state.question,false,null);
+const ACTIONS=['wave','walk','jump','tpose','dance','wiggle'];
+function scheduleAction(el){
+  const d=4000+Math.random()*20000;
+  setTimeout(()=>{runAction(el);},d);
 }
-
-// ══ AVATAR STATE MACHINE ══
-function initAvatar(el, seed, side) {
-  el.innerHTML = generateAvatar(seed, side);
-  el.style.animation='avatarIdle 2s ease-in-out infinite';
-  el.style.transformOrigin='center bottom';
-  setTimeout(()=>scheduleAction(el), 2000+Math.random()*4000);
-}
-
-function scheduleAction(el) {
-  const delay = 4000 + Math.random()*20000; // 4s a 24s entre acciones
-  setTimeout(()=>{
-    doAction(el);
-  }, delay);
-}
-
-const ACTIONS=['wave','walk','jump','tpose','dance','look_up','wiggle'];
-
-function doAction(el) {
-  const action = ACTIONS[Math.floor(Math.random()*ACTIONS.length)];
-  const arm_l = el.querySelector('.left-arm');
-  const arm_r = el.querySelector('.right-arm');
-  const body  = el.querySelector('.body');
-
-  if(action==='wave' && arm_r) {
-    arm_r.style.transition='transform 0.3s ease';
-    arm_r.style.transform='rotate(-60deg) translateY(-20px)';
-    let count=0;
-    const iv=setInterval(()=>{
-      count++;
-      arm_r.style.transform=count%2?'rotate(-80deg) translateY(-30px)':'rotate(-40deg) translateY(-10px)';
-      if(count>5){clearInterval(iv);arm_r.style.transform='';}
-    },200);
-  } else if(action==='walk') {
+function runAction(el){
+  const a=ACTIONS[Math.floor(Math.random()*ACTIONS.length)];
+  const la=el.querySelector('.left-arm'),ra=el.querySelector('.right-arm');
+  const orig=el.style.animation;
+  if(a==='wave'&&ra){
+    let c=0;const iv=setInterval(()=>{c++;ra.style.transform=c%2?'rotate(-70deg) translateY(-20px)':'rotate(-30deg)';if(c>6){clearInterval(iv);ra.style.transform='';}},200);
+  } else if(a==='walk'){
     el.style.animation='avatarWalk 0.4s ease-in-out 5 alternate';
-    setTimeout(()=>el.style.animation='avatarIdle 2s ease-in-out infinite',2500);
-  } else if(action==='jump') {
-    el.style.animation='avatarJump 0.6s cubic-bezier(.4,0,.2,1) 2';
-    setTimeout(()=>el.style.animation='avatarIdle 2s ease-in-out infinite',1400);
-  } else if(action==='tpose' && arm_l && arm_r) {
-    arm_l.style.transition='transform 0.4s ease';
-    arm_r.style.transition='transform 0.4s ease';
-    arm_l.style.transform='rotate(80deg) translateX(-30px)';
-    arm_r.style.transform='rotate(-80deg) translateX(30px)';
-    setTimeout(()=>{arm_l.style.transform='';arm_r.style.transform='';},1800);
-  } else if(action==='dance') {
-    el.style.animation='avatarDance 0.3s ease-in-out 8 alternate';
-    setTimeout(()=>el.style.animation='avatarIdle 2s ease-in-out infinite',2600);
-  } else if(action==='look_up') {
-    const head=el.querySelector('circle');
-    if(head){head.style.transition='transform 0.3s';head.style.transform='translateY(-12px)';setTimeout(()=>head.style.transform='',1500);}
-  } else if(action==='wiggle') {
-    el.style.animation='avatarWiggle 0.15s ease-in-out 8 alternate';
-    setTimeout(()=>el.style.animation='avatarIdle 2s ease-in-out infinite',1500);
+    setTimeout(()=>el.style.animation='avatarIdle 2.2s ease-in-out infinite',2200);
+  } else if(a==='jump'){
+    el.style.animation='avatarJump 0.65s cubic-bezier(.4,0,.2,1) 2';
+    setTimeout(()=>el.style.animation='avatarIdle 2.2s ease-in-out infinite',1500);
+  } else if(a==='tpose'&&la&&ra){
+    la.style.transition=ra.style.transition='transform 0.3s';
+    la.style.transform='rotate(85deg) translateX(-25px)';
+    ra.style.transform='rotate(-85deg) translateX(25px)';
+    setTimeout(()=>{la.style.transform=ra.style.transform='';},1800);
+  } else if(a==='dance'){
+    el.style.animation='avatarDance 0.28s ease-in-out 9 alternate';
+    setTimeout(()=>el.style.animation='avatarIdle 2.2s ease-in-out infinite',2700);
+  } else if(a==='wiggle'){
+    el.style.animation='avatarWiggle 0.14s ease-in-out 8 alternate';
+    setTimeout(()=>el.style.animation='avatarIdle 2.2s ease-in-out infinite',1200);
   }
-
   scheduleAction(el);
 }
 
-// ══ DETECCIÓN DE HABLA ══
-let lastMsg1='', lastMsg2='';
-function checkTalking() {
-  try {
-    const users=JSON.parse(localStorage.getItem('chat_users')||'{}');
-    const now=Date.now();
-    const rep1Id=state.team1.repUserId;
-    const rep2Id=state.team2.repUserId;
-    if(rep1Id&&users[rep1Id]&&now-users[rep1Id].lastSeen<2000) {
-      const av=document.getElementById('avatar1');
-      av.classList.add('talking');
-      document.getElementById('bubble1').textContent=users[rep1Id].text?.substring(0,20)||'...';
-      document.getElementById('bubble1').classList.add('show');
-      setTimeout(()=>{av.classList.remove('talking');document.getElementById('bubble1').classList.remove('show');},2000);
-    }
-    if(rep2Id&&users[rep2Id]&&now-users[rep2Id].lastSeen<2000) {
-      const av=document.getElementById('avatar2');
-      av.classList.add('talking');
-      document.getElementById('bubble2').textContent=users[rep2Id].text?.substring(0,20)||'...';
-      document.getElementById('bubble2').classList.add('show');
-      setTimeout(()=>{av.classList.remove('talking');document.getElementById('bubble2').classList.remove('show');},2000);
-    }
-  }catch(e){}
+function renderQuestion(q,reveal=false,correct=null){
+  if(!q)return;
+  document.getElementById('qCat').textContent=q.categoria||'';
+  document.getElementById('qText').textContent=q.pregunta||'';
+  const opts=document.getElementById('qOpts');
+  opts.innerHTML='';
+  ['A','B','C','D'].forEach(k=>{
+    const d=document.createElement('div');
+    d.className='q-opt'+(reveal&&k===correct?' correct':reveal?' wrong':'');
+    d.innerHTML=`<div class="q-key">${k}</div><span>${q.opciones?.[k]||''}</span>`;
+    opts.appendChild(d);
+  });
 }
 
+function showResult(correct,winner=''){
+  const el=document.getElementById('resultFlash');
+  const icon=document.getElementById('rIcon'),label=document.getElementById('rLabel');
+  el.className='';void el.offsetWidth;
+  if(winner){icon.textContent='🏆';label.textContent=winner+' GANA';el.classList.add('show','flash-win');spawnConfetti();}
+  else if(correct){icon.textContent='✓';label.textContent='CORRECTO';el.classList.add('show','flash-c');sfxCorrect();spawnConfetti();}
+  else{icon.textContent='✗';label.textContent='INCORRECTO';el.classList.add('show','flash-w');sfxWrong();}
+  setTimeout(()=>el.className='',2500);
+}
+
+function updateScore(p1,p2){
+  const e1=document.getElementById('sbPts1'),e2=document.getElementById('sbPts2');
+  if(e1.textContent!==String(p1)){e1.textContent=p1;e1.classList.remove('pop');void e1.offsetWidth;e1.classList.add('pop');sfxScore();}
+  if(e2.textContent!==String(p2)){e2.textContent=p2;e2.classList.remove('pop');void e2.offsetWidth;e2.classList.add('pop');sfxScore();}
+}
+
+// ══ HABLA ══
+setInterval(()=>{
+  try{
+    const users=JSON.parse(localStorage.getItem('chat_users')||'{}');
+    const now=Date.now();
+    [1,2].forEach(t=>{
+      const uid=gs['team'+t]?.repUserId;
+      if(!uid||!users[uid])return;
+      if(now-users[uid].lastSeen<1800){
+        const av=document.getElementById('avatar'+t);
+        const bub=document.getElementById('bubble'+t);
+        const mouth=av?.querySelector('.mouth');
+        if(mouth){mouth.style.transform='scaleY(1.8) translateY(2px)';}
+        if(bub){bub.textContent=(users[uid].text||'...').substring(0,18);bub.classList.add('show');}
+        setTimeout(()=>{if(mouth)mouth.style.transform='';if(bub)bub.classList.remove('show');},1800);
+      }
+    });
+  }catch(e){}
+},600);
+
 // ══ POLLING ══
+let prevResult=null,prev1Seed=null,prev2Seed=null;
 setInterval(()=>{
   try{
     const raw=localStorage.getItem(LS);
     if(!raw)return;
     const s=JSON.parse(raw);
     if(!s.ts||s.ts===lastTs)return;
-    lastTs=s.ts;
-    const prev=JSON.parse(JSON.stringify(state));
-    Object.assign(state,s);
+    lastTs=s.ts; gs=s;
 
-    // Resultado flash
-    if(s.result&&s.result!==prev.result) {
-      if(s.result==='correct') showResult(true);
-      else if(s.result==='wrong') showResult(false);
-      else if(s.result==='winner') showResult(false,s.winnerName||'');
+    document.getElementById('scoreboard').classList.toggle('show',!!s.active);
+    document.getElementById('sbName1').textContent=s.team1?.name||'E1';
+    document.getElementById('sbName2').textContent=s.team2?.name||'E2';
+    updateScore(s.team1?.pts||0,s.team2?.pts||0);
+
+    // Reps
+    const rb1=document.getElementById('repBadge1'),rb2=document.getElementById('repBadge2');
+    rb1.textContent=s.team1?.repName||'';rb1.classList.toggle('show',!!s.team1?.repName&&!!s.active);
+    rb2.textContent=s.team2?.repName||'';rb2.classList.toggle('show',!!s.team2?.repName&&!!s.active);
+
+    // Avatares
+    if(s.avatar1Seed&&s.avatar1Seed!==prev1Seed){prev1Seed=s.avatar1Seed;initAvatar(document.getElementById('avatar1'),s.avatar1Seed,1);}
+    if(s.avatar2Seed&&s.avatar2Seed!==prev2Seed){prev2Seed=s.avatar2Seed;initAvatar(document.getElementById('avatar2'),s.avatar2Seed,2);}
+
+    // Pregunta
+    if(s.showQuestion){renderQuestion(s.question);document.getElementById('questionBox').classList.add('show');sfxQuestion();}
+    else{document.getElementById('questionBox').classList.remove('show');}
+
+    // Resultado
+    if(s.result&&s.result!==prevResult){
+      prevResult=s.result;
+      if(s.result==='correct')showResult(true);
+      else if(s.result==='wrong')showResult(false);
+      else if(s.result==='winner')showResult(false,s.winnerName||'');
     }
-    // Cambio de avatar
-    if(s.avatar1Seed&&s.avatar1Seed!==prev.avatar1Seed)
-      initAvatar(document.getElementById('avatar1'),s.avatar1Seed,1);
-    if(s.avatar2Seed&&s.avatar2Seed!==prev.avatar2Seed)
-      initAvatar(document.getElementById('avatar2'),s.avatar2Seed,2);
-
-    updateUI();
   }catch(e){}
 },250);
 
-setInterval(checkTalking,500);
-
-// ══ CSS ANIMATIONS ══
-const styleEl=document.createElement('style');
-styleEl.textContent=`
-@keyframes avatarIdle{0%,100%{transform:translateY(0) scaleX(1);}50%{transform:translateY(-8px) scaleX(1.02);}}
-@keyframes avatarWalk{from{transform:translateX(-18px);}to{transform:translateX(18px);}}
-@keyframes avatarJump{0%{transform:translateY(0) scaleY(1);}30%{transform:translateY(-60px) scaleY(1.08);}80%{transform:translateY(0) scaleY(.85);}100%{transform:translateY(0) scaleY(1);}}
-@keyframes avatarDance{from{transform:rotate(-8deg);}to{transform:rotate(8deg);}}
-@keyframes avatarWiggle{from{transform:skewX(-6deg);}to{transform:skewX(6deg);}}
-.avatar-wrap{animation:avatarIdle 2s ease-in-out infinite;transform-origin:center bottom;}
-`;
-document.head.appendChild(styleEl);
-
-// Init avatares con seeds por defecto
-initAvatar(document.getElementById('avatar1'), 1234, 1);
-initAvatar(document.getElementById('avatar2'), 5678, 2);
+// Avatares iniciales
+setTimeout(()=>{
+  initAvatar(document.getElementById('avatar1'),Math.random()*9999|0,1);
+  initAvatar(document.getElementById('avatar2'),Math.random()*9999|0,2);
+},500);
 </script>
 </body>
 </html>
