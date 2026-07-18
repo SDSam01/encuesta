@@ -501,6 +501,8 @@ function rollCategoria(){
     display.textContent=cat.label;
     display.style.transform='scale(1.05)';
     setTimeout(()=>display.style.transform='',80);
+    // Mandar al overlay en tiempo real
+    localStorage.setItem('trivia_cat_roll',JSON.stringify({rolling:true,label:cat.label,ts:Date.now()}));
     count++;
     if(count<total){
       speed=Math.min(speed*1.08,400);
@@ -512,16 +514,15 @@ function rollCategoria(){
       display.style.background='rgba(255,208,0,.25)';
       display.style.borderColor='rgba(255,208,0,.8)';
       document.getElementById('catSelect').value=selectedCat.id;
+      // Mandar resultado final al overlay
+      localStorage.setItem('trivia_cat_roll',JSON.stringify({rolling:false,label:selectedCat.label,final:true,ts:Date.now()}));
       setTimeout(()=>{
         display.style.background='rgba(255,208,0,.1)';
         display.style.borderColor='rgba(255,208,0,.3)';
-      },1500);
+        localStorage.removeItem('trivia_cat_roll');
+      },3000);
       rollTimer=null;
       btn.disabled=false;
-      // Mostrar categoría en overlay
-      if(state.active){
-        save({...state,currentCat:selectedCat.label,ts:Date.now()});
-      }
     }
   }
   tick();
