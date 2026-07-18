@@ -100,6 +100,10 @@ input[type=text]::placeholder{color:rgba(255,255,255,.25);}
     <button class="meta-btn" onclick="setMeta(15,this)">15 pts</button>
   </div>
   <button class="btn btn-start" onclick="iniciarJuego()">🎮 Iniciar juego — mostrar overlay</button>
+  <div class="two-col" style="margin-top:5px;">
+    <button class="btn btn-show" onclick="mostrarPersonajes()">🎭 Sacar personajes</button>
+    <button class="btn btn-hide" onclick="ocultarPersonajes()">🙈 Ocultar personajes</button>
+  </div>
   <button class="btn btn-hide" onclick="modoDemo()" style="margin-top:2px;">🧪 Modo prueba (sin stream)</button>
   <button class="btn btn-hide" onclick="testHabla()" style="margin-top:2px;">💬 Test habla de reps</button>
 </div>
@@ -542,6 +546,16 @@ function adjPts(team,delta){
   setStatus(`Puntos E${team}: ${team===1?state.team1.pts:state.team2.pts}`,'ok');
 }
 
+function mostrarPersonajes(){
+  state.showCharacters=true;
+  save({...state,ts:Date.now()});
+  setStatus('Personajes visibles','ok');
+}
+function ocultarPersonajes(){
+  state.showCharacters=false;
+  save({...state,ts:Date.now()});
+  setStatus('Personajes ocultos','');
+}
 function ocultarOverlay(){
   state.active=false;
   save({...state,ts:Date.now()});
