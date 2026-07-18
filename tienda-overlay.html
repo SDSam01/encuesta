@@ -140,7 +140,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 .speech{
   position:fixed;z-index:26;
   background:rgba(255,255,255,.95);border-radius:12px;padding:7px 16px;
-  font-family:'Inter',sans-serif;font-size:22px;font-weight:900;color:#111;letter-spacing:.3px;
+  font-family:'Inter',sans-serif;font-size:26px;font-weight:900;color:#111;letter-spacing:.3px;
   max-width:320px;word-break:break-word;line-height:1.3;
   opacity:0;transform:scale(.8) translateY(6px);
   transition:opacity .2s,transform .25s cubic-bezier(.34,1.56,.64,1);
@@ -161,7 +161,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 /* REP BADGE */
 .rep-badge{
   position:fixed;z-index:25;
-  font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;font-weight:800;
+  font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;font-weight:800;
   background:rgba(0,0,0,.82);border-radius:10px;padding:7px 20px;
   border:1px solid rgba(255,255,255,.12);color:#fff;
   opacity:0;transition:opacity .4s,transform .4s cubic-bezier(.34,1.56,.64,1);
@@ -242,9 +242,9 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 .char-result.show{opacity:1;transform:scale(1) translateY(0);}
 .char-result.correct{color:#4ade80;}
 .char-result.wrong{color:#f87171;}
-/* Posición sobre cabeza de cada personaje */
-#cres1{left:60px;bottom:475px;}
-#cres2{right:60px;bottom:475px;}
+/* Posición SOBRE el personaje (centrado en el cuerpo) */
+#cres1{left:30px;bottom:200px;width:300px;text-align:center;}
+#cres2{right:30px;bottom:200px;width:300px;text-align:center;}
 
 /* ══ CATEGORY ROLL ══ */
 #catRoll{
@@ -404,14 +404,12 @@ function initChar(idx,hue){
   // Sombrero aleatorio
   const hat=document.getElementById('hat'+idx);
   if(hat) hat.style.backgroundImage=`url('${randomHat()}')`;
+  const wasVisible = cont.classList.contains('visible');
   cont.classList.remove('enter-l','enter-r','visible');
   void cont.offsetWidth;
   cont.classList.add(idx===1?'enter-l':'enter-r');
-  // Solo mostrar si showCharacters está activo
-  try{
-    const s=JSON.parse(localStorage.getItem('trivia_state')||'{}');
-    if(s.showCharacters===true) setTimeout(()=>cont.classList.add('visible'),50);
-  }catch(e){}
+  // Restaurar visibilidad si ya estaba visible
+  if(wasVisible) cont.classList.add('visible');
   sfxEnter();
   scheduleAction(idx);
 }
@@ -598,11 +596,40 @@ setInterval(()=>{
     const r1=document.getElementById('rep1'),r2=document.getElementById('rep2');
     r1.textContent=s.team1?.repName||'';r1.classList.toggle('show',!!s.team1?.repName);
     r2.textContent=s.team2?.repName||'';r2.classList.toggle('show',!!s.team2?.repName);
-    // Chars — controlados por showCharacters flag
-    if(s.showCharacters===false){hideChar(1);hideChar(2);}
-    else if(s.showCharacters===true&&prev.showCharacters!==true) showChars();
-    if(s.hue1&&s.hue1!==prev.hue1&&s.team1?.repName) initChar(1,s.hue1);
-    if(s.hue2&&s.hue2!==prev.hue2&&s.team2?.repName) initChar(2,s.hue2);
+    // Chars — visibilidad controlada por showCharacters flag
+    const shouldShow = s.showCharacters===true && s.active;
+    [1,2].forEach(i=>{
+      const cont=document.getElementById('char'+i);
+      if(!cont)return;
+      const isVisible=cont.classList.contains('visible');
+      if(shouldShow&&!isVisible){
+        // Mostrar con animación de entrada
+        cont.classList.remove('enter-l','enter-r');
+        void cont.offsetWidth;
+        cont.classList.add(i===1?'enter-l':'enter-r');
+        cont.classList.add('visible');
+        const body=document.getElementById('body'+i);
+        if(body&&!body.classList.contains('idle-bounce')) body.classList.add('idle-bounce');
+        if(!actionTimers[i-1]) scheduleAction(i);
+      } else if(!shouldShow&&isVisible){
+        hideChar(i);
+      }
+    });
+    if(s.hue1&&s.hue1!==prev.hue1&&s.team1?.repName){
+      // Nuevo rep — limpiar defeated y restaurar sombrero
+      const c1=document.getElementById('char1');
+      if(c1) c1.dataset.defeated='';
+      const h1=document.getElementById('hat1');
+      if(h1) h1.style.opacity='1';
+      initChar(1,s.hue1);
+    }
+    if(s.hue2&&s.hue2!==prev.hue2&&s.team2?.repName){
+      const c2=document.getElementById('char2');
+      if(c2) c2.dataset.defeated='';
+      const h2=document.getElementById('hat2');
+      if(h2) h2.style.opacity='1';
+      initChar(2,s.hue2);
+    }
     // Pregunta
     if(s.showQuestion&&s.question){
       renderQ(s.question, s.answer1||null, s.answer2||null, !!s.revealed);
