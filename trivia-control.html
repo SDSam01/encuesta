@@ -133,16 +133,11 @@ input[type=text]::placeholder{color:rgba(255,255,255,.25);}
 <!-- PREGUNTA -->
 <div class="section">
   <div class="st">Generar pregunta</div>
-  <select id="catSelect" style="width:100%;padding:7px 10px;border-radius:7px;font-size:12px;font-family:'Inter',sans-serif;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#fff;outline:none;margin-bottom:8px;">
-    <option value="1">🌍 Cultura General</option>
-    <option value="2">🎵 Música</option>
-    <option value="3">⚽ Deportes</option>
-    <option value="4">📱 Internet y Memes</option>
-    <option value="5">🎬 Series y Cine</option>
-    <option value="6">🤯 Historia Viral</option>
-    <option value="7">🌎 LATAM</option>
-    <option value="8">🎮 Gaming</option>
-  </select>
+  <div style="display:flex;gap:6px;margin-bottom:8px;">
+    <div id="catDisplay" style="flex:1;padding:8px 12px;border-radius:7px;font-size:13px;font-weight:700;background:rgba(255,208,0,.1);border:1px solid rgba(255,208,0,.3);color:#FFD000;text-align:center;transition:all .1s;">🌍 Cultura General</div>
+    <button onclick="rollCategoria()" style="padding:8px 14px;border-radius:7px;font-size:16px;cursor:pointer;background:rgba(255,208,0,.15);border:1px solid rgba(255,208,0,.4);color:#FFD000;">🎲</button>
+  </div>
+  <input type="hidden" id="catSelect" value="1">
   <button class="btn btn-gen" id="btnGen" onclick="generarPregunta()">🤖 Generar pregunta con Ollama</button>
   <button class="btn btn-gen" onclick="generarPregunta(true)" style="font-size:10px;opacity:.7;">🔄 Generar otra (descartar actual)</button>
 
@@ -196,6 +191,29 @@ input[type=text]::placeholder{color:rgba(255,255,255,.25);}
   <div class="two-col">
     <button class="btn btn-hide" onclick="ocultarOverlay()">🙈 Ocultar overlay</button>
     <button class="btn btn-reset" onclick="resetTodo()">🔄 Reset total</button>
+  </div>
+</div>
+
+<!-- Ajuste manual de puntos -->
+<div class="section">
+  <div class="st">Ajuste manual de puntos</div>
+  <div class="teams-grid" style="margin-bottom:0;">
+    <div class="team-card t1">
+      <div class="team-label">⬅ <span id="adjName1">E1</span></div>
+      <div style="display:flex;align-items:center;gap:6px;justify-content:center;">
+        <button class="ans-btn" onclick="adjPts(1,-1)" style="font-size:18px;width:36px;">−</button>
+        <span id="adjPts1" style="font-size:24px;font-weight:900;color:#FFD000;min-width:30px;text-align:center;">0</span>
+        <button class="ans-btn" onclick="adjPts(1,1)" style="font-size:18px;width:36px;">+</button>
+      </div>
+    </div>
+    <div class="team-card t2">
+      <div class="team-label"><span id="adjName2">E2</span> ➡</div>
+      <div style="display:flex;align-items:center;gap:6px;justify-content:center;">
+        <button class="ans-btn" onclick="adjPts(2,-1)" style="font-size:18px;width:36px;">−</button>
+        <span id="adjPts2" style="font-size:24px;font-weight:900;color:#FFD000;min-width:30px;text-align:center;">0</span>
+        <button class="ans-btn" onclick="adjPts(2,1)" style="font-size:18px;width:36px;">+</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -458,6 +476,71 @@ function testHabla(){
   }catch(e){setStatus('Inicia el juego primero','err');}
 }
 
+const CATS=[
+  {id:'1',label:'🌍 Cultura General'},
+  {id:'2',label:'🎵 Música'},
+  {id:'3',label:'⚽ Deportes'},
+  {id:'4',label:'📱 Internet y Memes'},
+  {id:'5',label:'🎬 Series y Cine'},
+  {id:'6',label:'🤯 Historia Viral'},
+  {id:'7',label:'🌎 LATAM'},
+  {id:'8',label:'🎮 Gaming'},
+];
+let selectedCat=CATS[0];
+let rollTimer=null;
+
+function rollCategoria(){
+  if(rollTimer)return;
+  const btn=event.target;btn.disabled=true;
+  const display=document.getElementById('catDisplay');
+  let count=0;
+  const total=24;
+  let speed=60;
+  function tick(){
+    const cat=CATS[Math.floor(Math.random()*CATS.length)];
+    display.textContent=cat.label;
+    display.style.transform='scale(1.05)';
+    setTimeout(()=>display.style.transform='',80);
+    count++;
+    if(count<total){
+      speed=Math.min(speed*1.08,400);
+      rollTimer=setTimeout(tick,speed);
+    } else {
+      // Resultado final
+      selectedCat=CATS[Math.floor(Math.random()*CATS.length)];
+      display.textContent=selectedCat.label;
+      display.style.background='rgba(255,208,0,.25)';
+      display.style.borderColor='rgba(255,208,0,.8)';
+      document.getElementById('catSelect').value=selectedCat.id;
+      setTimeout(()=>{
+        display.style.background='rgba(255,208,0,.1)';
+        display.style.borderColor='rgba(255,208,0,.3)';
+      },1500);
+      rollTimer=null;
+      btn.disabled=false;
+      // Mostrar categoría en overlay
+      if(state.active){
+        save({...state,currentCat:selectedCat.label,ts:Date.now()});
+      }
+    }
+  }
+  tick();
+}
+
+function adjPts(team,delta){
+  if(!state.team1)return;
+  if(team===1){
+    state.team1.pts=Math.max(0,(state.team1.pts||0)+delta);
+    document.getElementById('adjPts1').textContent=state.team1.pts;
+  } else {
+    state.team2.pts=Math.max(0,(state.team2.pts||0)+delta);
+    document.getElementById('adjPts2').textContent=state.team2.pts;
+  }
+  save({...state,ts:Date.now()});
+  updateMiniScore();
+  setStatus(`Puntos E${team}: ${team===1?state.team1.pts:state.team2.pts}`,'ok');
+}
+
 function ocultarOverlay(){
   state.active=false;
   save({...state,ts:Date.now()});
@@ -479,6 +562,10 @@ function resetTodo(){
 function updateMiniScore(){
   document.getElementById('mPts1').textContent=state.team1?.pts||0;
   document.getElementById('mPts2').textContent=state.team2?.pts||0;
+  document.getElementById('adjPts1').textContent=state.team1?.pts||0;
+  document.getElementById('adjPts2').textContent=state.team2?.pts||0;
+  document.getElementById('adjName1').textContent=state.team1?.name||'E1';
+  document.getElementById('adjName2').textContent=state.team2?.name||'E2';
 }
 
 function save(s){
