@@ -381,7 +381,7 @@ const HUES=[0,30,60,90,120,150,180,210,240,270,300,330];
 function randomHueClass(){return 'hue-'+HUES[Math.floor(Math.random()*HUES.length)];}
 
 // ══ FRAMES ══
-const FRAMES={idle:'frame-idle',talk:'frame-talk',wave:'frame-wave',celebrate:'frame-celebrate',victory:'frame-victory',scared:'frame-scared',run1:'frame-run1',run2:'frame-run2'};
+const FRAMES={idle:'frame-idle',talk:'frame-talk',wave:'frame-wave',celebrate:'frame-celebrate',victory:'frame-victory',scared:'frame-scared',run1:'frame-run1',run2:'frame-run2',defeated:'frame-defeated'};
 const ALL_FRAMES=Object.values(FRAMES);
 function setFrame(sprite,frame){
   ALL_FRAMES.forEach(f=>sprite.classList.remove(f));
