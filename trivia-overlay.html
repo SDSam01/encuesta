@@ -68,6 +68,14 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 .frame-run2      {background-image:url('char-run2.png');}
 .frame-defeated  {background-image:url('defeated.png');}
 
+/* Flip wrapper — solo char1 se espeja para mirar al centro */
+.char-flip{
+  width:300px;height:450px;
+  transform-origin:center bottom;
+}
+#flip1{transform:scaleX(-1);}
+#flip2{transform:scaleX(1);}
+
 /* char-body — wrapper animado que mueve sprite+hat juntos */
 .char-body{
   position:relative;
@@ -132,7 +140,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 .speech{
   position:fixed;z-index:26;
   background:rgba(255,255,255,.95);border-radius:12px;padding:7px 16px;
-  font-family:'Inter',sans-serif;font-size:20px;font-weight:900;color:#111;letter-spacing:.3px;
+  font-family:'Inter',sans-serif;font-size:22px;font-weight:900;color:#111;letter-spacing:.3px;
   max-width:320px;word-break:break-word;line-height:1.3;
   opacity:0;transform:scale(.8) translateY(6px);
   transition:opacity .2s,transform .25s cubic-bezier(.34,1.56,.64,1);
@@ -153,7 +161,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 /* REP BADGE */
 .rep-badge{
   position:fixed;z-index:25;
-  font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:3px;font-weight:700;
+  font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;font-weight:800;
   background:rgba(0,0,0,.82);border-radius:10px;padding:7px 20px;
   border:1px solid rgba(255,255,255,.12);color:#fff;
   opacity:0;transition:opacity .4s,transform .4s cubic-bezier(.34,1.56,.64,1);
@@ -301,15 +309,19 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 <div class="speech" id="speech2"></div>
 
 <div class="char-container" id="char1">
-  <div class="char-body" id="body1">
-    <div class="char-sprite frame-idle" id="sprite1"></div>
-    <div class="char-hat" id="hat1"></div>
+  <div class="char-flip" id="flip1">
+    <div class="char-body" id="body1">
+      <div class="char-sprite frame-idle" id="sprite1"></div>
+      <div class="char-hat" id="hat1"></div>
+    </div>
   </div>
 </div>
 <div class="char-container" id="char2">
-  <div class="char-body" id="body2">
-    <div class="char-sprite frame-idle" id="sprite2"></div>
-    <div class="char-hat" id="hat2"></div>
+  <div class="char-flip" id="flip2">
+    <div class="char-body" id="body2">
+      <div class="char-sprite frame-idle" id="sprite2"></div>
+      <div class="char-hat" id="hat2"></div>
+    </div>
   </div>
 </div>
 
@@ -404,6 +416,16 @@ function hideChar(idx){
   const cont=document.getElementById('char'+idx);
   cont.classList.remove('visible');
   if(actionTimers[idx-1]){clearTimeout(actionTimers[idx-1]);actionTimers[idx-1]=null;}
+}
+function showChars(){
+  [1,2].forEach(i=>{
+    const cont=document.getElementById('char'+i);
+    cont.classList.add('visible');
+    const sprite=document.getElementById('sprite'+i);
+    const body=document.getElementById('body'+i);
+    if(body) body.classList.add('idle-bounce');
+    if(!actionTimers[i-1]) scheduleAction(i);
+  });
 }
 
 // ══ ESTADO MACHINE ══
@@ -569,9 +591,9 @@ setInterval(()=>{
     const r1=document.getElementById('rep1'),r2=document.getElementById('rep2');
     r1.textContent=s.team1?.repName||'';r1.classList.toggle('show',!!s.team1?.repName);
     r2.textContent=s.team2?.repName||'';r2.classList.toggle('show',!!s.team2?.repName);
-    // Chars — solo aparecen cuando hay rep
-    if(!s.team1?.repName) hideChar(1);
-    if(!s.team2?.repName) hideChar(2);
+    // Chars — controlados por showCharacters flag + rep asignado
+    if(s.showCharacters===false){hideChar(1);hideChar(2);}
+    else if(s.showCharacters===true&&prev.showCharacters!==true) showChars();
     if(s.hue1&&s.hue1!==prev.hue1&&s.team1?.repName) initChar(1,s.hue1);
     if(s.hue2&&s.hue2!==prev.hue2&&s.team2?.repName) initChar(2,s.hue2);
     // Pregunta
