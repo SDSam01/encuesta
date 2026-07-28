@@ -144,14 +144,21 @@ function batchPushMessages(msgs) {
   if(queue.length > 500) queue = queue.slice(-500);
   localStorage.setItem(LS_QUEUE, JSON.stringify(queue));
 
-  // Usuarios activos
+  // Usuarios activos — TTL 45min, max 1500
   let users = {};
   try { users = JSON.parse(localStorage.getItem(LS_USERS) || '{}'); } catch(e) {}
   for(const msg of msgs) {
-    users[msg.userId] = { username:msg.username, src:msg.src, lastSeen:now, text:msg.text, isMember:msg.isMember };
+    // Solo guardar campos esenciales (no guardar text para ahorrar RAM)
+    users[msg.userId] = { username:msg.username, src:msg.src, lastSeen:now, isMember:!!msg.isMember };
   }
-  const cutoff = now - 24 * 60 * 60 * 1000;
+  const cutoff = now - 45 * 60 * 1000; // 45 minutos
   for(const uid in users) { if(users[uid].lastSeen < cutoff) delete users[uid]; }
+  // Cap: máximo 1500 usuarios (quitar los más antiguos)
+  const userEntries = Object.entries(users);
+  if(userEntries.length > 1500){
+    userEntries.sort((a,b)=>b[1].lastSeen-a[1].lastSeen);
+    users = Object.fromEntries(userEntries.slice(0,1500));
+  }
   localStorage.setItem(LS_USERS, JSON.stringify(users));
 
   // ══ Pool de "yo" — solo quien escribe yo y variaciones ══
@@ -160,12 +167,16 @@ function batchPushMessages(msgs) {
   try { yoPool = JSON.parse(localStorage.getItem('yo_pool') || '{}'); } catch(e) {}
   for(const msg of msgs) {
     if(YO_REGEX.test((msg.text||'').trim())){
-      // Solo guardar la más reciente por userId (1 entrada por persona)
-      yoPool[msg.userId] = {
-        username: msg.username, src: msg.src,
-        isMember: !!msg.isMember, ts: now
-      };
+      yoPool[msg.userId] = { username:msg.username, src:msg.src, isMember:!!msg.isMember, ts:now };
     }
+  }
+  // Limpiar yo_pool: quitar entradas de más de 10 minutos + cap 1500
+  const yoCutoff = now - 10*60*1000;
+  for(const uid in yoPool){ if(yoPool[uid].ts < yoCutoff) delete yoPool[uid]; }
+  const yoEntries = Object.entries(yoPool);
+  if(yoEntries.length > 1500){
+    yoEntries.sort((a,b)=>b[1].ts-a[1].ts);
+    yoPool = Object.fromEntries(yoEntries.slice(0,1500));
   }
   localStorage.setItem('yo_pool', JSON.stringify(yoPool));
 
@@ -654,7 +665,40 @@ async function pollTikTok() {
   }
   tiktokRetryTimer = setTimeout(pollTikTok, 2000);
 }
-pollTikTok(); // Empieza a intentar conectar, silencioso si no está corriendo
+pollTikTok();
+
+// ══ LIMPIEZA DE MEMORIA PERIÓDICA ══
+function limpiarMemoria(full=false){
+  const now=Date.now();
+  // chat_users - quitar expirados
+  try{
+    let u=JSON.parse(localStorage.getItem('chat_users')||'{}');
+    const cutoff=now-45*60*1000;
+    Object.keys(u).forEach(k=>{if(u[k].lastSeen<cutoff)delete u[k];});
+    localStorage.setItem('chat_users',JSON.stringify(u));
+  }catch(e){}
+  // yo_pool - quitar expirados
+  try{
+    let y=JSON.parse(localStorage.getItem('yo_pool')||'{}');
+    const yoCutoff=now-10*60*1000;
+    Object.keys(y).forEach(k=>{if(y[k].ts<yoCutoff)delete y[k];});
+    localStorage.setItem('yo_pool',JSON.stringify(y));
+  }catch(e){}
+  // poll_voters - limpiar si no hay encuesta activa
+  try{
+    const ps=JSON.parse(localStorage.getItem('poll_state')||'{}');
+    if(!ps.active) localStorage.removeItem('poll_voters');
+  }catch(e){}
+  if(full){
+    // Limpieza completa - quitar todo menos lo esencial
+    localStorage.removeItem('poll_voters');
+    localStorage.removeItem('poll_vote_delta');
+    console.log('[SDSAM] Limpieza completa de memoria');
+  }
+  console.log('[SDSAM] Limpieza de memoria OK');
+}
+// Limpieza automática cada 3 minutos
+setInterval(()=>limpiarMemoria(false), 3*60*1000);
 
 function setBigStatus(msg, type) { const el=document.getElementById('bigStatus'); el.textContent=msg; el.className=type||''; }
 function setStatus(msg, type) { const el=document.getElementById('statusBar'); el.textContent=msg; el.className='status-bar '+(type||''); }
