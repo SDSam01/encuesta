@@ -78,185 +78,81 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 
 /* ══ JACKPOT — Slot Machine Premium ══ */
 /* ══ JACKPOT VIP — Cinematic Premium ══ */
+/* ══ VIP JACKPOT — Canvas 60fps ══ */
 #jackpotStage{
   position:fixed;inset:0;z-index:22;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
   pointer-events:none;opacity:0;
-  background:radial-gradient(ellipse at center,#0c0500 0%,#000 70%);
-  transition:opacity .5s;
+  transition:opacity .4s;
+  background:#000;
 }
 #jackpotStage.show{opacity:1;}
 
-/* Spotlight pulsante detrás de la carta */
-#jpSpotlight{
-  position:absolute;
-  width:700px;height:700px;
-  border-radius:50%;
-  background:radial-gradient(ellipse,rgba(255,160,0,.07) 0%,transparent 65%);
-  animation:spotPulse 2s ease-in-out infinite alternate;
-  pointer-events:none;
-}
-@keyframes spotPulse{from{opacity:.5;transform:scale(.9);}to{opacity:1;transform:scale(1.1);}}
+/* Canvas de partículas — fondo */
+#vipCanvas{position:absolute;inset:0;width:100%;height:100%;}
 
-/* Eyebrow */
-.jp-eyebrow{
+/* Nombre central */
+#vipDisplay{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:2;pointer-events:none;
+}
+#vipLabel{
   font-family:'Bebas Neue',sans-serif;
   font-size:14px;letter-spacing:14px;
-  color:rgba(255,200,0,.55);
-  margin-bottom:32px;z-index:2;position:relative;
-  animation:eyePulse 1.4s ease-in-out infinite alternate;
+  color:rgba(255,200,0,.0);margin-bottom:20px;
+  transition:color .3s;
 }
-@keyframes eyePulse{from{opacity:.4;letter-spacing:12px;}to{opacity:.9;letter-spacing:16px;}}
-
-/* Escena de carta */
-.jp-card-scene{
-  width:520px;height:300px;
-  position:relative;z-index:2;
-}
-.jp-card{
-  width:100%;height:100%;
-  position:relative;
-  animation:cardEnter .5s cubic-bezier(.34,1.56,.64,1) forwards;
-  will-change:transform,opacity;
-}
-@keyframes cardEnter{
-  0%{opacity:0;transform:translateY(50px) scale(.85);}
-  100%{opacity:1;transform:translateY(0) scale(1);}
-}
-
-/* Cara frontal — scanning */
-.jp-card-front{
-  position:absolute;inset:0;border-radius:18px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:linear-gradient(145deg,#130800,#220d00,#130800);
-  border:2px solid rgba(255,160,0,.4);
-  box-shadow:0 0 50px rgba(255,130,0,.15),inset 0 0 50px rgba(0,0,0,.6);
-  overflow:hidden;
-  transition:transform .32s ease-in, opacity .32s ease-in;
-  transform:scaleX(1);opacity:1;
-}
-/* Shimmer sweep en el frente */
-.jp-card-front::after{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(105deg,transparent 35%,rgba(255,180,0,.06) 50%,transparent 65%);
-  animation:shimmer 2.5s ease-in-out infinite;
-}
-@keyframes shimmer{0%{transform:translateX(-100%);}100%{transform:translateX(200%);}}
-
-.jp-card-front-icon{font-size:48px;margin-bottom:8px;opacity:.8;filter:drop-shadow(0 0 12px rgba(255,180,0,.5));}
-.jp-card-scanning{
-  font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;
-  color:rgba(255,210,100,.8);min-height:42px;text-align:center;
-  text-shadow:0 0 15px rgba(255,180,0,.6);
-}
-.jp-card-vip{
-  font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:12px;
-  color:rgba(255,160,0,.35);margin-top:8px;
-}
-
-/* Cara trasera — reveal */
-.jp-card-back{
-  position:absolute;inset:0;border-radius:18px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:linear-gradient(160deg,#000a18,#00102a,#000a18);
-  border:2px solid rgba(255,215,0,.7);
-  box-shadow:0 0 70px rgba(255,215,0,.4),0 0 140px rgba(255,180,0,.2),inset 0 0 50px rgba(0,0,20,.8);
-  transform:scaleX(0);opacity:0;
-  transition:transform .32s ease-out .32s, opacity .2s ease-out .38s;
-}
-.jp-card.flipped .jp-card-front{transform:scaleX(0);opacity:0;}
-.jp-card.flipped .jp-card-back{transform:scaleX(1);opacity:1;}
-
-/* Decoración en la carta back */
-.jp-card-back::before{
-  content:'';position:absolute;
-  inset:8px;border:1px solid rgba(255,215,0,.12);border-radius:12px;
-}
-.jp-card-back-label{
-  font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:10px;
-  color:rgba(255,215,0,.45);margin-bottom:12px;position:relative;z-index:1;
-}
-.jp-card-name{
+#vipLabel.show{color:rgba(255,200,0,.6);}
+#vipName{
   font-family:'Bebas Neue',sans-serif;
-  font-size:58px;letter-spacing:5px;color:#fff;line-height:1;
-  text-shadow:0 0 25px rgba(255,255,255,.8),0 0 50px rgba(255,215,0,.6),0 0 90px rgba(255,150,0,.3);
-  text-align:center;padding:0 18px;position:relative;z-index:1;
+  font-size:72px;letter-spacing:6px;color:#fff;
+  text-shadow:0 0 30px rgba(255,215,0,.8),0 0 60px rgba(255,150,0,.4);
+  transform:scale(1);opacity:1;
+  transition:transform .2s,text-shadow .3s;
+  text-align:center;padding:0 40px;
+  min-height:90px;
 }
-.jp-card-name.glow{animation:nameGlow 1.5s infinite alternate;}
-@keyframes nameGlow{
-  from{text-shadow:0 0 20px rgba(255,255,255,.7),0 0 40px rgba(255,215,0,.5);}
-  to{text-shadow:0 0 40px rgba(255,255,255,1),0 0 80px rgba(255,215,0,.9),0 0 130px rgba(255,130,0,.4);}
+#vipName.locked{
+  font-size:88px;
+  text-shadow:0 0 50px rgba(255,255,255,1),0 0 100px rgba(255,215,0,.9),0 0 200px rgba(255,130,0,.5);
+  animation:namePulse 1s ease-in-out infinite alternate;
 }
-.jp-card-back-badge{
-  font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:8px;
-  color:rgba(255,215,0,.55);margin-top:12px;position:relative;z-index:1;
-  opacity:0;transform:translateY(8px);transition:opacity .5s .4s,transform .5s .4s;
+@keyframes namePulse{
+  from{text-shadow:0 0 40px rgba(255,255,255,.8),0 0 80px rgba(255,215,0,.7);}
+  to{text-shadow:0 0 60px rgba(255,255,255,1),0 0 120px rgba(255,215,0,1),0 0 200px rgba(255,100,0,.6);}
 }
-.jp-card.flipped .jp-card-back-badge{opacity:1;transform:translateY(0);}
+#vipBadge{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;letter-spacing:10px;
+  color:rgba(255,215,0,.7);margin-top:16px;
+  opacity:0;transform:translateY(10px);
+  transition:opacity .5s,transform .5s cubic-bezier(.34,1.56,.64,1);
+}
+#vipBadge.show{opacity:1;transform:translateY(0);}
 
-/* Reveal screen — nombre grande tras cerrar la carta */
+/* Reveal final */
 #jpReveal{
   position:fixed;inset:0;z-index:35;
   display:none;flex-direction:column;align-items:center;justify-content:center;
-  text-align:center;
-  background:linear-gradient(160deg,#000a18,#00060f);
+  text-align:center;background:#000a18;
   opacity:0;transition:opacity .4s;
 }
 #jpReveal.show{display:flex;opacity:1;}
-/* Líneas decorativas */
-#jpReveal::before{
-  content:'';position:absolute;
-  width:1px;height:40%;left:50%;top:0;
-  background:linear-gradient(180deg,transparent,rgba(255,215,0,.3),transparent);
-}
-#jpReveal::after{
-  content:'';position:absolute;
-  width:1px;height:40%;left:50%;bottom:0;
-  background:linear-gradient(0deg,transparent,rgba(255,215,0,.3),transparent);
-}
-.jp-jackpot-text{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:18px;letter-spacing:16px;
-  color:rgba(255,215,0,.6);margin-bottom:10px;
-  animation:jtIn .4s ease forwards;opacity:0;
-}
+#jpReveal::before{content:'';position:absolute;width:1px;height:40%;left:50%;top:0;background:linear-gradient(180deg,transparent,rgba(255,215,0,.3),transparent);}
+#jpReveal::after{content:'';position:absolute;width:1px;height:40%;left:50%;bottom:0;background:linear-gradient(0deg,transparent,rgba(255,215,0,.3),transparent);}
+.jp-jackpot-text{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:16px;color:rgba(255,215,0,.6);margin-bottom:10px;animation:jtIn .4s ease forwards;opacity:0;}
 @keyframes jtIn{from{opacity:0;letter-spacing:8px;}to{opacity:1;letter-spacing:16px;}}
-
-/* Línea dorada */
-.jp-reveal-line{
-  width:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,215,0,.6),transparent);
-  animation:lineExpand .5s ease .2s forwards;margin-bottom:14px;
-}
+.jp-reveal-line{width:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,215,0,.6),transparent);animation:lineExpand .5s ease .2s forwards;margin-bottom:14px;}
 @keyframes lineExpand{from{width:0;}to{width:600px;}}
-
-.jp-winner-name{
-  font-family:'Bebas Neue',sans-serif;
-  font-size:140px;letter-spacing:4px;color:#fff;line-height:.95;
-  text-shadow:0 0 40px rgba(255,255,255,.8),0 0 80px rgba(255,215,0,.5);
-  animation:nameBlast .55s cubic-bezier(.22,1.2,.36,1) .25s forwards;opacity:0;
-}
-@keyframes nameBlast{
-  0%{opacity:0;transform:scale(1.6);filter:blur(16px);}
-  60%{opacity:1;filter:blur(1px);}
-  80%{transform:scale(.98);}
-  100%{opacity:1;transform:scale(1);filter:blur(0);}
-}
-.jp-sub-badge{
-  font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:10px;
-  color:rgba(255,215,0,.75);margin-top:18px;
-  text-shadow:0 0 10px rgba(255,215,0,.5);
-  opacity:0;transform:translateY(12px);
-  transition:opacity .4s,transform .4s cubic-bezier(.34,1.56,.64,1);
-}
+.jp-winner-name{font-family:'Bebas Neue',sans-serif;font-size:140px;letter-spacing:4px;color:#fff;line-height:.95;text-shadow:0 0 40px rgba(255,255,255,.8),0 0 80px rgba(255,215,0,.5);animation:nameBlast .55s cubic-bezier(.22,1.2,.36,1) .25s forwards;opacity:0;}
+@keyframes nameBlast{0%{opacity:0;transform:scale(1.6);filter:blur(16px);}60%{opacity:1;filter:blur(1px);}80%{transform:scale(.98);}100%{opacity:1;transform:scale(1);filter:blur(0);}}
+.jp-sub-badge{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:10px;color:rgba(255,215,0,.75);margin-top:18px;opacity:0;transform:translateY(12px);transition:opacity .4s,transform .4s cubic-bezier(.34,1.56,.64,1);}
 .jp-sub-badge.show{opacity:1;transform:translateY(0);}
-
-#jpFlash{
-  position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0;
-  background:radial-gradient(ellipse at center,rgba(255,220,100,.7) 0%,rgba(255,150,0,.1) 60%,transparent 80%);
-  transition:opacity .07s;
-}
+#jpFlash{position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0;background:radial-gradient(ellipse at center,rgba(255,220,100,.8) 0%,rgba(255,150,0,.2) 50%,transparent 80%);transition:opacity .06s;}
 #jpFlash.show{opacity:1;}
+/* Slots legacy hidden */
+.jp-slots,.jp-reel,.jp-reel-inner,.jp-reel-item,.jp-card-scene,.jp-eyebrow{display:none;}
+
 
 /* Slots ocultos */
 .jp-slots{display:none;}
@@ -428,194 +324,430 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 
 <script>
 
-// ══ JACKPOT — CARTA FLIP ══
-let jpScanInterval = null;
+// ══ VIP JACKPOT — Canvas 60fps ══
+let vipRAF = null;
 let jpScanTimers = [];
 
-function startJackpot(candidates, chosen){
-  // Limpiar timers previos
-  if(jpScanInterval) clearInterval(jpScanInterval);
+function startJackpot(candidates, chosen) {
+  // Limpiar animación previa
+  if(vipRAF){ cancelAnimationFrame(vipRAF); vipRAF=null; }
   jpScanTimers.forEach(t=>clearTimeout(t)); jpScanTimers=[];
 
   const stage = document.getElementById('jackpotStage');
-  const card  = document.getElementById('jpCard');
-  const scanning = document.getElementById('jpScanning');
-  const cardName = document.getElementById('jpCardName');
+  const canvas = document.getElementById('vipCanvas');
+  const nameEl = document.getElementById('vipName');
+  const labelEl = document.getElementById('vipLabel');
+  const badgeEl = document.getElementById('vipBadge');
+  const flash = document.getElementById('jpFlash');
 
-  // Reset visual
-  card.classList.remove('flipped');
-  cardName.classList.remove('glow');
+  // Reset
+  nameEl.className=''; nameEl.textContent='---';
+  labelEl.className=''; badgeEl.className='';
+  flash.classList.remove('show');
   document.getElementById('bg').className='jackpot show';
   document.getElementById('jpReveal').classList.remove('show');
-  document.getElementById('jpSubBadge').classList.remove('show');
+
   stage.classList.add('show');
+  setTimeout(()=>labelEl.classList.add('show'),300);
 
-  playJackpotSpin();
-  startParticles(false);
+  // ── Canvas setup ──
+  canvas.width = 1920; canvas.height = 1080;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2;
 
-  const pool = candidates.length>0 ? [...candidates] : [chosen||'???'];
-  let scanCount = 0;
-  let delay = 55;
-  const FAST_SCANS = 22;
-  const SLOW_SCANS = 8;
-  const TOTAL_SCANS = FAST_SCANS + SLOW_SCANS;
+  // ── Partículas ──
+  const PARTICLE_COUNT = 120;
+  const particles = [];
+  for(let i=0;i<PARTICLE_COUNT;i++){
+    particles.push({
+      x: cx + (Math.random()-0.5)*W*0.8,
+      y: cy + (Math.random()-0.5)*H*0.8,
+      vx:(Math.random()-0.5)*1.2,
+      vy:(Math.random()-0.5)*1.2,
+      r: Math.random()*3+1,
+      a: Math.random()*0.7+0.15,
+      hue: 35+Math.random()*25,
+      phase:'idle'
+    });
+  }
 
-  function nextScan(){
-    scanning.textContent = (pool[scanCount%pool.length]||'???').substring(0,14).toUpperCase();
-    scanCount++;
-    if(scanCount < FAST_SCANS){
-      // Fase rápida — constante
-      jpScanTimers.push(setTimeout(nextScan, delay));
-    } else if(scanCount < TOTAL_SCANS){
-      // Fase de desaceleración exponencial
-      delay = Math.min(delay * 1.45, 400);
-      jpScanTimers.push(setTimeout(nextScan, delay));
-    } else {
-      // Freeze en el ganador
-      scanning.textContent = (chosen||'???').substring(0,14).toUpperCase();
-      jpScanTimers.push(setTimeout(doFlip, 600));
+  // Burst particles (hidden until reveal)
+  const burstParticles = [];
+  for(let i=0;i<80;i++){
+    const angle = (i/80)*Math.PI*2;
+    burstParticles.push({
+      x:cx, y:cy,
+      vx:Math.cos(angle)*(4+Math.random()*6),
+      vy:Math.sin(angle)*(4+Math.random()*6),
+      r:Math.random()*5+2,
+      a:1, active:false, hue:40+Math.random()*20,
+      trail:[]
+    });
+  }
+
+  // ── Estado de animación ──
+  let phase = 'scanning'; // scanning → locking → locked → burst → done
+  const startTime = performance.now();
+  const SCAN_FAST_END = 2200;   // ms
+  const SCAN_SLOW_END = 3200;   // ms
+  const LOCK_TIME = 3700;       // ms - flash & freeze
+  const BURST_TIME = 3800;      // ms - particles explode
+  const DONE_TIME  = 7000;      // ms - fade out, show reveal
+
+  const pool = candidates.length > 0 ? [...candidates] : [chosen||'VIP'];
+  let scanIdx = 0;
+  let lastScanTime = 0;
+  let scanInterval = 55;
+
+  function animate(now) {
+    const elapsed = now - startTime;
+    ctx.clearRect(0,0,W,H);
+
+    // ── Fase de scanning ──
+    if(phase==='scanning'){
+      if(elapsed > SCAN_SLOW_END) phase='locked';
+      else if(elapsed > SCAN_FAST_END) scanInterval = 55 + ((elapsed-SCAN_FAST_END)/(SCAN_SLOW_END-SCAN_FAST_END))*350;
+
+      if(now - lastScanTime > scanInterval){
+        lastScanTime = now;
+        nameEl.textContent = (pool[scanIdx%pool.length]||'???').substring(0,14).toUpperCase();
+        scanIdx++;
+      }
     }
+
+    // ── Fase locked ──
+    if(phase==='locked'){
+      if(elapsed < LOCK_TIME){
+        nameEl.textContent = (chosen||'VIP').substring(0,14).toUpperCase();
+        nameEl.className = '';
+      } else {
+        // Flash!
+        flash.classList.add('show');
+        setTimeout(()=>flash.classList.remove('show'),100);
+        setTimeout(()=>{flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),80);},220);
+        nameEl.className = 'locked';
+        badgeEl.classList.add('show');
+        playJackpotWin();
+        phase = 'burst';
+        // Activar burst particles
+        burstParticles.forEach(p=>{p.x=cx;p.y=cy;p.active=true;p.a=1;});
+      }
+    }
+
+    // ── Fondo oscuro con vignette ──
+    const grad = ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*0.7);
+    grad.addColorStop(0,'rgba(10,5,0,0.7)');
+    grad.addColorStop(1,'rgba(0,0,0,0.92)');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+
+    // ── Grid lines (efecto señal) ──
+    ctx.strokeStyle='rgba(255,180,0,0.025)';
+    ctx.lineWidth=1;
+    for(let x=0;x<W;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+    // ── Scan line (como TV) ──
+    if(phase==='scanning'||phase==='locked'){
+      const scanY = ((elapsed*0.3)%H);
+      const lineGrad = ctx.createLinearGradient(0,scanY-4,0,scanY+4);
+      lineGrad.addColorStop(0,'transparent');
+      lineGrad.addColorStop(0.5,'rgba(255,200,0,0.08)');
+      lineGrad.addColorStop(1,'transparent');
+      ctx.fillStyle=lineGrad; ctx.fillRect(0,scanY-4,W,8);
+    }
+
+    // ── Ring de luz central ──
+    const pulseR = 200 + Math.sin(elapsed*0.003)*20;
+    const ringGrad = ctx.createRadialGradient(cx,cy,pulseR-8,cx,cy,pulseR+8);
+    const ringA = phase==='burst' ? 0 : 0.12;
+    ringGrad.addColorStop(0,'transparent');
+    ringGrad.addColorStop(0.5,`rgba(255,200,0,${ringA})`);
+    ringGrad.addColorStop(1,'transparent');
+    ctx.fillStyle=ringGrad; ctx.fillRect(0,0,W,H);
+
+    // ── Partículas de fondo ──
+    particles.forEach(p=>{
+      if(phase==='burst'){
+        // Convergen al centro durante burst
+        const dx=cx-p.x, dy=cy-p.y;
+        p.vx+=dx*0.002; p.vy+=dy*0.002;
+        p.a=Math.max(0,p.a-0.015);
+      } else {
+        p.vx+=(Math.random()-0.5)*0.05;
+        p.vy+=(Math.random()-0.5)*0.05;
+        p.vx*=0.98; p.vy*=0.98;
+      }
+      p.x+=p.vx; p.y+=p.vy;
+      // Wrap around
+      if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+      if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${p.hue},90%,65%,${p.a})`;
+      ctx.fill();
+      // Glow
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r*3,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${p.hue},90%,65%,${p.a*0.08})`;
+      ctx.fill();
+    });
+
+    // ── Burst particles ──
+    if(phase==='burst'||phase==='done'){
+      burstParticles.forEach(p=>{
+        if(!p.active) return;
+        p.trail.push({x:p.x,y:p.y,a:p.a});
+        if(p.trail.length>8) p.trail.shift();
+        // Draw trail
+        p.trail.forEach((tp,i)=>{
+          ctx.beginPath();
+          ctx.arc(tp.x,tp.y,p.r*(i/p.trail.length),0,Math.PI*2);
+          ctx.fillStyle=`hsla(${p.hue},100%,65%,${tp.a*0.3*(i/p.trail.length)})`;
+          ctx.fill();
+        });
+        p.vx*=0.95; p.vy*=0.95;
+        p.x+=p.vx; p.y+=p.vy;
+        p.a-=0.012;
+        if(p.a<=0) p.active=false;
+        // Draw particle
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle=`hsla(${p.hue},100%,70%,${p.a})`;
+        ctx.fill();
+      });
+    }
+
+    // ── Glow central durante scanning ──
+    if(phase==='scanning'||phase==='locked'){
+      const intensity = phase==='locked'?0.25:0.12;
+      const cgGrad=ctx.createRadialGradient(cx,cy,0,cx,cy,300);
+      cgGrad.addColorStop(0,`rgba(255,180,0,${intensity})`);
+      cgGrad.addColorStop(1,'transparent');
+      ctx.fillStyle=cgGrad; ctx.fillRect(0,0,W,H);
+    }
+
+    // ── Done: transición al reveal ──
+    if(phase==='burst'&&elapsed>DONE_TIME){
+      phase='done';
+      stage.classList.remove('show');
+      revealJackpot(chosen);
+      cancelAnimationFrame(vipRAF); vipRAF=null;
+      return;
+    }
+
+    vipRAF = requestAnimationFrame(animate);
   }
 
-  function doFlip(){
-    cardName.textContent = (chosen||'???').substring(0,14).toUpperCase();
-    card.classList.add('flipped');
-    playJackpotWin();
-    jpScanTimers.push(setTimeout(()=>{
-      cardName.classList.add('glow');
-      startParticles(true);
-    }, 800));
-  }
-
-  nextScan();
-
-  // FASE 5 — transición al reveal
-  jpScanTimers.push(setTimeout(()=>{
-    stage.classList.remove('show');
-    revealJackpot(chosen);
-  }, 7500));
+  vipRAF = requestAnimationFrame(animate);
+  startParticles(false);
 }
+
+
 
 function revealJackpot(name){
   const flash=document.getElementById('jpFlash');
   [0,130,260].forEach(d=>setTimeout(()=>{flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),90);},d));
-
-  const reveal=document.getElementById('jpReveal');
-  const stage=document.getElementById('jackpotStage');
-  stage.classList.remove('show');
+  document.getElementById('jackpotStage').classList.remove('show');
   document.getElementById('bg').className='jackpot show';
+  const reveal=document.getElementById('jpReveal');
   document.getElementById('jpWinnerName').textContent=(name||'???').toUpperCase();
   document.getElementById('jpSubBadge').classList.remove('show');
-  reveal.style.display='flex'; reveal.style.opacity='1';
+  reveal.classList.remove('show'); void reveal.offsetWidth; reveal.classList.add('show');
   setTimeout(()=>document.getElementById('jpSubBadge').classList.add('show'),700);
   startParticles(true);
-
-  // Cierre forzado a los 5 segundos
-  setTimeout(()=>{
-    reveal.style.opacity='0';
-    reveal.style.display='none';
-    reveal.classList.remove('show');
-    stage.classList.remove('show');
-    document.getElementById('bg').className='';
-    document.getElementById('jpFlash').classList.remove('show');
-    stopParticles();
-    activateRep(true);
-  }, 5000);
+  // Auto-transition after 6s
+  setTimeout(()=>forceHideReveal(true), 6000);
+  // Safety: force hide after 10s
+  setTimeout(()=>forceHideReveal(false), 10000);
 }
 
-const LS = 'rep_state';
+function forceHideReveal(activateAfter){
+  const reveal=document.getElementById('jpReveal');
+  reveal.style.opacity='0';
+  setTimeout(()=>{
+    reveal.style.display='none'; reveal.classList.remove('show');
+    reveal.style.opacity='';
+    document.getElementById('bg').className='';
+    document.getElementById('jackpotStage').classList.remove('show');
+    stopParticles();
+    if(activateAfter) activateRep(true);
+  },500);
+}
+
+// ── Variables globales ──
+const LS='rep_state';
 let repUserId=null, repUsername=null, repIsSubscriber=false;
 let ttsTimeout=null, msgTimeout=null;
 let particles=[], pRAF=null;
 let lastTrigger=0, lastClear=0, pendingRep=null;
-// FIX: estado de la sirena para poder interrumpirla
 let sirenTimer=null, lastSirenTs=0;
+let lastTs=0, lastTts=0;
 
-// ══ FIX: AudioContext lazy con unlock periódico ══
+// ── AudioContext lazy ──
 let _ac=null;
 function getAC(){
-  if(!_ac){
-    try{ _ac=new(window.AudioContext||window.webkitAudioContext)(); }
-    catch(e){ return null; }
-  }
+  if(!_ac){ try{_ac=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;} }
   if(_ac.state!=='running') _ac.resume().catch(()=>{});
   return _ac;
 }
-const _audioUnlocker=setInterval(()=>{
-  const ac=getAC();
-  if(ac&&ac.state==='running') clearInterval(_audioUnlocker);
-},1000);
+setInterval(()=>{const ac=getAC();if(ac&&ac.state==='running')clearInterval&&null;},2000);
 
-// ══ FIX: Warmup de TTS para OBS ══
-// En OBS el speechSynthesis puede estar bloqueado sin interacción previa
-// Llamar getVoices() y un utterance silencioso ayuda a desbloquearlo
-function warmupTTS(){
-  try{
-    window.speechSynthesis.getVoices();
-    const u=new SpeechSynthesisUtterance(' ');
-    u.volume=0; u.rate=2;
-    window.speechSynthesis.speak(u);
-    setTimeout(()=>{ try{ window.speechSynthesis.cancel(); }catch(e){} },200);
-  }catch(e){}
-}
-warmupTTS();
-setTimeout(warmupTTS,2000);
-setTimeout(warmupTTS,5000);
-
-// ══ FIX: Polling de rep_siren — antes NUNCA se leía en el overlay ══
-// rep-control escribe rep_siren al localStorage pero el overlay nunca lo leía
-setInterval(()=>{
-  try{
-    const raw=localStorage.getItem('rep_siren');
-    if(!raw) return;
-    const s=JSON.parse(raw);
-    if(s.ts&&s.ts!==lastSirenTs){
-      lastSirenTs=s.ts;
-      showSirenAnimation();
-    }
-  }catch(e){}
-},300);
-
-// FIX: mostrar sirena y permitir interrupción
-function showSirenAnimation(){
-  const so=document.getElementById('sirenOverlay');
-  so.classList.add('show');
-  playSirenSound();
-  if(sirenTimer) clearTimeout(sirenTimer);
-  sirenTimer=setTimeout(()=>{
-    so.classList.remove('show');
-    sirenTimer=null;
-  },4000);
+function playNote(freq,dur,vol,type,t,ac){
+  if(!ac)return;
+  const o=ac.createOscillator(),g=ac.createGain();
+  o.type=type||'sine'; o.frequency.value=freq;
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.connect(g); g.connect(ac.destination);
+  o.start(t); o.stop(t+dur+0.05);
 }
 
-// FIX: ocultar sirena aunque esté a mitad de animación (para clear inmediato)
-function hideSirenAnimation(){
-  if(sirenTimer){ clearTimeout(sirenTimer); sirenTimer=null; }
-  document.getElementById('sirenOverlay').classList.remove('show');
-  stopSirenSound();
+function playJackpotSpin(){
+  const ac=getAC(); if(!ac)return;
+  const t=ac.currentTime;
+  [200,250,300,350].forEach((f,i)=>playNote(f,.15,.08,'sine',t+i*.08,ac));
 }
 
-// ══ Safety: cierra reveal si se queda pegado ══
-setInterval(()=>{
-  const reveal=document.getElementById('jpReveal');
-  if(!reveal) return;
-  const visible=reveal.style.display==='flex'||reveal.classList.contains('show');
-  if(visible && repUserId){
-    reveal.style.display='none';
-    reveal.style.opacity='0';
-    reveal.classList.remove('show');
-    document.getElementById('bg').className='';
-    document.getElementById('jackpotStage').classList.remove('show');
-    stopParticles();
+function playJackpotWin(){
+  const ac=getAC(); if(!ac)return;
+  const t=ac.currentTime;
+  [523,659,784,1047,1319].forEach((f,i)=>playNote(f,.3,.18,'triangle',t+i*.1,ac));
+  setTimeout(()=>{const t2=ac.currentTime;playNote(1568,.5,.15,'triangle',t2,ac);},600);
+}
+
+// ── Partículas Canvas ──
+function startParticles(burst){
+  if(pRAF){cancelAnimationFrame(pRAF);pRAF=null;}
+  const canvas=document.getElementById('vipCanvas');
+  if(!canvas)return;
+  canvas.width=1920;canvas.height=1080;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  particles=[];
+  const count=burst?80:40;
+  for(let i=0;i<count;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=burst?(2+Math.random()*5):(.3+Math.random()*1.2);
+    particles.push({
+      x:W/2+(Math.random()-.5)*200,y:H/2+(Math.random()-.5)*200,
+      vx:Math.cos(angle)*speed*(burst?1:.3),vy:Math.sin(angle)*speed*(burst?1:.3),
+      r:Math.random()*4+1,a:1,hue:35+Math.random()*25
+    });
   }
-},2000);
+  function frame(){
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy;
+      p.vx*=.97; p.vy*=.97;
+      if(!burst){p.vx+=(Math.random()-.5)*.05;p.vy+=(Math.random()-.5)*.05;}
+      p.a-=burst?.008:.003;
+      if(p.a<=0){p.a=0;return;}
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${p.hue},90%,65%,${p.a})`;ctx.fill();
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r*3,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${p.hue},90%,65%,${p.a*.07})`;ctx.fill();
+    });
+    particles=particles.filter(p=>p.a>0);
+    if(particles.length>0) pRAF=requestAnimationFrame(frame);
+    else ctx.clearRect(0,0,W,H);
+  }
+  pRAF=requestAnimationFrame(frame);
+}
+function stopParticles(){
+  if(pRAF){cancelAnimationFrame(pRAF);pRAF=null;}
+  const c=document.getElementById('vipCanvas');
+  if(c){const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);}
+  particles=[];
+}
 
-// ══ Polling principal del estado ══
+// ── TTS Voice ──
+let vp={rate:.95,pitch:1,voice:null};
+function pickRandomVoiceProfile(){
+  const voices=window.speechSynthesis.getVoices().filter(v=>v.lang.startsWith('es'));
+  if(voices.length>0) vp.voice=voices[Math.floor(Math.random()*voices.length)];
+  vp.rate=.9+Math.random()*.2; vp.pitch=.9+Math.random()*.3;
+}
+window.speechSynthesis.onvoiceschanged=pickRandomVoiceProfile;
+
+function speakTTS(text){
+  if(!text) return;
+  window.speechSynthesis.cancel();
+  const utt=new SpeechSynthesisUtterance(text);
+  utt.lang='es-MX'; utt.rate=vp.rate; utt.pitch=vp.pitch;
+  if(vp.voice) utt.voice=vp.voice;
+  window.speechSynthesis.speak(utt);
+}
+
+// ── Activate Rep ──
+function activateRep(isSub){
+  document.getElementById('jpReveal').classList.remove('show');
+  document.getElementById('bg').className='';
+  if(!pendingRep) return;
+  repUserId=pendingRep.userId;
+  repUsername=pendingRep.username;
+  repIsSubscriber=isSub;
+  pendingRep=null;
+  pickRandomVoiceProfile();
+  const hud=document.getElementById('repHud');
+  const crown=document.getElementById('hudCrown');
+  const name=document.getElementById('hudName');
+  hud.className=isSub?'sub show':'normal show';
+  crown.style.display=isSub?'inline':'none';
+  name.textContent=(repUsername||'?').substring(0,16).toUpperCase();
+  stopParticles();
+}
+
+function clearRep(){
+  repUserId=null; repUsername=null; repIsSubscriber=false; pendingRep=null;
+  document.getElementById('stage').classList.remove('show');
+  document.getElementById('repHud').className='normal';
+  document.getElementById('jackpotStage').classList.remove('show');
+  document.getElementById('jpReveal').classList.remove('show');
+  document.getElementById('bg').className='';
+  stopParticles();
+  if(vipRAF){cancelAnimationFrame(vipRAF);vipRAF=null;}
+  jpScanTimers.forEach(t=>clearTimeout(t)); jpScanTimers=[];
+}
+
+// ── Animación selección normal (no VIP) ──
+function startAnimation(candidates, chosen){
+  const stage=document.getElementById('stage');
+  const chosen2=document.getElementById('chosenName');
+  const badge=document.getElementById('sBadge');
+  stage.classList.remove('show');
+  chosen2.classList.remove('show');
+  badge.classList.remove('show');
+  void stage.offsetWidth;
+  stage.classList.add('show');
+  const pool=candidates.length>0?[...candidates]:[chosen||'???'];
+  let idx=0, speed=60;
+  const interval=setInterval(()=>{
+    chosen2.textContent=(pool[idx%pool.length]||'???').substring(0,16).toUpperCase();
+    chosen2.classList.add('show'); idx++;
+  },speed);
+  setTimeout(()=>{
+    clearInterval(interval);
+    speed=160;
+    const iv2=setInterval(()=>{
+      chosen2.textContent=(pool[idx%pool.length]||'???').substring(0,16).toUpperCase(); idx++;
+    },speed);
+    setTimeout(()=>{
+      clearInterval(iv2);
+      chosen2.textContent=(chosen||'???').substring(0,16).toUpperCase();
+      badge.classList.add('show');
+      activateRep(false);
+    },1200);
+  },1800);
+}
+
+// ══ POLLING — rep_state ══
 setInterval(()=>{
   try{
-    const raw=localStorage.getItem(LS);
-    if(!raw) return;
-    const s=JSON.parse(raw);
+    const raw=localStorage.getItem(LS); if(!raw)return;
+    const s=JSON.parse(raw); if(!s.ts||s.ts===lastTs)return;
+    lastTs=s.ts;
     if(s.trigger&&s.trigger!==lastTrigger){
       lastTrigger=s.trigger;
       pendingRep={userId:s.repUserId,username:s.repUsername,isMember:!!s.repIsMember};
@@ -626,555 +758,25 @@ setInterval(()=>{
   }catch(e){}
 },300);
 
-// ══ Escuchar mensajes TTS ══
+// ══ POLLING — TTS mensajes ══
 setInterval(()=>{
   try{
-    const raw=localStorage.getItem('rep_message');
-    if(!raw) return;
-    const m=JSON.parse(raw);
-    if(!m.ts||m.ts===window._lastMsgTs) return;
-    window._lastMsgTs=m.ts;
-    if(repUserId&&m.userId===repUserId) speakMessage(repUsername,m.text,repIsSubscriber);
+    const raw=localStorage.getItem('rep_tts'); if(!raw)return;
+    const s=JSON.parse(raw); if(!s.ts||s.ts===lastTts)return;
+    lastTts=s.ts;
+    const ttsEl=document.getElementById('ttsMsg');
+    const userEl=document.getElementById('ttsMsgUser');
+    const textEl=document.getElementById('ttsMsgText');
+    if(!s.text||s.userId!==repUserId) return;
+    userEl.textContent=(repUsername||'').toUpperCase();
+    textEl.textContent=s.text;
+    ttsEl.classList.add('show');
+    speakTTS(s.text);
+    if(msgTimeout) clearTimeout(msgTimeout);
+    msgTimeout=setTimeout(()=>ttsEl.classList.remove('show'),5000);
   }catch(e){}
-},250);
-window._lastMsgTs=0;
+},300);
 
-// ══ Voz basada en perfil del rep activo ══
-// La variación ya no es por username hash — se asigna al seleccionar el rep
-function speakMessage(username,text,isSub){
-  if(!text||text.length>200) return;
-  window.speechSynthesis.cancel();
-  document.getElementById('ttsMsgUser').textContent=(isSub?'⭐ ':'')+username;
-  document.getElementById('ttsMsgText').textContent=text;
-  const ttsEl=document.getElementById('ttsMsg');
-  ttsEl.classList.toggle('sub-rep',!!isSub);
-  ttsEl.classList.add('show');
-  if(msgTimeout) clearTimeout(msgTimeout);
-  msgTimeout=setTimeout(()=>ttsEl.classList.remove('show'),5000);
-
-  const profile = currentVoiceProfile || VOICE_PROFILES[0];
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang  = 'es-MX';
-  utt.pitch  = profile.pitch;
-  utt.rate   = profile.rate;
-  utt.volume = 1.0;  // Volumen máximo
-
-  // Seleccionar mejor voz en español disponible
-  const voices = window.speechSynthesis.getVoices();
-  const esVoices = voices.filter(v => v.lang.startsWith('es'));
-  if(esVoices.length > 0){
-    // Usar la voz según el índice del perfil para más variedad si hay varias
-    const vIdx = VOICE_PROFILES.indexOf(profile) % esVoices.length;
-    utt.voice = esVoices[vIdx] || esVoices[0];
-  } else if(voices.length > 0){
-    utt.voice = voices[0];
-  }
-
-  window.speechSynthesis.speak(utt);
-}
-
-// ══ ANIMACIÓN NORMAL ══
-function startAnimation(candidates,chosen){
-  const pool=candidates.length>0?candidates:['???'];
-  document.getElementById('bg').className='show';
-  const stage=document.getElementById('stage');
-  document.getElementById('chosenName').classList.remove('show');
-  document.getElementById('chosenName').style.display='none';
-  document.getElementById('sBadge').classList.remove('show');
-  document.getElementById('shuffleZone').style.display='flex';
-  stage.classList.add('show');
-  startParticles(false);
-  playDrumRoll(); // ← drum roll mientras mezcla nombres
-  let count=0;
-  const si=setInterval(()=>{
-    count++;
-    ['sh0','sh1','sh2'].forEach(id=>{
-      document.getElementById(id).textContent=pool[Math.floor(Math.random()*pool.length)];
-    });
-    if(count>=40){clearInterval(si);stopDrumRoll();revealChosen(chosen||pool[0]);}
-  },80);
-}
-
-function revealChosen(name){
-  document.getElementById('shuffleZone').style.display='none';
-  const el=document.getElementById('chosenName');
-  el.textContent=name.toUpperCase(); el.style.display='block';
-  void el.offsetWidth; el.classList.add('show');
-  playRevealFanfare(); // ← fanfarria al revelar el ganador
-  setTimeout(()=>document.getElementById('sBadge').classList.add('show'),400);
-  setTimeout(()=>{
-    document.getElementById('bg').className='';
-    document.getElementById('stage').classList.remove('show');
-    stopParticles();
-    activateRep(false);
-  },6000);
-}
-
-// ══ FIX: JACKPOT MODE — pad pool para evitar undefined en reeles ══
-// ══ JACKPOT — Slot Machine Premium ══
-// Física real con tease, blur en movimiento y paradas dramáticas
-
-// ── frame independiente por reel + timeout de seguridad ──
-const jpFrames = [null, null, null];
-const jpSafetyTimers = [null, null, null];
-
-// ══ PERFILES DE VOZ — varían mucho entre representantes ══
-// Se asigna uno nuevo al activar cada rep, se mantiene hasta que cambia
-const VOICE_PROFILES = [
-  { pitch:2.0,  rate:1.0,  label:'agudo normal'    },
-  { pitch:0.3,  rate:0.85, label:'muy grave lento'  },
-  { pitch:1.7,  rate:1.3,  label:'agudo rápido'     },
-  { pitch:0.5,  rate:1.1,  label:'grave rápido'     },
-  { pitch:1.9,  rate:0.75, label:'agudo muy lento'  },
-  { pitch:0.4,  rate:0.7,  label:'muy grave lento'  },
-  { pitch:1.4,  rate:1.5,  label:'medio muy rápido' },
-  { pitch:0.6,  rate:1.4,  label:'grave rápido'     },
-  { pitch:1.8,  rate:0.9,  label:'agudo pausado'    },
-  { pitch:0.8,  rate:1.2,  label:'ligeramente grave'},
-  { pitch:1.2,  rate:0.65, label:'medio muy lento'  },
-  { pitch:2.0,  rate:1.6,  label:'agudo veloz'      },
-];
-
-let currentVoiceProfile = null;
-
-function pickRandomVoiceProfile(){
-  const idx = Math.floor(Math.random() * VOICE_PROFILES.length);
-  currentVoiceProfile = VOICE_PROFILES[idx];
-  console.log(`[TTS] Nuevo rep → perfil: ${currentVoiceProfile.label}`);
-}
-
-function activateRep(isSub){
-  if(!pendingRep) return;
-  repUserId=pendingRep.userId;
-  repUsername=pendingRep.username;
-  repIsSubscriber=isSub;
-  pendingRep=null;
-
-  // ← Asignar voz nueva al nuevo rep
-  pickRandomVoiceProfile();
-
-  const hud=document.getElementById('repHud');
-  const crown=document.getElementById('hudCrown');
-  const name=document.getElementById('hudName');
-
-  hud.className=isSub?'sub show':'normal show';
-  crown.style.display=isSub?'inline':'none';
-  name.className='hud-name'+(isSub?' sub':'');
-  name.textContent=repUsername;
-}
-
-function clearRep(){
-  // FIX: también interrumpir la sirena si está corriendo
-  hideSirenAnimation();
-  repUserId=null; repUsername=null; repIsSubscriber=false;
-  window.speechSynthesis.cancel();
-  document.getElementById('repHud').classList.remove('show');
-  document.getElementById('ttsMsg').classList.remove('show');
-  document.getElementById('bg').className='';
-  document.getElementById('stage').classList.remove('show');
-  document.getElementById('jackpotStage').classList.remove('show');
-  document.getElementById('jpReveal').classList.remove('show');
-  stopParticles();
-}
-
-// ══ Partículas ══
-function startParticles(jackpot){
-  const canvas=document.getElementById('particles');
-  canvas.width=1920; canvas.height=1080;
-  const ctx=canvas.getContext('2d');
-  const colors=jackpot
-    ?['#FFD700','#FFC200','#FFEC00','#FF8C00','#ffffff','#FFD000','#FFA500']
-    :['#FFD000','#FF8800','#FFEC00','#ffffff','#FFA500'];
-
-  particles=Array.from({length:jackpot?120:60},()=>({
-    x:Math.random()*1920,
-    y:jackpot?-20:Math.random()*1080,
-    vx:(Math.random()-.5)*(jackpot?3:1.5),
-    vy:jackpot?Math.random()*4+2:(Math.random()-.5)*1.5,
-    r:jackpot?Math.random()*5+2:Math.random()*3+1,
-    color:colors[Math.floor(Math.random()*colors.length)],
-    opacity:Math.random()*.7+.3,
-    rot:Math.random()*Math.PI*2,
-    rotV:(Math.random()-.5)*.2,
-    w:jackpot?Math.random()*12+4:0,
-  }));
-
-  function loop(){
-    ctx.clearRect(0,0,1920,1080);
-    particles.forEach(p=>{
-      p.x+=p.vx; p.y+=p.vy; p.rot+=p.rotV;
-      if(jackpot&&p.y>1100){p.y=-20;p.x=Math.random()*1920;}
-      else if(!jackpot){if(p.x<0||p.x>1920)p.vx*=-1;if(p.y<0||p.y>1080)p.vy*=-1;}
-      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
-      ctx.globalAlpha=p.opacity; ctx.shadowColor=p.color; ctx.shadowBlur=jackpot?12:8;
-      ctx.fillStyle=p.color;
-      if(jackpot&&p.w>0){ctx.fillRect(-p.w/2,-p.r/2,p.w,p.r);}
-      else{ctx.beginPath();ctx.arc(0,0,p.r,0,Math.PI*2);ctx.fill();}
-      ctx.restore();
-    });
-    pRAF=requestAnimationFrame(loop);
-  }
-  if(pRAF) cancelAnimationFrame(pRAF);
-  loop();
-}
-
-function stopParticles(){
-  if(pRAF){cancelAnimationFrame(pRAF);pRAF=null;}
-  const c=document.getElementById('particles');
-  c.getContext('2d').clearRect(0,0,c.width,c.height);
-}
-
-// ══ Audio Engine ══
-function makeNoise(duration){
-  const ac=getAC(); if(!ac) return null;
-  const buf=ac.createBuffer(1,ac.sampleRate*duration,ac.sampleRate);
-  const d=buf.getChannelData(0);
-  for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
-  const src=ac.createBufferSource();
-  src.buffer=buf;
-  return src;
-}
-
-function makeOsc(type,freq){
-  const ac=getAC(); if(!ac) return null;
-  const o=ac.createOscillator();
-  o.type=type; o.frequency.value=freq;
-  return o;
-}
-
-function conn(...nodes){
-  const ac=getAC(); if(!ac) return;
-  for(let i=0;i<nodes.length-1;i++) if(nodes[i]&&nodes[i+1]) nodes[i].connect(nodes[i+1]);
-  if(nodes[nodes.length-1]) nodes[nodes.length-1].connect(ac.destination);
-}
-
-// ══ FIX: Sonido de sirena real con posibilidad de parar ══
-let sirenOscSource=null;
-function playSirenSound(){
-  const ac=getAC(); if(!ac) return;
-  stopSirenSound();
-  const t=ac.currentTime;
-  const o=ac.createOscillator();
-  const g=ac.createGain();
-  const f=ac.createBiquadFilter();
-  f.type='lowpass'; f.frequency.value=900;
-
-  // Sweep ascendente/descendente × 4 ciclos
-  for(let i=0;i<8;i++){
-    const st=t+i*0.5;
-    o.frequency.setValueAtTime(600,st);
-    o.frequency.linearRampToValueAtTime(1200,st+0.25);
-    o.frequency.linearRampToValueAtTime(600,st+0.5);
-  }
-  o.type='sawtooth';
-  g.gain.setValueAtTime(0,t);
-  g.gain.linearRampToValueAtTime(0.28,t+0.15);
-  g.gain.setValueAtTime(0.28,t+3.6);
-  g.gain.linearRampToValueAtTime(0,t+4.0);
-
-  o.connect(f); f.connect(g); g.connect(ac.destination);
-  o.start(t); o.stop(t+4.0);
-  sirenOscSource=o;
-}
-
-function stopSirenSound(){
-  if(sirenOscSource){
-    try{ sirenOscSource.stop(); }catch(e){}
-    sirenOscSource=null;
-  }
-}
-
-// ══ Reel spin sound ══
-let reelSpinSource=null;
-function startReelSpinSound(){
-  const ac=getAC(); if(!ac) return;
-  stopReelSpinSound();
-  const bufLen=ac.sampleRate*0.5;
-  const buf=ac.createBuffer(1,bufLen,ac.sampleRate);
-  const d=buf.getChannelData(0);
-  for(let i=0;i<bufLen;i++){
-    const pos=i/bufLen;
-    d[i]=(Math.random()*2-1)*0.15;
-    const clickFreq=12;
-    if(Math.sin(pos*Math.PI*2*clickFreq)>0.92){
-      d[i]+=(Math.random()*2-1)*0.6*Math.pow(Math.abs(Math.sin(pos*Math.PI*2*clickFreq)),8);
-    }
-  }
-  reelSpinSource=ac.createBufferSource();
-  reelSpinSource.buffer=buf;
-  reelSpinSource.loop=true;
-  const filter=ac.createBiquadFilter();
-  filter.type='bandpass'; filter.frequency.value=800; filter.Q.value=1.5;
-  const gain=ac.createGain();
-  gain.gain.setValueAtTime(0,ac.currentTime);
-  gain.gain.linearRampToValueAtTime(0.35,ac.currentTime+0.3);
-  reelSpinSource.connect(filter); filter.connect(gain); gain.connect(ac.destination);
-  reelSpinSource.start();
-}
-
-function stopReelSpinSound(){
-  if(reelSpinSource){
-    try{ reelSpinSource.stop(); }catch(e){}
-    reelSpinSource=null;
-  }
-}
-
-function playReelStop(idx){
-  const ac=getAC(); if(!ac) return;
-  const t=ac.currentTime;
-  const impactBuf=ac.createBuffer(1,ac.sampleRate*0.08,ac.sampleRate);
-  const id=impactBuf.getChannelData(0);
-  for(let i=0;i<id.length;i++) id[i]=(Math.random()*2-1)*Math.pow(1-i/id.length,1.5);
-  const impact=ac.createBufferSource(); impact.buffer=impactBuf;
-  const impF=ac.createBiquadFilter(); impF.type='lowpass'; impF.frequency.value=500;
-  const impG=ac.createGain();
-  impG.gain.setValueAtTime(0.7,t); impG.gain.exponentialRampToValueAtTime(0.001,t+0.1);
-  impact.connect(impF); impF.connect(impG); impG.connect(ac.destination);
-  impact.start(t);
-
-  const tones=[[392,523],[523,659],[659,784]];
-  const[f1,f2]=tones[idx];
-  const metal=makeOsc('triangle',f1); if(!metal) return;
-  const metalG=ac.createGain();
-  const metalF=ac.createBiquadFilter(); metalF.type='peaking'; metalF.frequency.value=2000; metalF.gain.value=6;
-  metal.frequency.setValueAtTime(f1,t); metal.frequency.exponentialRampToValueAtTime(f2,t+0.08);
-  metalG.gain.setValueAtTime(0.5,t); metalG.gain.exponentialRampToValueAtTime(0.001,t+0.25);
-  metal.connect(metalF); metalF.connect(metalG); metalG.connect(ac.destination);
-  metal.start(t); metal.stop(t+0.25);
-
-  const bell=makeOsc('sine',f2*2); if(!bell) return;
-  const bellG=ac.createGain();
-  bellG.gain.setValueAtTime(0.15,t+0.05); bellG.gain.exponentialRampToValueAtTime(0.001,t+0.6);
-  bell.connect(bellG); bellG.connect(ac.destination);
-  bell.start(t+0.05); bell.stop(t+0.6);
-
-  if(idx===2) setTimeout(stopReelSpinSound,200);
-}
-
-function playJackpotSpin(){
-  const ac=getAC(); if(!ac) return;
-  const t=ac.currentTime;
-  [[146,0],[174,0.1],[220,0.2],[261,0.3]].forEach(([freq,delay])=>{
-    const o=makeOsc('sine',freq); if(!o) return;
-    const g=ac.createGain();
-    g.gain.setValueAtTime(0.0,t+delay);
-    g.gain.linearRampToValueAtTime(0.2,t+delay+0.15);
-    g.gain.setValueAtTime(0.2,t+delay+0.8);
-    g.gain.exponentialRampToValueAtTime(0.001,t+delay+1.5);
-    o.connect(g); g.connect(ac.destination);
-    o.start(t+delay); o.stop(t+delay+1.5);
-  });
-  const rollDuration=2.5;
-  for(let i=0;i<40;i++){
-    const st=t+0.3+(i/40)*rollDuration;
-    const intensity=Math.pow(i/40,2);
-    const nBuf=ac.createBuffer(1,ac.sampleRate*0.03,ac.sampleRate);
-    const nd=nBuf.getChannelData(0);
-    for(let j=0;j<nd.length;j++) nd[j]=(Math.random()*2-1)*Math.pow(1-j/nd.length,2);
-    const ns=ac.createBufferSource(); ns.buffer=nBuf;
-    const nf=ac.createBiquadFilter(); nf.type='bandpass'; nf.frequency.value=200+intensity*400;
-    const ng=ac.createGain();
-    ng.gain.setValueAtTime(0.1+intensity*0.4,st); ng.gain.exponentialRampToValueAtTime(0.001,st+0.04);
-    ns.connect(nf); nf.connect(ng); ng.connect(ac.destination);
-    ns.start(st);
-  }
-  setTimeout(startReelSpinSound,400);
-}
-
-function playJackpotWin(){
-  const ac=getAC(); if(!ac) return;
-  stopReelSpinSound();
-  const t=ac.currentTime;
-
-  const sub=makeOsc('sine',80); if(!sub) return;
-  const subG=ac.createGain();
-  sub.frequency.setValueAtTime(80,t); sub.frequency.exponentialRampToValueAtTime(30,t+0.6);
-  subG.gain.setValueAtTime(1.0,t); subG.gain.exponentialRampToValueAtTime(0.001,t+0.7);
-  sub.connect(subG); subG.connect(ac.destination);
-  sub.start(t); sub.stop(t+0.7);
-
-  const expBuf=ac.createBuffer(1,ac.sampleRate*0.3,ac.sampleRate);
-  const expD=expBuf.getChannelData(0);
-  for(let i=0;i<expD.length;i++) expD[i]=(Math.random()*2-1)*Math.pow(1-i/expD.length,0.8);
-  const exp=ac.createBufferSource(); exp.buffer=expBuf;
-  const expF=ac.createBiquadFilter(); expF.type='lowpass'; expF.frequency.value=300;
-  const expG=ac.createGain();
-  expG.gain.setValueAtTime(0.8,t); expG.gain.exponentialRampToValueAtTime(0.001,t+0.35);
-  exp.connect(expF); expF.connect(expG); expG.connect(ac.destination);
-  exp.start(t);
-
-  const trumpetNotes=[523,659,784,1047,1319,1047,784,1047,1319,1568];
-  const trumpetTimes=[0.1,0.17,0.24,0.31,0.38,0.52,0.59,0.66,0.73,0.80];
-  trumpetNotes.forEach((freq,i)=>{
-    const o1=makeOsc('sawtooth',freq); if(!o1) return;
-    const o2=makeOsc('square',freq*2);
-    const mix=ac.createGain(); mix.gain.value=0.5;
-    const mix2=ac.createGain(); mix2.gain.value=0.15;
-    const filter=ac.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value=freq*3;
-    const env=ac.createGain();
-    const st=t+trumpetTimes[i];
-    env.gain.setValueAtTime(0,st); env.gain.linearRampToValueAtTime(0.35,st+0.04);
-    env.gain.setValueAtTime(0.3,st+0.08); env.gain.exponentialRampToValueAtTime(0.001,st+0.18);
-    o1.connect(mix); o2.connect(mix2);
-    mix.connect(filter); mix2.connect(filter);
-    filter.connect(env); env.connect(ac.destination);
-    o1.start(st); o1.stop(st+0.2);
-    o2.start(st); o2.stop(st+0.2);
-  });
-
-  [[523,0.95],[659,0.85],[784,0.9],[1047,0.75],[1319,0.6]].forEach(([freq,vol],i)=>{
-    const o=makeOsc('sine',freq); if(!o) return;
-    const g=ac.createGain();
-    const st=t+0.9+i*0.02;
-    g.gain.setValueAtTime(0,st); g.gain.linearRampToValueAtTime(vol*0.18,st+0.1);
-    g.gain.setValueAtTime(vol*0.18,st+1.2); g.gain.exponentialRampToValueAtTime(0.001,st+2.5);
-    o.connect(g); g.connect(ac.destination);
-    o.start(st); o.stop(st+2.5);
-  });
-
-  for(let i=0;i<25;i++){
-    const st=t+0.5+i*0.06+Math.random()*0.03;
-    const coinFreq=1200+i*80+Math.random()*200;
-    const coin=makeOsc('sine',coinFreq); if(!coin) return;
-    const coinG=ac.createGain();
-    coinG.gain.setValueAtTime(0.12,st); coinG.gain.exponentialRampToValueAtTime(0.001,st+0.08);
-    coin.connect(coinG); coinG.connect(ac.destination);
-    coin.start(st); coin.stop(st+0.1);
-  }
-
-  [[0.15,0.6],[0.3,0.4],[0.5,0.25],[0.8,0.15]].forEach(([delay,vol])=>{
-    [523,784,1047].forEach(freq=>{
-      const o=makeOsc('sine',freq); if(!o) return;
-      const g=ac.createGain();
-      g.gain.setValueAtTime(vol*0.08,t+delay); g.gain.exponentialRampToValueAtTime(0.001,t+delay+0.4);
-      o.connect(g); g.connect(ac.destination);
-      o.start(t+delay); o.stop(t+delay+0.4);
-    });
-  });
-
-  [2093,2637,3136,3951,4186].forEach((freq,i)=>{
-    const o=makeOsc('sine',freq); if(!o) return;
-    const g=ac.createGain();
-    const st=t+1.0+i*0.12;
-    g.gain.setValueAtTime(0.12,st); g.gain.exponentialRampToValueAtTime(0.001,st+0.8);
-    o.connect(g); g.connect(ac.destination);
-    o.start(st); o.stop(st+0.8);
-  });
-}
-
-window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
-
-// ══ SONIDOS ANIMACIÓN NORMAL (chat rep) ══
-
-let drumRollInterval = null;
-let drumRollCount = 0;
-
-function playDrumRoll(){
-  const ac = getAC(); if(!ac) return;
-  drumRollCount = 0;
-  const totalBeats = 40; // igual que count>=40 en startAnimation
-  let beatDelay = 140; // ms entre golpes, va acelerando
-
-  function beat(){
-    const t = ac.currentTime;
-    drumRollCount++;
-    // Golpe de caja — ruido corto con filtro
-    const bufLen = Math.floor(ac.sampleRate * 0.04);
-    const buf = ac.createBuffer(1, bufLen, ac.sampleRate);
-    const d = buf.getChannelData(0);
-    for(let i = 0; i < bufLen; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/bufLen, 1.2);
-    const src = ac.createBufferSource(); src.buffer = buf;
-    const filt = ac.createBiquadFilter(); filt.type = 'bandpass'; filt.frequency.value = 2000; filt.Q.value = 0.8;
-    const g = ac.createGain();
-    const vol = 0.15 + (drumRollCount/totalBeats)*0.35; // crece con la racha
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.05);
-    src.connect(filt); filt.connect(g); g.connect(ac.destination);
-    src.start(t);
-
-    // Sub-golpe que se intensifica
-    const sub = ac.createOscillator(); sub.type = 'sine';
-    sub.frequency.setValueAtTime(90 + drumRollCount*2, t);
-    sub.frequency.exponentialRampToValueAtTime(40, t+0.06);
-    const subG = ac.createGain();
-    subG.gain.setValueAtTime(0.25 + (drumRollCount/totalBeats)*0.5, t);
-    subG.gain.exponentialRampToValueAtTime(0.001, t+0.07);
-    sub.connect(subG); subG.connect(ac.destination);
-    sub.start(t); sub.stop(t+0.07);
-
-    // Acelerar progresivamente
-    beatDelay = Math.max(35, 140 - drumRollCount*3);
-    if(drumRollCount < totalBeats){
-      drumRollInterval = setTimeout(beat, beatDelay);
-    }
-  }
-  beat();
-}
-
-function stopDrumRoll(){
-  if(drumRollInterval){ clearTimeout(drumRollInterval); drumRollInterval = null; }
-}
-
-function playRevealFanfare(){
-  const ac = getAC(); if(!ac) return;
-  const t = ac.currentTime;
-
-  // Boom de impacto
-  const sub = ac.createOscillator(); sub.type = 'sine';
-  const subG = ac.createGain();
-  sub.frequency.setValueAtTime(100, t); sub.frequency.exponentialRampToValueAtTime(35, t+0.5);
-  subG.gain.setValueAtTime(1.0, t); subG.gain.exponentialRampToValueAtTime(0.001, t+0.55);
-  sub.connect(subG); subG.connect(ac.destination);
-  sub.start(t); sub.stop(t+0.55);
-
-  // Explosion noise
-  const expLen = Math.floor(ac.sampleRate * 0.25);
-  const expBuf = ac.createBuffer(1, expLen, ac.sampleRate);
-  const expD = expBuf.getChannelData(0);
-  for(let i=0;i<expLen;i++) expD[i]=(Math.random()*2-1)*Math.pow(1-i/expLen,0.7);
-  const exp = ac.createBufferSource(); exp.buffer = expBuf;
-  const expF = ac.createBiquadFilter(); expF.type = 'lowpass'; expF.frequency.value = 500;
-  const expG = ac.createGain();
-  expG.gain.setValueAtTime(0.7, t); expG.gain.exponentialRampToValueAtTime(0.001, t+0.3);
-  exp.connect(expF); expF.connect(expG); expG.connect(ac.destination);
-  exp.start(t);
-
-  // Fanfarria 5 notas ascendentes
-  const notes   = [523, 659, 784, 1047, 1319];
-  const offsets = [0.05, 0.12, 0.19, 0.26, 0.33];
-  notes.forEach((freq,i)=>{
-    const o = ac.createOscillator(); o.type = 'triangle';
-    const g = ac.createGain();
-    const st = t + offsets[i];
-    g.gain.setValueAtTime(0, st); g.gain.linearRampToValueAtTime(0.4, st+0.04);
-    g.gain.setValueAtTime(0.35, st+0.1); g.gain.exponentialRampToValueAtTime(0.001, st+0.28);
-    o.frequency.value = freq;
-    o.connect(g); g.connect(ac.destination);
-    o.start(st); o.stop(st+0.3);
-  });
-
-  // Acorde final sostenido
-  [523, 659, 784, 1047].forEach((freq,i)=>{
-    const o = ac.createOscillator(); o.type = 'sine';
-    const g = ac.createGain();
-    const st = t + 0.45 + i*0.02;
-    g.gain.setValueAtTime(0, st); g.gain.linearRampToValueAtTime(0.18, st+0.1);
-    g.gain.setValueAtTime(0.18, st+1.0); g.gain.exponentialRampToValueAtTime(0.001, st+2.0);
-    o.frequency.value = freq;
-    o.connect(g); g.connect(ac.destination);
-    o.start(st); o.stop(st+2.0);
-  });
-
-  // Campanitas de brillo
-  [2093, 2637, 3136, 4186].forEach((freq,i)=>{
-    const o = ac.createOscillator(); o.type = 'sine';
-    const g = ac.createGain();
-    const st = t + 0.5 + i*0.1;
-    g.gain.setValueAtTime(0.12, st); g.gain.exponentialRampToValueAtTime(0.001, st+0.7);
-    o.frequency.value = freq;
-    o.connect(g); g.connect(ac.destination);
-    o.start(st); o.stop(st+0.7);
-  });
-}
 </script>
 </body>
 </html>
