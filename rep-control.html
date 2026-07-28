@@ -136,6 +136,7 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 <button class="btn-reset-all" onclick="resetTodo()">🔄 Reset completo — limpiar todo</button>
 <button class="btn-limpiar" onclick="limpiarRep()">✕ Quitar representante</button>
 <button class="btn-demo" onclick="modoDemo()">🧪 Modo prueba (sin stream)</button>
+  <button class="btn-demo" onclick="testVipDirecto()" style="background:rgba(255,180,0,.1);border-color:rgba(255,180,0,.3);color:rgba(255,180,0,.8);margin-top:4px;">⭐ TEST VIP directo (saltarse todo)</button>
 <div id="pastRepsCount" style="font-size:10px;color:rgba(248,113,113,.6);text-align:center;margin-top:4px;min-height:14px;"></div>
 <button onclick="resetPastReps()" style="width:100%;padding:5px;border-radius:7px;font-size:10px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;background:transparent;border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.25);margin-top:2px;">♻️ Reiniciar lista de exclusión</button>
 <div class="tts-test-row">
@@ -440,6 +441,23 @@ function testTTS(){
   localStorage.setItem(LS_MSG,JSON.stringify({userId:currentRep.userId,username:currentRep.username,text,ts:Date.now()}));
   setStatus('🔊 Reproduciendo con voz de '+currentRep.username,'ok');
   setTimeout(()=>setStatus('',''),3000);
+}
+
+function testVipDirecto(){
+  // Bypasear todo — escribir directamente al rep_state para disparar la animación VIP
+  const fakeNames=['Carlos_VIP','SofiaGamer','LuisStreamer','MariaPro','DiegoFan'];
+  const chosen = fakeNames[Math.floor(Math.random()*fakeNames.length)];
+  localStorage.setItem(LS_REP, JSON.stringify({
+    trigger: Date.now(),
+    candidates: fakeNames,
+    chosen: chosen,
+    repUserId: 'test_'+Date.now(),
+    repUsername: chosen,
+    repIsMember: true,
+    clear: 0,
+    ts: Date.now()
+  }));
+  setStatus('⭐ TEST VIP disparado → '+chosen,'ok');
 }
 
 function modoDemo(){
