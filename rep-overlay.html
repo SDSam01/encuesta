@@ -524,7 +524,7 @@ function startJackpot(candidates, chosen) {
   }
 
   vipRAF = requestAnimationFrame(animate);
-  startParticles(false);
+  // startParticles ya está integrado en la animación principal de canvas
 }
 
 
@@ -539,7 +539,7 @@ function revealJackpot(name){
   document.getElementById('jpSubBadge').classList.remove('show');
   reveal.classList.remove('show'); void reveal.offsetWidth; reveal.classList.add('show');
   setTimeout(()=>document.getElementById('jpSubBadge').classList.add('show'),700);
-  startParticles(true);
+  // Auto-ocultar después de 6s
   // Auto-transition after 6s
   setTimeout(()=>forceHideReveal(true), 6000);
   // Safety: force hide after 10s
@@ -640,6 +640,7 @@ function startParticles(burst){
 }
 function stopParticles(){
   if(pRAF){cancelAnimationFrame(pRAF);pRAF=null;}
+  if(vipRAF){cancelAnimationFrame(vipRAF);vipRAF=null;}
   const c=document.getElementById('vipCanvas');
   if(c){const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);}
   particles=[];
