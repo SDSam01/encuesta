@@ -452,18 +452,30 @@ function modoDemo(){
     {id:'kick_s1',name:'Team_Canguro',src:'kick',isMember:true},
     {id:'yt_sub2',name:'Alex_God',src:'yt',isMember:true},
     {id:'kick_s2',name:'MR_ARBOLERO',src:'kick',isMember:true},
+    {id:'yt_demo3',name:'NachoPro2024',src:'yt',isMember:false},
+    {id:'yt_demo4',name:'ChelseaMX',src:'yt',isMember:false},
+    {id:'yt_demo5',name:'DragonBall_Fan',src:'yt',isMember:false},
+    {id:'tiktok_d1',name:'tktk_user1',src:'tiktok',isMember:false},
+    {id:'tiktok_d2',name:'luisito_official',src:'tiktok',isMember:false},
   ];
   const now=Date.now();
   const users={};
   fakeUsers.forEach(u=>{
-    users[u.id]={username:u.name,src:u.src,lastSeen:now,text:'',isMember:!!u.isMember};
+    users[u.id]={username:u.name,src:u.src,lastSeen:now,text:'yo',isMember:!!u.isMember};
   });
   localStorage.setItem('chat_users',JSON.stringify(users));
+
+  // ← CLAVE: llenar yo_pool para que el selector funcione
+  const yoPool={};
+  fakeUsers.forEach(u=>{
+    yoPool[u.id]={username:u.name,src:u.src,isMember:!!u.isMember,ts:now};
+  });
+  localStorage.setItem('yo_pool',JSON.stringify(yoPool));
+
   localStorage.setItem('chat_status',JSON.stringify({ytConnected:true,kickConnected:true,keyIdx:0,ts:Date.now()}));
 
-  // FIX: mostrar banner de advertencia demo
   document.getElementById('demoWarning').style.display='block';
-  setStatus('🧪 Modo prueba activo — '+fakeUsers.length+' usuarios cargados','ok');
+  setStatus('🧪 Modo prueba — '+fakeUsers.length+' en yo_pool listos','ok');
 }
 
 function setStatus(msg,type){
