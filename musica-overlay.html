@@ -36,24 +36,35 @@ const _wu=setInterval(()=>{
 // ENCUESTA: Hip-Hop Chill con Sax — energía CONSTANTE
 // BPM: 90 — no escala, solo fade in/out
 // ══════════════════════════════════════════════
+// Variación de sesión para la encuesta
+let pollBPM=90;
+let pollCurrentScale=[174.6,207.7,233.1,261.6,311.1,349.2,523.3,622.3];
+const POLL_SCALES=[
+  [174.6,207.7,233.1,261.6,311.1,349.2,523.3,622.3], // F menor
+  [146.8,174.6,196.0,220.0,261.6,293.7,349.2,392.0,440.0], // D menor
+  [196.0,233.1,261.6,293.7,349.2,392.0,523.3,587.3], // G menor
+  [220.0,261.6,293.7,311.1,329.6,392.0,440.0,523.3], // A blues
+  [261.6,311.1,349.2,392.0,466.2,523.3,622.3],        // C menor
+];
+
 function startPollMusic(){
-  if(currentMode==='poll') return;
+  // Siempre reiniciar — cada encuesta suena diferente
   stopAll(false); currentMode='poll';
   const a=getAC(); if(!a||!masterGain) return;
   pollNodes=[];
-
-  // Fade in suave
+  // Cada encuesta: BPM y escala diferentes
+  pollBPM=82+Math.floor(Math.random()*16); // 82-97
+  pollCurrentScale=POLL_SCALES[Math.floor(Math.random()*POLL_SCALES.length)];
   masterGain.gain.cancelScheduledValues(a.currentTime);
   masterGain.gain.setValueAtTime(0, a.currentTime);
   masterGain.gain.linearRampToValueAtTime(lastVolume, a.currentTime+1.5);
-
   schedulePollLoop(a);
 }
 
 function schedulePollLoop(a){
-  const BPM=90, beat=60/BPM, bar=beat*4;
+  const BPM=pollBPM, beat=60/BPM, bar=beat*4;
   let t=a.currentTime+0.1;
-  const BARS=8; // 8 compases y repite
+  const BARS=8;
 
   function oneLoop(){
     if(currentMode!=='poll') return;
@@ -132,27 +143,20 @@ function playHipHopLoop(a, start, bars, bar, beat, nodes){
     nodes.push(bass,bfilt,bg,lfo,lfoG);
   });
 
-  // SAXOFÓN PROMINENTE — melodía hip-hop sax, más fuerte y expresiva
-  // F menor pentatónica: F3=174.6, Ab3=207.7, Bb3=233.1, C4=261.6, Eb4=311.1
-  const saxMelody=[
-    // Frase 1 — pregunta
-    {f:261.6,d:0.5, o:0},
-    {f:311.1,d:0.3, o:0.6},
-    {f:349.2,d:0.4, o:1.0},
-    {f:311.1,d:0.2, o:1.5},
-    {f:261.6,d:0.6, o:1.8},
-    // Frase 2 — respuesta
-    {f:233.1,d:0.4, o:2.7},
-    {f:261.6,d:0.3, o:3.2},
-    {f:311.1,d:0.5, o:3.6},
-    {f:349.2,d:0.3, o:4.2},
-    {f:392.0,d:0.4, o:4.6},
-    {f:349.2,d:0.3, o:5.1},
-    {f:311.1,d:0.3, o:5.5},
-    {f:261.6,d:0.7, o:5.9},
-    // Nota larga de cierre
-    {f:233.1,d:0.8, o:6.8},
-  ];
+  // SAX — genera frases usando la escala de la sesión actual
+  const saxScale=pollCurrentScale;
+  const saxMelody=[];
+  const r2=rng(Math.floor(Date.now()/500));
+  let pos2=r2()*0.4, noteIdx2=Math.floor(r2()*saxScale.length/2)+1;
+  const durPool2=[0.3,0.4,0.5,0.6,0.8];
+  while(pos2<bars*4-0.5){
+    const step=Math.round((r2()-0.4)*3);
+    noteIdx2=Math.max(0,Math.min(saxScale.length-1,noteIdx2+step));
+    const dur=durPool2[Math.floor(r2()*durPool2.length)];
+    const isLong=r2()<0.2;
+    saxMelody.push({f:saxScale[noteIdx2],d:isLong?dur*2:dur,o:pos2});
+    pos2+=isLong?dur*2+r2()*0.3:dur+r2()*0.2;
+  }
 
   for(let rep=0;rep<Math.ceil(bars/2);rep++){
     const repT=t+rep*bar*2;
