@@ -307,7 +307,7 @@ function buscarRep(){
 
   const candidates=active.map(([_,u])=>u.username).slice(0,25);
   localStorage.setItem(LS_REP, JSON.stringify({
-    trigger:Date.now(), candidates,
+    ts:Date.now(), trigger:Date.now(), candidates,
     chosen:user.username,
     repUserId:userId, repUsername:user.username,
     repIsMember:false, clear:0,
@@ -366,7 +366,7 @@ function activarModVip(){
         .map(([_,u])=>u.username).slice(0,25);
 
       localStorage.setItem(LS_REP, JSON.stringify({
-        trigger:Date.now(), candidates,
+        ts:Date.now(), trigger:Date.now(), candidates,
         chosen:user.username,
         repUserId:userId, repUsername:user.username,
         repIsMember:true,
