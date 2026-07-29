@@ -755,6 +755,9 @@ function activateRep(isSub){
 }
 
 function clearRep(){
+  // Cancelar animaciones en curso
+  if(normalRAF){cancelAnimationFrame(normalRAF);normalRAF=null;}
+  if(vipRAF){cancelAnimationFrame(vipRAF);vipRAF=null;}
   repUserId=null; repUsername=null; repIsSubscriber=false; pendingRep=null;
   document.getElementById('stage').classList.remove('show');
   document.getElementById('repHud').className='normal';
@@ -762,7 +765,6 @@ function clearRep(){
   document.getElementById('jpReveal').classList.remove('show');
   document.getElementById('bg').className='';
   stopParticles();
-  if(vipRAF){cancelAnimationFrame(vipRAF);vipRAF=null;}
   jpScanTimers.forEach(t=>clearTimeout(t)); jpScanTimers=[];
 }
 
@@ -844,7 +846,7 @@ setInterval(()=>{
     const ttsEl=document.getElementById('ttsMsg');
     const userEl=document.getElementById('ttsMsgUser');
     const textEl=document.getElementById('ttsMsgText');
-    if(!s.text||s.userId!==repUserId) return;
+    if(!s.text) return; // mostrar TTS sin importar userId
     userEl.textContent=(repUsername||'').toUpperCase();
     textEl.textContent=s.text;
     ttsEl.classList.add('show');
