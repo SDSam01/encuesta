@@ -150,6 +150,32 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 .jp-sub-badge.show{opacity:1;transform:translateY(0);}
 #jpFlash{position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0;background:radial-gradient(ellipse at center,rgba(255,220,100,.8) 0%,rgba(255,150,0,.2) 50%,transparent 80%);transition:opacity .06s;}
 #jpFlash.show{opacity:1;}
+/* Alarma VIP — destello rojo antes del jackpot */
+#vipAlarm{
+  position:fixed;inset:0;z-index:24;pointer-events:none;
+  background:rgba(200,0,0,0);display:none;
+}
+#vipAlarm.active{
+  display:block;
+  animation:alarmFlash .35s ease-in-out infinite;
+}
+@keyframes alarmFlash{
+  0%,100%{background:rgba(180,0,0,0);}
+  50%{background:rgba(200,0,0,0.45);}
+}
+/* Texto MODO VIP centrado */
+#vipAlarmText{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-family:'Bebas Neue',sans-serif;
+  font-size:80px;letter-spacing:20px;color:#FF2020;
+  text-shadow:0 0 40px rgba(255,50,50,.9);
+  animation:alarmTextPulse .35s ease-in-out infinite alternate;
+  opacity:0;
+}
+#vipAlarm.active #vipAlarmText{opacity:1;}
+@keyframes alarmTextPulse{from{transform:translate(-50%,-50%) scale(1);}to{transform:translate(-50%,-50%) scale(1.06);}}
+
 /* Slots legacy hidden */
 .jp-slots,.jp-reel,.jp-reel-inner,.jp-reel-item,.jp-card-scene,.jp-eyebrow{display:none;}
 
@@ -277,6 +303,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
   <div class="s-badge" id="sBadge">🎤 REPRESENTANTE OFICIAL</div>
 </div>
 
+<div id="vipAlarm"><div id="vipAlarmText">🚨 MODO VIP 🚨</div></div>
 <div id="jackpotStage">
   <canvas id="vipCanvas"></canvas>
   <div id="vipDisplay">
@@ -310,6 +337,49 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 // ══ VIP JACKPOT — Canvas 60fps ══
 let vipRAF = null;
 let jpScanTimers = [];
+
+// ── Sonido de alarma VIP ──
+function playVIPAlarm(){
+  const ac=getAC();if(!ac)return;
+  const t=ac.currentTime;
+  // Sirena sweep
+  for(let i=0;i<5;i++){
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.type='sawtooth';
+    const st=t+i*0.38;
+    o.frequency.setValueAtTime(280,st);
+    o.frequency.linearRampToValueAtTime(560,st+0.18);
+    o.frequency.linearRampToValueAtTime(280,st+0.36);
+    g.gain.setValueAtTime(.2,st);g.gain.setValueAtTime(.18,st+0.35);g.gain.linearRampToValueAtTime(0,st+0.38);
+    // Distorsión leve
+    const wc=ac.createWaveShaper();const curve=new Float32Array(256);
+    for(let k=0;k<256;k++){const x=k*2/255-1;curve[k]=Math.tanh(x*3);}
+    wc.curve=curve;
+    o.connect(wc);wc.connect(g);g.connect(ac.destination);
+    o.start(st);o.stop(st+0.4);
+  }
+}
+
+// ── Sonidos del scan ──
+function playScanTick(){
+  const ac=getAC();if(!ac)return;
+  const t=ac.currentTime;
+  const o=ac.createOscillator(),g=ac.createGain();
+  o.type='sine';o.frequency.value=600+Math.random()*300;
+  g.gain.setValueAtTime(.06,t);g.gain.exponentialRampToValueAtTime(.001,t+.04);
+  o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.05);
+}
+
+// ── Inicio con alarma + jackpot ──
+function triggerVIP(candidates, chosen){
+  const alarm=document.getElementById('vipAlarm');
+  alarm.classList.add('active');
+  playVIPAlarm();
+  setTimeout(()=>{
+    alarm.classList.remove('active');
+    startJackpot(candidates,chosen);
+  },2000);
+}
 
 function startJackpot(candidates, chosen) {
   // Limpiar animación previa
@@ -396,6 +466,7 @@ function startJackpot(candidates, chosen) {
         lastScanTime = now;
         nameEl.textContent = (pool[scanIdx%pool.length]||'???').substring(0,14).toUpperCase();
         scanIdx++;
+        playScanTick();
       }
     }
 
@@ -695,35 +766,52 @@ function clearRep(){
   jpScanTimers.forEach(t=>clearTimeout(t)); jpScanTimers=[];
 }
 
-// ── Animación selección normal (no VIP) ──
+// ── Animación selección normal — 60fps rAF ──
+let normalRAF=null;
 function startAnimation(candidates, chosen){
+  if(normalRAF){cancelAnimationFrame(normalRAF);normalRAF=null;}
   const stage=document.getElementById('stage');
-  const chosen2=document.getElementById('chosenName');
+  const nameEl=document.getElementById('chosenName');
   const badge=document.getElementById('sBadge');
-  stage.classList.remove('show');
-  chosen2.classList.remove('show');
-  badge.classList.remove('show');
+  stage.classList.remove('show');nameEl.classList.remove('show');badge.classList.remove('show');
   void stage.offsetWidth;
   stage.classList.add('show');
   const pool=candidates.length>0?[...candidates]:[chosen||'???'];
-  let idx=0, speed=60;
-  const interval=setInterval(()=>{
-    chosen2.textContent=(pool[idx%pool.length]||'???').substring(0,16).toUpperCase();
-    chosen2.classList.add('show'); idx++;
-  },speed);
-  setTimeout(()=>{
-    clearInterval(interval);
-    speed=160;
-    const iv2=setInterval(()=>{
-      chosen2.textContent=(pool[idx%pool.length]||'???').substring(0,16).toUpperCase(); idx++;
-    },speed);
-    setTimeout(()=>{
-      clearInterval(iv2);
-      chosen2.textContent=(chosen||'???').substring(0,16).toUpperCase();
+  let idx=0, lastUpdate=0, speed=55;
+  const startT=performance.now();
+  const FAST_END=1800, SLOW_END=3000;
+  let done=false;
+
+  function frame(now){
+    if(done)return;
+    const elapsed=now-startT;
+    if(elapsed>SLOW_END){
+      done=true;
+      nameEl.textContent=(chosen||'???').substring(0,16).toUpperCase();
+      nameEl.classList.add('show');
       badge.classList.add('show');
+      // Flash en el nombre al seleccionar
+      nameEl.style.transition='text-shadow .2s';
+      nameEl.style.textShadow='0 0 30px rgba(255,215,0,1),0 0 60px rgba(255,150,0,.8)';
+      setTimeout(()=>nameEl.style.textShadow='',1500);
+      // Sonido de selección
+      const ac=getAC();if(ac){const t=ac.currentTime;[523,784,1047].forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.2,t+i*.1);g.gain.exponentialRampToValueAtTime(.001,t+i*.1+.25);o.connect(g);g.connect(ac.destination);o.start(t+i*.1);o.stop(t+i*.1+.3);});}
       activateRep(false);
-    },1200);
-  },1800);
+      return;
+    }
+    // Velocidad desacelerante
+    if(elapsed>FAST_END) speed=55+((elapsed-FAST_END)/(SLOW_END-FAST_END))*350;
+    if(now-lastUpdate>speed){
+      lastUpdate=now;
+      nameEl.textContent=(pool[idx%pool.length]||'???').substring(0,16).toUpperCase();
+      nameEl.classList.add('show');
+      idx++;
+      // Sonido de tick
+      const ac=getAC();if(ac){const t=ac.currentTime;const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=400+Math.random()*200;g.gain.setValueAtTime(.05,t);g.gain.exponentialRampToValueAtTime(.001,t+.04);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.05);}
+    }
+    normalRAF=requestAnimationFrame(frame);
+  }
+  normalRAF=requestAnimationFrame(frame);
 }
 
 // ══ POLLING — rep_state ══
@@ -735,7 +823,7 @@ setInterval(()=>{
     if(s.trigger&&s.trigger!==lastTrigger){
       lastTrigger=s.trigger;
       pendingRep={userId:s.repUserId,username:s.repUsername,isMember:!!s.repIsMember};
-      if(s.repIsMember) startJackpot(s.candidates||[],s.chosen);
+      if(s.repIsMember) triggerVIP(s.candidates||[],s.chosen);
       else startAnimation(s.candidates||[],s.chosen);
     }
     if(s.clear&&s.clear!==lastClear){lastClear=s.clear;clearRep();}
