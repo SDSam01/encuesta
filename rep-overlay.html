@@ -794,7 +794,13 @@ function startAnimation(candidates, chosen){
       // Flash en el nombre al seleccionar
       nameEl.style.transition='text-shadow .2s';
       nameEl.style.textShadow='0 0 30px rgba(255,215,0,1),0 0 60px rgba(255,150,0,.8)';
-      setTimeout(()=>{nameEl.style.textShadow='';document.getElementById('bg').className='';},1500);
+      setTimeout(()=>{
+        nameEl.style.textShadow='';
+        document.getElementById('bg').className='';
+        stage.classList.remove('show'); // ocultar stage
+        nameEl.classList.remove('show');
+        badge.classList.remove('show');
+      },1500);
       // Sonido de selección
       const ac=getAC();if(ac){const t=ac.currentTime;[523,784,1047].forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.2,t+i*.1);g.gain.exponentialRampToValueAtTime(.001,t+i*.1+.25);o.connect(g);g.connect(ac.destination);o.start(t+i*.1);o.stop(t+i*.1+.3);});}
       activateRep(false);
