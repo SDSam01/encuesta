@@ -17,6 +17,7 @@ let pollNodes = [], vsNodes = [];
 let currentMode = 'idle';
 let lastPollActive = false, lastManual = false, lastVolume = 0.6;
 let pollLoopTimer = null;
+let vsLoopTimer = null;
 
 function getAC(){
   if(!ac){try{ac=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}}
@@ -57,7 +58,7 @@ function startPollMusic(){
   pollCurrentScale=POLL_SCALES[Math.floor(Math.random()*POLL_SCALES.length)];
   masterGain.gain.cancelScheduledValues(a.currentTime);
   masterGain.gain.setValueAtTime(0, a.currentTime);
-  masterGain.gain.linearRampToValueAtTime(lastVolume, a.currentTime+1.5);
+  masterGain.gain.linearRampToValueAtTime(lastVolume, a.currentTime+0.4);
   schedulePollLoop(a);
 }
 
@@ -226,7 +227,7 @@ function scheduleVsLoop(a){
     if(currentMode!=='vs') return;
     playJazzHopLoop(a,t,BARS,bar,beat,vsNodes);
     t+=BARS*bar;
-    pollLoopTimer=setTimeout(loop,(BARS*bar-0.08)*1000);
+    vsLoopTimer=setTimeout(loop,(BARS*bar-0.08)*1000);
   }
   loop();
 }
@@ -418,24 +419,28 @@ function playJazzHopLoop(a,start,bars,bar,beat,nodes){
 // ══ Stop & Fade ══
 function stopAll(fade){
   currentMode='idle';
+  // Cancelar AMBOS timers
   if(pollLoopTimer){clearTimeout(pollLoopTimer);pollLoopTimer=null;}
+  if(vsLoopTimer){clearTimeout(vsLoopTimer);vsLoopTimer=null;}
   if(!ac||!masterGain) return;
+  // Detener TODOS los nodos inmediatamente (sin importar fade)
+  const killNodes=()=>{
+    pollNodes.forEach(n=>{try{n.stop&&n.stop(0);}catch(e){}try{n.disconnect&&n.disconnect();}catch(e){}});
+    vsNodes.forEach(n=>{try{n.stop&&n.stop(0);}catch(e){}try{n.disconnect&&n.disconnect();}catch(e){}});
+    pollNodes=[]; vsNodes=[];
+  };
   if(fade){
     const tv=ac.currentTime;
     masterGain.gain.cancelScheduledValues(tv);
     masterGain.gain.setValueAtTime(masterGain.gain.value,tv);
-    masterGain.gain.linearRampToValueAtTime(0,tv+1.5);
+    masterGain.gain.linearRampToValueAtTime(0,tv+0.8);
     setTimeout(()=>{
-      pollNodes.forEach(n=>{try{n.stop&&n.stop(0);}catch(e){}});
-      vsNodes.forEach(n=>{try{n.stop&&n.stop(0);}catch(e){}});
-      pollNodes=[]; vsNodes=[];
+      killNodes();
       masterGain.gain.cancelScheduledValues(ac.currentTime);
       masterGain.gain.setValueAtTime(lastVolume,ac.currentTime);
-    },1600);
+    },900);
   } else {
-    pollNodes.forEach(n=>{try{n.stop&&n.stop(0);}catch(e){}});
-    vsNodes.forEach(n=>{try{n.stop&&n.stop(0);}catch(e){}});
-    pollNodes=[]; vsNodes=[];
+    killNodes();
   }
 }
 
