@@ -452,6 +452,18 @@ setInterval(()=>{
         masterGain.gain.setTargetAtTime(vol,ac.currentTime,0.2);
       }
     }
+    // Poll tiene prioridad sobre modo manual
+    const ps=JSON.parse(localStorage.getItem('poll_state')||'{}');
+    const pollActive=!!(ps.active&&ps.timerEnd&&ps.timerEnd>Date.now());
+    if(pollActive!==lastPollActive){
+      lastPollActive=pollActive;
+      if(pollActive){ startPollMusic(); return; }
+      else if(manual){ startVsMusic(); return; }
+      else stopAll(true);
+      return;
+    }
+    if(pollActive) return; // poll corriendo, no cambiar nada
+
     const manual=!!ms.manual;
     if(manual!==lastManual){
       lastManual=manual;
@@ -460,13 +472,6 @@ setInterval(()=>{
       return;
     }
     if(manual) return;
-    const ps=JSON.parse(localStorage.getItem('poll_state')||'{}');
-    const pollActive=!!(ps.active&&ps.timerEnd&&ps.timerEnd>Date.now());
-    if(pollActive!==lastPollActive){
-      lastPollActive=pollActive;
-      if(pollActive) startPollMusic();
-      else stopAll(true);
-    }
   }catch(e){}
 },600);
 </script>
