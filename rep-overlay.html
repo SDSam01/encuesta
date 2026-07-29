@@ -846,7 +846,12 @@ setInterval(()=>{
     const ttsEl=document.getElementById('ttsMsg');
     const userEl=document.getElementById('ttsMsgUser');
     const textEl=document.getElementById('ttsMsgText');
-    if(!s.text) return;
+    // Mute: cancelar voz y ocultar mensaje
+    if(s.userId==='__mute__'||!s.text){
+      window.speechSynthesis.cancel();
+      ttsEl.classList.remove('show');
+      return;
+    }
     userEl.textContent=(repUsername||s.username||'').toUpperCase();
     textEl.textContent=s.text;
     ttsEl.classList.add('show');
