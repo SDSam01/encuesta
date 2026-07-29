@@ -419,7 +419,7 @@ function limpiarRep(){
   localStorage.setItem('chat_demand','0');
   document.getElementById('repCard').classList.remove('show');
   const prev=JSON.parse(localStorage.getItem(LS_REP)||'{}');
-  localStorage.setItem(LS_REP,JSON.stringify({...prev,repUserId:null,repUsername:null,clear:Date.now()}));
+  localStorage.setItem(LS_REP,JSON.stringify({...prev,ts:Date.now(),repUserId:null,repUsername:null,clear:Date.now()}));
   setStatus('Representante eliminado','');
 }
 
@@ -447,7 +447,7 @@ function testVipDirecto(){
   // Bypasear todo — escribir directamente al rep_state para disparar la animación VIP
   const fakeNames=['Carlos_VIP','SofiaGamer','LuisStreamer','MariaPro','DiegoFan'];
   const chosen = fakeNames[Math.floor(Math.random()*fakeNames.length)];
-  localStorage.setItem(LS_REP, JSON.stringify({
+  localStorage.setItem(LS_REP, JSON.stringify({ts:Date.now(),
     trigger: Date.now(),
     candidates: fakeNames,
     chosen: chosen,
