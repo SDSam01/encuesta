@@ -840,14 +840,14 @@ setInterval(()=>{
 // ══ POLLING — TTS mensajes ══
 setInterval(()=>{
   try{
-    const raw=localStorage.getItem('rep_tts'); if(!raw)return;
+    const raw=localStorage.getItem('rep_message'); if(!raw)return;
     const s=JSON.parse(raw); if(!s.ts||s.ts===lastTts)return;
     lastTts=s.ts;
     const ttsEl=document.getElementById('ttsMsg');
     const userEl=document.getElementById('ttsMsgUser');
     const textEl=document.getElementById('ttsMsgText');
-    if(!s.text) return; // mostrar TTS sin importar userId
-    userEl.textContent=(repUsername||'').toUpperCase();
+    if(!s.text) return;
+    userEl.textContent=(repUsername||s.username||'').toUpperCase();
     textEl.textContent=s.text;
     ttsEl.classList.add('show');
     speakTTS(s.text);
