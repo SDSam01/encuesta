@@ -766,55 +766,53 @@ function clearRep(){
   jpScanTimers.forEach(t=>clearTimeout(t)); jpScanTimers=[];
 }
 
-// ── Animación selección normal — 60fps rAF ──
+// ── Animación selección normal — 60fps rAF, misma lógica ──
 let normalRAF=null;
 function startAnimation(candidates, chosen){
   if(normalRAF){cancelAnimationFrame(normalRAF);normalRAF=null;}
   const stage=document.getElementById('stage');
-  const nameEl=document.getElementById('chosenName');
+  const chosen2=document.getElementById('chosenName');
   const badge=document.getElementById('sBadge');
-  stage.classList.remove('show');nameEl.classList.remove('show');badge.classList.remove('show');
+  stage.classList.remove('show');
+  chosen2.classList.remove('show');
+  badge.classList.remove('show');
+  document.getElementById('repHud').className='normal'; // ocultar HUD durante animación
   void stage.offsetWidth;
   stage.classList.add('show');
-  document.getElementById('bg').className='show'; // oscurecer fondo
+  document.getElementById('bg').className='show';
+
   const pool=candidates.length>0?[...candidates]:[chosen||'???'];
-  let idx=0, lastUpdate=0, speed=55;
+  let idx=0;
   const startT=performance.now();
-  const FAST_END=1800, SLOW_END=3000;
-  let done=false;
+  let lastSwap=0;
+  // Fase 1: rápido 60ms por nombre, Fase 2: desacelera, Fase 3: nombre final
+  const PHASE2=1800, PHASE3=3000;
 
   function frame(now){
-    if(done)return;
     const elapsed=now-startT;
-    if(elapsed>SLOW_END){
-      done=true;
-      nameEl.textContent=(chosen||'???').substring(0,16).toUpperCase();
-      nameEl.classList.add('show');
+    // Velocidad: 60ms → 400ms progresivamente
+    const speed=elapsed<PHASE2?60:60+((elapsed-PHASE2)/(PHASE3-PHASE2))*340;
+
+    if(elapsed>=PHASE3){
+      // Final
+      chosen2.textContent=(chosen||'???').substring(0,16).toUpperCase();
+      chosen2.classList.add('show');
       badge.classList.add('show');
-      // Flash en el nombre al seleccionar
-      nameEl.style.transition='text-shadow .2s';
-      nameEl.style.textShadow='0 0 30px rgba(255,215,0,1),0 0 60px rgba(255,150,0,.8)';
       setTimeout(()=>{
-        nameEl.style.textShadow='';
-        document.getElementById('bg').className='';
-        stage.classList.remove('show'); // ocultar stage
-        nameEl.classList.remove('show');
+        stage.classList.remove('show');
+        chosen2.classList.remove('show');
         badge.classList.remove('show');
-      },1500);
-      // Sonido de selección
-      const ac=getAC();if(ac){const t=ac.currentTime;[523,784,1047].forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.2,t+i*.1);g.gain.exponentialRampToValueAtTime(.001,t+i*.1+.25);o.connect(g);g.connect(ac.destination);o.start(t+i*.1);o.stop(t+i*.1+.3);});}
-      activateRep(false);
+        document.getElementById('bg').className='';
+        activateRep(false);
+      },2000);
       return;
     }
-    // Velocidad desacelerante
-    if(elapsed>FAST_END) speed=55+((elapsed-FAST_END)/(SLOW_END-FAST_END))*350;
-    if(now-lastUpdate>speed){
-      lastUpdate=now;
-      nameEl.textContent=(pool[idx%pool.length]||'???').substring(0,16).toUpperCase();
-      nameEl.classList.add('show');
+
+    if(now-lastSwap>=speed){
+      lastSwap=now;
+      chosen2.textContent=(pool[idx%pool.length]||'???').substring(0,16).toUpperCase();
+      chosen2.classList.add('show');
       idx++;
-      // Sonido de tick
-      const ac=getAC();if(ac){const t=ac.currentTime;const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=400+Math.random()*200;g.gain.setValueAtTime(.05,t);g.gain.exponentialRampToValueAtTime(.001,t+.04);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.05);}
     }
     normalRAF=requestAnimationFrame(frame);
   }
