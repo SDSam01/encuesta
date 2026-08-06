@@ -155,8 +155,9 @@ let soloSubs    = false;
 let currentRep  = null;
 let recentUsers = {};
 
-// pastReps — solo en memoria, se resetea al recargar OBS (por stream)
+// pastReps — solo en memoria del stream actual
 let pastReps = new Set();
+function savePastReps(){} // no-op, sin persistencia
 
 // FIX: timeout automático para rep (45 min) — evita que quede pegado indefinidamente
 const REP_AUTO_CLEAR_MS = 45 * 60 * 1000;
@@ -272,49 +273,83 @@ function setSubs(val, btn){
   btn.style.color='#FFD000';
 }
 
+let capturando = false;
+
 function buscarRep(){
-  const now=Date.now();
+  if(capturando) return; // evitar doble clic
+  capturando = true;
 
-  // Solo quien escribió "yo" y variaciones en la ventana activa
-  let yoPool={};
-  try{ yoPool=JSON.parse(localStorage.getItem('yo_pool')||'{}'); }catch(e){}
+  // Vaciar yo_pool viejo para arrancar la captura desde cero
+  localStorage.setItem('yo_pool', JSON.stringify({}));
 
-  // 1 entrada por persona (ya deduplicado en chat-reader), excluir los de este stream
-  let active=Object.entries(yoPool)
-    .filter(([id,u])=>now-u.ts<=windowSecs*1000&&!pastReps.has(id));
+  const startCapture = Date.now();
+  const CAPTURE_MS = 10000; // captura 10 segundos desde que presionas
 
-  if(active.length===0){
-    // Fallback: ampliar a 5 minutos
-    active=Object.entries(yoPool)
-      .filter(([id,u])=>now-u.ts<=300*1000&&!pastReps.has(id));
+  // Marca el momento de inicio — solo cuentan los "yo" DESPUÉS de este instante
+  const btn = document.getElementById('btnBuscar');
+  if(btn){ btn.disabled = true; }
+
+  // Countdown visual
+  let remaining = 10;
+  setStatus(`🎬 Capturando "yo"... ${remaining}s`, 'loading');
+  const countInt = setInterval(()=>{
+    remaining--;
+    // Contar cuántos van escribiendo en vivo
+    let live = {};
+    try{ live = JSON.parse(localStorage.getItem('yo_pool')||'{}'); }catch(e){}
+    const nuevos = Object.entries(live).filter(([id,u])=>u.ts>=startCapture&&!pastReps.has(id)).length;
+    if(remaining>0) setStatus(`🎬 Capturando "yo"... ${remaining}s — ${nuevos} personas`, 'loading');
+  }, 1000);
+
+  // Al terminar la captura, sortear
+  setTimeout(()=>{
+    clearInterval(countInt);
+    capturando = false;
+    if(btn){ btn.disabled = false; }
+
+    const now = Date.now();
+    let yoPool = {};
+    try{ yoPool = JSON.parse(localStorage.getItem('yo_pool')||'{}'); }catch(e){}
+
+    // Solo los "yo" que llegaron DESPUÉS de presionar el botón, sin repetir de este stream
+    let active = Object.entries(yoPool)
+      .filter(([id,u])=>u.ts>=startCapture && !pastReps.has(id));
+
     if(active.length===0){
-      setStatus('⚠️ Nadie ha escrito "yo" recientemente','err');
+      // Fallback: si nadie escribió en esos 4s, tomar los últimos 20 segundos
+      active = Object.entries(yoPool)
+        .filter(([id,u])=>now-u.ts<=20000 && !pastReps.has(id));
+    }
+
+    if(active.length===0){
+      setStatus('⚠️ Nadie escribió "yo" en la ventana', 'err');
       return;
     }
-  }
 
-  const [userId,user]=active[Math.floor(Math.random()*active.length)];
-  pastReps.add(userId);
-  updatePastRepsCount();
-  currentRep={userId, username:user.username, src:user.src};
-  lastRepQueueTs=Date.now();
+    // Sorteo verdaderamente aleatorio entre TODOS los capturados
+    const [userId,user] = active[Math.floor(Math.random()*active.length)];
+    pastReps.add(userId); savePastReps();
+    updatePastRepsCount();
+    currentRep = {userId, username:user.username, src:user.src};
+    lastRepQueueTs = Date.now();
 
-  document.getElementById('repCard').classList.add('show');
-  document.getElementById('repName').textContent=user.username;
-  document.getElementById('repSrc').textContent=
-    user.src==='yt'?'▶ YOUTUBE':user.src==='kick'?'⚡ KICK':user.src==='tiktok'?'🎵 TIKTOK':'🟣 TWITCH';
-  document.getElementById('repLast').textContent='Esperando mensaje...';
+    document.getElementById('repCard').classList.add('show');
+    document.getElementById('repName').textContent = user.username;
+    document.getElementById('repSrc').textContent =
+      user.src==='yt'?'▶ YOUTUBE':user.src==='kick'?'⚡ KICK':user.src==='tiktok'?'🎵 TIKTOK':'🟣 TWITCH';
+    document.getElementById('repLast').textContent = 'Esperando mensaje...';
 
-  const candidates=active.map(([_,u])=>u.username).slice(0,25);
-  localStorage.setItem(LS_REP, JSON.stringify({
-    ts:Date.now(), trigger:Date.now(), candidates,
-    chosen:user.username,
-    repUserId:userId, repUsername:user.username,
-    repIsMember:false, clear:0,
-  }));
+    const candidates = active.map(([_,u])=>u.username).slice(0,30);
+    localStorage.setItem(LS_REP, JSON.stringify({
+      ts:Date.now(), trigger:Date.now(), candidates,
+      chosen:user.username,
+      repUserId:userId, repUsername:user.username,
+      repIsMember:false, clear:0,
+    }));
 
-  armRepAutoTimer();
-  setStatus(`🎤 ${user.username} — ${active.length} personas escribieron "yo"`,'ok');
+    armRepAutoTimer();
+    setStatus(`🎤 ${user.username} — sorteado entre ${active.length} personas`, 'ok');
+  }, CAPTURE_MS);
 }
 
 function activarModVip(){
@@ -351,7 +386,7 @@ function activarModVip(){
   setTimeout(()=>{
     try {
       const [userId,user]=activeSubs[Math.floor(Math.random()*activeSubs.length)];
-      pastReps.add(userId); updatePastRepsCount();
+      pastReps.add(userId); savePastReps(); updatePastRepsCount();
       currentRep={userId, username:user.username, src:user.src};
       lastRepQueueTs = Date.now();
 
