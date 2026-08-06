@@ -462,8 +462,31 @@ function stopAll(fade){
   }
 }
 
+// ══ Candado de instancia única (evita música encimada por fuentes duplicadas) ══
+const INSTANCE_ID = Math.random().toString(36).slice(2);
+let isOwner = false;
+function claimOwnership(){
+  try{
+    const l = JSON.parse(localStorage.getItem('music_lock')||'{}');
+    const now = Date.now();
+    // Tomo el candado si está libre, si ya es mío, o si el dueño lleva >3s sin latir
+    if(!l.id || l.id===INSTANCE_ID || !l.ts || (now-l.ts)>3000){
+      localStorage.setItem('music_lock', JSON.stringify({id:INSTANCE_ID, ts:now}));
+      isOwner = true;
+    } else {
+      isOwner = false;
+    }
+  }catch(e){ isOwner = true; }
+  return isOwner;
+}
+
 // ══ Loop principal de control ══
 setInterval(()=>{
+  // Si otra instancia ya tiene el candado, me callo y no toco nada
+  if(!claimOwnership()){
+    if(currentMode!=='idle') stopAll(false);
+    return;
+  }
   if(!ensureMaster()) return;
   try{
     const ms=JSON.parse(localStorage.getItem('music_state')||'{}');
