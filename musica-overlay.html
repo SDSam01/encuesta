@@ -18,6 +18,7 @@ let currentMode = 'idle';
 let lastPollActive = false, lastManual = false, lastVolume = 0.6;
 let pollLoopTimer = null;
 let vsLoopTimer = null;
+let fadeTimer = null;
 
 function getAC(){
   if(!ac){try{ac=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}}
@@ -437,6 +438,7 @@ function stopAll(fade){
   // Cancelar AMBOS timers
   if(pollLoopTimer){clearTimeout(pollLoopTimer);pollLoopTimer=null;}
   if(vsLoopTimer){clearTimeout(vsLoopTimer);vsLoopTimer=null;}
+  if(fadeTimer){clearTimeout(fadeTimer);fadeTimer=null;}
   if(!ensureMaster()) return;
   // Detener TODOS los nodos inmediatamente (sin importar fade)
   const killNodes=()=>{
@@ -449,7 +451,8 @@ function stopAll(fade){
     masterGain.gain.cancelScheduledValues(tv);
     masterGain.gain.setValueAtTime(masterGain.gain.value,tv);
     masterGain.gain.linearRampToValueAtTime(0,tv+0.8);
-    setTimeout(()=>{
+    fadeTimer=setTimeout(()=>{
+      fadeTimer=null;
       killNodes();
       masterGain.gain.cancelScheduledValues(ac.currentTime);
       masterGain.gain.setValueAtTime(lastVolume,ac.currentTime);
@@ -473,6 +476,7 @@ setInterval(()=>{
       }
     }
     // Poll tiene prioridad sobre modo manual
+    const manual=!!ms.manual;
     const ps=JSON.parse(localStorage.getItem('poll_state')||'{}');
     const pollActive=!!(ps.active&&ps.timerEnd&&ps.timerEnd>Date.now());
     if(pollActive!==lastPollActive){
@@ -484,7 +488,6 @@ setInterval(()=>{
     }
     if(pollActive) return; // poll corriendo, no cambiar nada
 
-    const manual=!!ms.manual;
     if(manual!==lastManual){
       lastManual=manual;
       if(manual) startVsMusic();
