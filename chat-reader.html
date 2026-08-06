@@ -161,13 +161,21 @@ function batchPushMessages(msgs) {
   }
   localStorage.setItem(LS_USERS, JSON.stringify(users));
 
-  // ══ Pool de "yo" — solo quien escribe yo y variaciones ══
-  const YO_REGEX = /^y+o+[!.,~¡]*$/i;
+  // ══ Pool de "yo" — acepta yo, yoooo, yyyoo, YO!!, etc. ══
+  const YO_REGEX = /^\s*y+o+\s*[!.,~¡]*\s*$/i;
+  // Si ya hay un representante activo, NO seguir acumulando yo_pool (reduce delay)
+  let repActivo = false;
+  try {
+    const rs = JSON.parse(localStorage.getItem('rep_state')||'{}');
+    repActivo = !!(rs.repUserId && !rs.clear);
+  } catch(e) {}
   let yoPool = {};
   try { yoPool = JSON.parse(localStorage.getItem('yo_pool') || '{}'); } catch(e) {}
-  for(const msg of msgs) {
-    if(YO_REGEX.test((msg.text||'').trim())){
-      yoPool[msg.userId] = { username:msg.username, src:msg.src, isMember:!!msg.isMember, ts:now };
+  if(!repActivo){
+    for(const msg of msgs) {
+      if(YO_REGEX.test((msg.text||'').trim())){
+        yoPool[msg.userId] = { username:msg.username, src:msg.src, isMember:!!msg.isMember, ts:now };
+      }
     }
   }
   // Limpiar yo_pool: quitar entradas de más de 10 minutos + cap 1500
