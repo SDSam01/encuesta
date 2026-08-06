@@ -382,7 +382,6 @@ function triggerVIP(candidates, chosen){
 }
 
 function startJackpot(candidates, chosen) {
-  // Limpiar animación previa
   if(vipRAF){ cancelAnimationFrame(vipRAF); vipRAF=null; }
   jpScanTimers.forEach(t=>clearTimeout(t)); jpScanTimers=[];
 
@@ -393,7 +392,6 @@ function startJackpot(candidates, chosen) {
   const badgeEl = document.getElementById('vipBadge');
   const flash = document.getElementById('jpFlash');
 
-  // Reset
   nameEl.className=''; nameEl.textContent='---';
   labelEl.className=''; badgeEl.className='';
   flash.classList.remove('show');
@@ -403,199 +401,109 @@ function startJackpot(candidates, chosen) {
   stage.classList.add('show');
   setTimeout(()=>labelEl.classList.add('show'),300);
 
-  // ── Canvas setup ──
   canvas.width = 1920; canvas.height = 1080;
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
   const cx = W/2, cy = H/2;
 
-  // ── Partículas ──
-  const PARTICLE_COUNT = 120;
+  // ── Partículas sutiles — pocas, suaves, ascendentes ──
+  const PARTICLE_COUNT = 45;
   const particles = [];
   for(let i=0;i<PARTICLE_COUNT;i++){
     particles.push({
-      x: cx + (Math.random()-0.5)*W*0.8,
-      y: cy + (Math.random()-0.5)*H*0.8,
-      vx:(Math.random()-0.5)*1.2,
-      vy:(Math.random()-0.5)*1.2,
-      r: Math.random()*3+1,
-      a: Math.random()*0.7+0.15,
-      hue: 35+Math.random()*25,
-      phase:'idle'
+      x: Math.random()*W,
+      y: Math.random()*H,
+      vy:-(0.2+Math.random()*0.5),
+      vx:(Math.random()-0.5)*0.15,
+      r: Math.random()*2+0.8,
+      a: Math.random()*0.4+0.1,
+      hue: 42+Math.random()*12
     });
   }
 
-  // Burst particles (hidden until reveal)
-  const burstParticles = [];
-  for(let i=0;i<80;i++){
-    const angle = (i/80)*Math.PI*2;
-    burstParticles.push({
-      x:cx, y:cy,
-      vx:Math.cos(angle)*(4+Math.random()*6),
-      vy:Math.sin(angle)*(4+Math.random()*6),
-      r:Math.random()*5+2,
-      a:1, active:false, hue:40+Math.random()*20,
-      trail:[]
-    });
-  }
+  // ── Fases ──
+  let phase='scanning';
+  const startTime=performance.now();
+  const SCAN_FAST_END=1600, SCAN_SLOW_END=2600, LOCK_TIME=3000, DONE_TIME=5000;
+  const pool=candidates.length>0?[...candidates]:[chosen||'VIP'];
+  let scanIdx=0, lastScanTime=0, scanInterval=60;
+  let revealGlow=0;
 
-  // ── Estado de animación ──
-  let phase = 'scanning'; // scanning → locking → locked → burst → done
-  const startTime = performance.now();
-  const SCAN_FAST_END = 2200;   // ms
-  const SCAN_SLOW_END = 3200;   // ms
-  const LOCK_TIME = 3700;       // ms - flash & freeze
-  const BURST_TIME = 3800;      // ms - particles explode
-  const DONE_TIME  = 7000;      // ms - fade out, show reveal
-
-  const pool = candidates.length > 0 ? [...candidates] : [chosen||'VIP'];
-  let scanIdx = 0;
-  let lastScanTime = 0;
-  let scanInterval = 55;
-
-  function animate(now) {
-    const elapsed = now - startTime;
+  function animate(now){
+    const elapsed=now-startTime;
     ctx.clearRect(0,0,W,H);
 
-    // ── Fase de scanning ──
+    // Scanning: nombres ciclan y desaceleran
     if(phase==='scanning'){
-      if(elapsed > SCAN_SLOW_END) phase='locked';
-      else if(elapsed > SCAN_FAST_END) scanInterval = 55 + ((elapsed-SCAN_FAST_END)/(SCAN_SLOW_END-SCAN_FAST_END))*350;
-
-      if(now - lastScanTime > scanInterval){
-        lastScanTime = now;
-        nameEl.textContent = (pool[scanIdx%pool.length]||'???').substring(0,14).toUpperCase();
+      if(elapsed>SCAN_SLOW_END) phase='locked';
+      else if(elapsed>SCAN_FAST_END) scanInterval=60+((elapsed-SCAN_FAST_END)/(SCAN_SLOW_END-SCAN_FAST_END))*280;
+      if(now-lastScanTime>scanInterval){
+        lastScanTime=now;
+        nameEl.textContent=(pool[scanIdx%pool.length]||'???').substring(0,14).toUpperCase();
         scanIdx++;
-        playScanTick();
       }
     }
-
-    // ── Fase locked ──
+    // Locked: nombre final, glow suave creciente
     if(phase==='locked'){
-      if(elapsed < LOCK_TIME){
-        nameEl.textContent = (chosen||'VIP').substring(0,14).toUpperCase();
-        nameEl.className = '';
-      } else {
-        // Flash!
-        flash.classList.add('show');
-        setTimeout(()=>flash.classList.remove('show'),100);
-        setTimeout(()=>{flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),80);},220);
-        nameEl.className = 'locked';
+      nameEl.textContent=(chosen||'VIP').substring(0,14).toUpperCase();
+      if(elapsed>=LOCK_TIME && phase==='locked'){
+        nameEl.className='locked';
         badgeEl.classList.add('show');
         playJackpotWin();
-        phase = 'burst';
-        // Activar burst particles
-        burstParticles.forEach(p=>{p.x=cx;p.y=cy;p.active=true;p.a=1;});
+        phase='reveal';
       }
     }
+    if(phase==='reveal') revealGlow=Math.min(1,revealGlow+0.03);
 
-    // ── Fondo oscuro con vignette ──
-    const grad = ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*0.7);
-    grad.addColorStop(0,'rgba(10,5,0,0.7)');
-    grad.addColorStop(1,'rgba(0,0,0,0.92)');
-    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+    // ── Fondo: gradiente radial suave y limpio ──
+    const bgGrad=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*0.75);
+    bgGrad.addColorStop(0,'rgba(18,12,2,0.55)');
+    bgGrad.addColorStop(1,'rgba(0,0,0,0.9)');
+    ctx.fillStyle=bgGrad; ctx.fillRect(0,0,W,H);
 
-    // ── Grid lines (efecto señal) ──
-    ctx.strokeStyle='rgba(255,180,0,0.025)';
-    ctx.lineWidth=1;
-    for(let x=0;x<W;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-    for(let y=0;y<H;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    // ── Halo central suave detrás del nombre ──
+    const haloBase=phase==='reveal'?0.16+revealGlow*0.12:0.09;
+    const haloR=340+Math.sin(elapsed*0.0015)*24;
+    const halo=ctx.createRadialGradient(cx,cy,0,cx,cy,haloR);
+    halo.addColorStop(0,`rgba(255,200,80,${haloBase})`);
+    halo.addColorStop(0.6,`rgba(255,170,40,${haloBase*0.4})`);
+    halo.addColorStop(1,'transparent');
+    ctx.fillStyle=halo; ctx.fillRect(0,0,W,H);
 
-    // ── Scan line (como TV) ──
-    if(phase==='scanning'||phase==='locked'){
-      const scanY = ((elapsed*0.3)%H);
-      const lineGrad = ctx.createLinearGradient(0,scanY-4,0,scanY+4);
-      lineGrad.addColorStop(0,'transparent');
-      lineGrad.addColorStop(0.5,'rgba(255,200,0,0.08)');
-      lineGrad.addColorStop(1,'transparent');
-      ctx.fillStyle=lineGrad; ctx.fillRect(0,scanY-4,W,8);
-    }
+    // ── Anillo fino y elegante ──
+    const ringR=200+Math.sin(elapsed*0.002)*10;
+    ctx.beginPath();
+    ctx.arc(cx,cy,ringR,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(255,210,120,${phase==='reveal'?0.22+revealGlow*0.15:0.1})`;
+    ctx.lineWidth=1.5;
+    ctx.stroke();
 
-    // ── Ring de luz central ──
-    const pulseR = 200 + Math.sin(elapsed*0.003)*20;
-    const ringGrad = ctx.createRadialGradient(cx,cy,pulseR-8,cx,cy,pulseR+8);
-    const ringA = phase==='burst' ? 0 : 0.12;
-    ringGrad.addColorStop(0,'transparent');
-    ringGrad.addColorStop(0.5,`rgba(255,200,0,${ringA})`);
-    ringGrad.addColorStop(1,'transparent');
-    ctx.fillStyle=ringGrad; ctx.fillRect(0,0,W,H);
-
-    // ── Partículas de fondo ──
+    // ── Partículas ascendentes suaves ──
     particles.forEach(p=>{
-      if(phase==='burst'){
-        // Convergen al centro durante burst
-        const dx=cx-p.x, dy=cy-p.y;
-        p.vx+=dx*0.002; p.vy+=dy*0.002;
-        p.a=Math.max(0,p.a-0.015);
-      } else {
-        p.vx+=(Math.random()-0.5)*0.05;
-        p.vy+=(Math.random()-0.5)*0.05;
-        p.vx*=0.98; p.vy*=0.98;
-      }
       p.x+=p.vx; p.y+=p.vy;
-      // Wrap around
-      if(p.x<0)p.x=W; if(p.x>W)p.x=0;
-      if(p.y<0)p.y=H; if(p.y>H)p.y=0;
-
+      if(p.y<-10){p.y=H+10;p.x=Math.random()*W;}
+      const tw=0.7+Math.sin(elapsed*0.003+p.x)*0.3; // parpadeo suave
       ctx.beginPath();
       ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle=`hsla(${p.hue},90%,65%,${p.a})`;
+      ctx.fillStyle=`hsla(${p.hue},85%,68%,${p.a*tw})`;
       ctx.fill();
-      // Glow
       ctx.beginPath();
-      ctx.arc(p.x,p.y,p.r*3,0,Math.PI*2);
-      ctx.fillStyle=`hsla(${p.hue},90%,65%,${p.a*0.08})`;
+      ctx.arc(p.x,p.y,p.r*2.5,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${p.hue},85%,68%,${p.a*tw*0.06})`;
       ctx.fill();
     });
 
-    // ── Burst particles ──
-    if(phase==='burst'||phase==='done'){
-      burstParticles.forEach(p=>{
-        if(!p.active) return;
-        p.trail.push({x:p.x,y:p.y,a:p.a});
-        if(p.trail.length>8) p.trail.shift();
-        // Draw trail
-        p.trail.forEach((tp,i)=>{
-          ctx.beginPath();
-          ctx.arc(tp.x,tp.y,p.r*(i/p.trail.length),0,Math.PI*2);
-          ctx.fillStyle=`hsla(${p.hue},100%,65%,${tp.a*0.3*(i/p.trail.length)})`;
-          ctx.fill();
-        });
-        p.vx*=0.95; p.vy*=0.95;
-        p.x+=p.vx; p.y+=p.vy;
-        p.a-=0.012;
-        if(p.a<=0) p.active=false;
-        // Draw particle
-        ctx.beginPath();
-        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctx.fillStyle=`hsla(${p.hue},100%,70%,${p.a})`;
-        ctx.fill();
-      });
-    }
-
-    // ── Glow central durante scanning ──
-    if(phase==='scanning'||phase==='locked'){
-      const intensity = phase==='locked'?0.25:0.12;
-      const cgGrad=ctx.createRadialGradient(cx,cy,0,cx,cy,300);
-      cgGrad.addColorStop(0,`rgba(255,180,0,${intensity})`);
-      cgGrad.addColorStop(1,'transparent');
-      ctx.fillStyle=cgGrad; ctx.fillRect(0,0,W,H);
-    }
-
-    // ── Done: transición al reveal ──
-    if(phase==='burst'&&elapsed>DONE_TIME){
-      phase='done';
+    // Done → reveal final
+    if(phase==='reveal'&&elapsed>DONE_TIME){
       stage.classList.remove('show');
       revealJackpot(chosen);
       cancelAnimationFrame(vipRAF); vipRAF=null;
       return;
     }
 
-    vipRAF = requestAnimationFrame(animate);
+    vipRAF=requestAnimationFrame(animate);
   }
-
-  vipRAF = requestAnimationFrame(animate);
-  // startParticles ya está integrado en la animación principal de canvas
+  vipRAF=requestAnimationFrame(animate);
 }
 
 
