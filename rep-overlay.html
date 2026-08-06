@@ -157,24 +157,24 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 }
 #vipAlarm.active{
   display:block;
-  animation:alarmFlash .35s ease-in-out infinite;
+  animation:alarmFlash .7s ease-in-out infinite;
 }
 @keyframes alarmFlash{
-  0%,100%{background:rgba(180,0,0,0);}
-  50%{background:rgba(200,0,0,0.45);}
+  0%,100%{background:rgba(160,20,20,0);}
+  50%{background:rgba(190,30,30,0.32);}
 }
 /* Texto MODO VIP centrado */
 #vipAlarmText{
   position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%);
   font-family:'Bebas Neue',sans-serif;
-  font-size:80px;letter-spacing:20px;color:#FF2020;
-  text-shadow:0 0 40px rgba(255,50,50,.9);
-  animation:alarmTextPulse .35s ease-in-out infinite alternate;
+  font-size:80px;letter-spacing:20px;color:#FFD24A;
+  text-shadow:0 0 40px rgba(255,180,40,.9),0 0 80px rgba(255,120,0,.4);
+  animation:alarmTextPulse .7s ease-in-out infinite alternate;
   opacity:0;
 }
 #vipAlarm.active #vipAlarmText{opacity:1;}
-@keyframes alarmTextPulse{from{transform:translate(-50%,-50%) scale(1);}to{transform:translate(-50%,-50%) scale(1.06);}}
+@keyframes alarmTextPulse{from{transform:translate(-50%,-50%) scale(1);}to{transform:translate(-50%,-50%) scale(1.04);}}
 
 /* Slots legacy hidden */
 .jp-slots,.jp-reel,.jp-reel-inner,.jp-reel-item,.jp-card-scene,.jp-eyebrow{display:none;}
@@ -342,22 +342,37 @@ let jpScanTimers = [];
 function playVIPAlarm(){
   const ac=getAC();if(!ac)return;
   const t=ac.currentTime;
-  // Sirena sweep
-  for(let i=0;i<5;i++){
+  // Campanadas ascendentes elegantes — suspenso sin ser agresivo
+  const notes=[392,523,659,784]; // Sol, Do, Mi, Sol (acorde mayor ascendente)
+  notes.forEach((freq,i)=>{
+    const st=t+i*0.42;
+    // Tono principal suave (triangle en vez de sawtooth)
     const o=ac.createOscillator(),g=ac.createGain();
-    o.type='sawtooth';
-    const st=t+i*0.38;
-    o.frequency.setValueAtTime(280,st);
-    o.frequency.linearRampToValueAtTime(560,st+0.18);
-    o.frequency.linearRampToValueAtTime(280,st+0.36);
-    g.gain.setValueAtTime(.2,st);g.gain.setValueAtTime(.18,st+0.35);g.gain.linearRampToValueAtTime(0,st+0.38);
-    // Distorsión leve
-    const wc=ac.createWaveShaper();const curve=new Float32Array(256);
-    for(let k=0;k<256;k++){const x=k*2/255-1;curve[k]=Math.tanh(x*3);}
-    wc.curve=curve;
-    o.connect(wc);wc.connect(g);g.connect(ac.destination);
-    o.start(st);o.stop(st+0.4);
-  }
+    o.type='triangle';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,st);
+    g.gain.linearRampToValueAtTime(.18,st+0.04);
+    g.gain.exponentialRampToValueAtTime(.001,st+0.5);
+    // Armónico brillante suave para dar "shimmer"
+    const o2=ac.createOscillator(),g2=ac.createGain();
+    o2.type='sine';o2.frequency.value=freq*2;
+    g2.gain.setValueAtTime(0,st);
+    g2.gain.linearRampToValueAtTime(.05,st+0.04);
+    g2.gain.exponentialRampToValueAtTime(.001,st+0.4);
+    o.connect(g);g.connect(ac.destination);
+    o2.connect(g2);g2.connect(ac.destination);
+    o.start(st);o.stop(st+0.55);
+    o2.start(st);o2.stop(st+0.45);
+    o.onended=()=>{try{o.disconnect();g.disconnect();o2.disconnect();g2.disconnect();}catch(e){}};
+  });
+  // Nota grave sostenida de fondo para dar cuerpo (sutil)
+  const bass=ac.createOscillator(),bg=ac.createGain();
+  bass.type='sine';bass.frequency.value=98; // Sol grave
+  bg.gain.setValueAtTime(0,t);
+  bg.gain.linearRampToValueAtTime(.08,t+0.3);
+  bg.gain.exponentialRampToValueAtTime(.001,t+2);
+  bass.connect(bg);bg.connect(ac.destination);
+  bass.start(t);bass.stop(t+2.1);
+  bass.onended=()=>{try{bass.disconnect();bg.disconnect();}catch(e){}};
 }
 
 // ── Sonidos del scan ──
