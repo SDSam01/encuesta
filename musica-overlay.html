@@ -25,13 +25,28 @@ function getAC(){
   return ac;
 }
 
+// Crear masterGain de inmediato (OBS permite autoplay de audio)
+function ensureMaster(){
+  const a=getAC();
+  if(a && !masterGain){
+    masterGain=a.createGain();
+    masterGain.connect(a.destination);
+    masterGain.gain.value=lastVolume;
+  }
+  return masterGain;
+}
+// Intentar crear el contexto y resumir repetidamente hasta que corra
 const _wu=setInterval(()=>{
   const a=getAC();
-  if(a&&a.state==='running'){
-    masterGain=a.createGain(); masterGain.connect(a.destination);
-    masterGain.gain.value=lastVolume; clearInterval(_wu);
+  if(a){
+    ensureMaster();
+    if(a.state==='running' && masterGain) clearInterval(_wu);
   }
-},500);
+},300);
+// También intentar al primer evento de cualquier tipo (por si OBS lo permite)
+['click','mousemove','keydown','loadeddata'].forEach(ev=>{
+  window.addEventListener(ev,()=>{const a=getAC();if(a){a.resume();ensureMaster();}},{once:true});
+});
 
 // ══════════════════════════════════════════════
 // ENCUESTA: Hip-Hop Chill con Sax — energía CONSTANTE
@@ -51,7 +66,7 @@ const POLL_SCALES=[
 function startPollMusic(){
   // Siempre reiniciar — cada encuesta suena diferente
   stopAll(false); currentMode='poll';
-  const a=getAC(); if(!a||!masterGain) return;
+  const a=getAC(); if(!a||!ensureMaster()) return;
   pollNodes=[];
   // Cada encuesta: BPM y escala diferentes
   pollBPM=82+Math.floor(Math.random()*16); // 82-97
@@ -211,7 +226,7 @@ function playHipHopLoop(a, start, bars, bar, beat, nodes){
 function startVsMusic(){
   if(currentMode==='vs') return;
   stopAll(false); currentMode='vs';
-  const a=getAC(); if(!a||!masterGain) return;
+  const a=getAC(); if(!a||!ensureMaster()) return;
   vsNodes=[];
   masterGain.gain.cancelScheduledValues(a.currentTime);
   masterGain.gain.setValueAtTime(0,a.currentTime);
@@ -422,7 +437,7 @@ function stopAll(fade){
   // Cancelar AMBOS timers
   if(pollLoopTimer){clearTimeout(pollLoopTimer);pollLoopTimer=null;}
   if(vsLoopTimer){clearTimeout(vsLoopTimer);vsLoopTimer=null;}
-  if(!ac||!masterGain) return;
+  if(!ensureMaster()) return;
   // Detener TODOS los nodos inmediatamente (sin importar fade)
   const killNodes=()=>{
     pollNodes.forEach(n=>{try{n.stop&&n.stop(0);}catch(e){}try{n.disconnect&&n.disconnect();}catch(e){}});
@@ -446,7 +461,7 @@ function stopAll(fade){
 
 // ══ Loop principal de control ══
 setInterval(()=>{
-  if(!ac||!masterGain) return;
+  if(!ensureMaster()) return;
   try{
     const ms=JSON.parse(localStorage.getItem('music_state')||'{}');
     const vol=ms.volume!==undefined?ms.volume:0.6;
