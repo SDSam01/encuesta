@@ -51,6 +51,12 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
 .btn-em{background:rgba(255,80,80,.07);border-color:rgba(255,80,80,.3);color:rgba(255,100,100,.7);grid-column:1/-1;font-size:9px;}
 .btn-hide{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.1);color:rgba(255,255,255,.35);grid-column:1/-1;font-size:9px;}
 
+/* Selector de formato */
+.fmt{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:7px;}
+.bf{padding:8px 5px;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;text-align:center;transition:.12s;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35);}
+.bf:hover{opacity:.8;}
+.bf.on{background:rgba(255,208,0,.15);border-color:rgba(255,208,0,.55);color:#FFD000;}
+
 /* Referencia */
 .rt{font-size:9px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,.22);margin-bottom:4px;}
 .rnote{font-size:9px;color:rgba(255,208,0,.35);margin-bottom:7px;font-style:italic;}
@@ -86,6 +92,11 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
   </div>
 </div>
 
+<div class="fmt">
+  <button class="bf on" id="fmtComp" onclick="setFormato('companero')">👥 Elige tu compañero</button>
+  <button class="bf" id="fmtPuerta" onclick="setFormato('puerta')">🚪 Elige tu puerta</button>
+</div>
+
 <button class="btn-sorteo" onclick="iniciarSorteo()">🃏 Iniciar sorteo — mostrar cartas en stream</button>
 
 <!-- Selectores -->
@@ -116,23 +127,50 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
 
 <script>
 const LS='comodines_state';
-const TODOS=[
-  {emoji:'💚',titulo:'Recuperación',    desc:'Si ganas esta ronda recuperas media vida.'},
-  {emoji:'🎲',titulo:'Lotería',         desc:'Ganas o pierdes media vida al azar. 50/50.'},
-  {emoji:'🔄',titulo:'Inversión Total', desc:'El rival tiene que votar mal para ganar esta ronda.'},
-  {emoji:'💀',titulo:'Doble o nada',    desc:'Si el rival pierde esta ronda, pierde 1 vida completa.'},
-  {emoji:'🛡️',titulo:'Escudo',          desc:'Tu próximo error no te quita vida. Un fallo gratis.'},
-  {emoji:'⚔️',titulo:'Sabotaje',        desc:'Si el rival falla, pierde 1 vida completa en lugar de media.'},
-  {emoji:'🩸',titulo:'Robo de vida',    desc:'Le robas media vida al rival y te la sumas.'},
-  {emoji:'🔀',titulo:'Ruleta de vidas', desc:'Las vidas de Sam y Chat se intercambian completamente.'},
-  {emoji:'✨',titulo:'Resurrección',    desc:'Recuperas TODAS tus vidas de golpe.'},
+const MAZO_COMPANERO=[
+  {emoji:'🎲',titulo:'Aura o Laura',     desc:'Ganas o pierdes media vida al azar. 50/50.'},
+  {emoji:'🔄',titulo:'Buena mala suerte',desc:'El rival tiene que votar mal para ganar esta ronda.'},
+  {emoji:'⚔️',titulo:'Error de rata',    desc:'Si el rival falla, pierde 1 vida completa en lugar de media.'},
+  {emoji:'🩸',titulo:'Robo de vida',     desc:'Le robas media vida al rival y te la sumas.'},
+  {emoji:'🔀',titulo:'Ruleta de vidas',  desc:'Las vidas de Sam y Chat se intercambian completamente.'},
+  {emoji:'✨',titulo:'Resurrección',     desc:'Si pierdes tu última vida, revives con media vida.'},
+  {emoji:'⚖️',titulo:'Tregua',           desc:'Nadie pierde vida esta ronda, pase lo que pase.'},
+  {emoji:'🚫',titulo:'Anular',           desc:'Cancelas el comodín que el rival active esta ronda.'},
+  {emoji:'🎣',titulo:'Robo de comodín',  desc:'Le quitas al rival un comodín sin usar y te lo quedas.'},
   {emoji:'🎭',titulo:'Cambiar Personaje',desc:'El representante del chat responde en el personaje que Sam elija al momento.'},
 ];
+
+const MAZO_PUERTA=[
+  {emoji:'🚪',titulo:'Cambio de puerta', desc:'Después de elegir, puedes cambiarte a otra puerta.'},
+  {emoji:'👥',titulo:'Copiar',           desc:'Eliges la misma puerta que el rival.'},
+  {emoji:'🔒',titulo:'Bloqueo',          desc:'Bloqueas una puerta para que el rival no la pueda usar.'},
+  {emoji:'🛡️',titulo:'Escudo',           desc:'Tu próximo error no te quita vida. Un fallo gratis.'},
+  {emoji:'🩸',titulo:'Robo de vida',     desc:'Le robas media vida al rival y te la sumas.'},
+  {emoji:'🎲',titulo:'Lotería',          desc:'Ganas o pierdes media vida al azar. 50/50.'},
+  {emoji:'💀',titulo:'Error letal',      desc:'Si el rival falla esta ronda, pierde 1 vida completa en lugar de media.'},
+  {emoji:'🍀',titulo:'Suertudo',         desc:'Si eliges bien recuperas 1 vida completa.'},
+  {emoji:'⚖️',titulo:'Tregua',           desc:'Nadie pierde vida esta ronda, pase lo que pase.'},
+  {emoji:'🚫',titulo:'Anular',           desc:'Cancelas el comodín que el rival active esta ronda.'},
+];
+
+// Mazo activo — cambia según el formato seleccionado
+let formato = localStorage.getItem('comodines_formato') || 'companero';
+let TODOS = (formato==='puerta') ? MAZO_PUERTA : MAZO_COMPANERO;
 
 let mazo=[];
 let samPicks=[null,null],chatPicks=[null,null];
 let samUsed=[false,false],chatUsed=[false,false];
 let samStep=0,chatStep=0;
+
+function setFormato(f){
+  formato = f;
+  TODOS = (f==='puerta') ? MAZO_PUERTA : MAZO_COMPANERO;
+  localStorage.setItem('comodines_formato', f);
+  document.getElementById('fmtComp').className = 'bf' + (f==='companero' ? ' on' : '');
+  document.getElementById('fmtPuerta').className = 'bf' + (f==='puerta' ? ' on' : '');
+  renderRef();
+  setStatus(f==='puerta' ? 'Formato: Elige tu puerta — aplica al próximo sorteo' : 'Formato: Elige tu compañero — aplica al próximo sorteo','ok');
+}
 
 function iniciarSorteo(){
   mazo=[...TODOS].sort(()=>Math.random()-.5);
@@ -259,6 +297,9 @@ function renderRef(){
   });
 }
 renderRef();
+// Restaurar el formato guardado al cargar (marca el botón correcto)
+document.getElementById('fmtComp').className = 'bf' + (formato==='companero' ? ' on' : '');
+document.getElementById('fmtPuerta').className = 'bf' + (formato==='puerta' ? ' on' : '');
 </script>
 </body>
 </html>
