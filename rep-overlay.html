@@ -336,6 +336,7 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
 
 // ══ VIP JACKPOT — Canvas 60fps ══
 let vipRAF = null;
+let animActive = false; // true mientras corre la animación (normal o VIP)
 let jpScanTimers = [];
 
 // ── Sonido de alarma VIP ──
@@ -387,6 +388,7 @@ function playScanTick(){
 
 // ── Inicio con alarma + jackpot ──
 function triggerVIP(candidates, chosen){
+  animActive=true;
   const alarm=document.getElementById('vipAlarm');
   alarm.classList.add('active');
   playVIPAlarm();
@@ -660,6 +662,7 @@ function speakTTS(text){
 
 // ── Activate Rep ──
 function activateRep(isSub){
+  animActive=false;
   document.getElementById('jpReveal').classList.remove('show');
   document.getElementById('bg').className='';
   if(!pendingRep) return;
@@ -678,6 +681,7 @@ function activateRep(isSub){
 }
 
 function clearRep(){
+  animActive=false;
   // Cancelar animaciones en curso
   if(normalRAF){cancelAnimationFrame(normalRAF);normalRAF=null;}
   if(vipRAF){cancelAnimationFrame(vipRAF);vipRAF=null;}
@@ -695,6 +699,7 @@ function clearRep(){
 // ── Animación selección normal — 60fps rAF, misma lógica ──
 let normalRAF=null;
 function startAnimation(candidates, chosen){
+  animActive=true;
   if(normalRAF){cancelAnimationFrame(normalRAF);normalRAF=null;}
   const stage=document.getElementById('stage');
   const chosen2=document.getElementById('chosenName');
@@ -865,6 +870,8 @@ setInterval(()=>{
       ttsEl.classList.remove('show');
       return;
     }
+    // Durante la animación: consumir el mensaje pero NO mostrarlo ni hablarlo
+    if(animActive) return;
     userEl.textContent=(repUsername||s.username||'').toUpperCase();
     textEl.textContent=s.text;
     ttsEl.classList.add('show');
@@ -872,7 +879,7 @@ setInterval(()=>{
     if(msgTimeout) clearTimeout(msgTimeout);
     msgTimeout=setTimeout(()=>ttsEl.classList.remove('show'),5000);
   }catch(e){}
-},300);
+},100);
 
 </script>
 </body>
