@@ -201,11 +201,14 @@ setInterval(()=>{
 // AHORA: escanea chat_queue buscando mensajes del rep por userId.
 //        Con queue de 500 mensajes, ningún mensaje del rep se pierde.
 let lastRepQueueTs = 0;
+let lastQueueRaw = null;
 setInterval(()=>{
   try{
     if(!currentRep) return;
     const raw = localStorage.getItem('chat_queue');
     if(!raw) return;
+    if(raw === lastQueueRaw) return; // sin cambios: evitar parsear 500 msgs
+    lastQueueRaw = raw;
     const queue = JSON.parse(raw);
     // Buscar mensajes del rep más recientes que el último procesado
     const repMsgs = queue.filter(m => m.userId === currentRep.userId && m.ts > lastRepQueueTs);
