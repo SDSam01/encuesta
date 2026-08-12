@@ -42,6 +42,9 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 .wbtn{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.4);transition:.15s;font-family:'Inter',sans-serif;}
 .wbtn:hover,.wbtn.on{background:rgba(255,185,0,.15);border-color:rgba(255,185,0,.35);color:#FFD000;}
 .btn-main{width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:1px solid;transition:.15s;font-family:'Inter',sans-serif;margin-bottom:6px;}
+.btn-cap{padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.12s;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35);}
+.btn-cap:hover{opacity:.75;}
+.btn-cap.on{background:rgba(255,208,0,.15);border-color:rgba(255,208,0,.5);color:#FFD000;}
 .btn-buscar{background:rgba(255,208,0,.15);border-color:rgba(255,208,0,.4);color:#FFD000;}
 .btn-buscar:hover{background:rgba(255,208,0,.28);}
 .btn-buscar:disabled{opacity:.35;cursor:not-allowed;}
@@ -121,6 +124,14 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 
 <button class="btn-siren" id="btnSiren" onclick="activarModVip()">🚨 ACTIVAR MODO VIP — Representante Suscriptor</button>
 <button class="btn-main btn-buscar" id="btnBuscar" onclick="buscarRep()">🎲 BUSCAR REPRESENTANTE</button>
+
+<div style="display:flex;align-items:center;gap:6px;margin:6px 0 4px;font-size:11px;color:rgba(255,255,255,.45);">
+  <span>⏱️ Captura:</span>
+  <button class="btn-cap" id="cap10" onclick="setCaptura(10)">10s</button>
+  <button class="btn-cap" id="cap15" onclick="setCaptura(15)">15s</button>
+  <button class="btn-cap" id="cap20" onclick="setCaptura(20)">20s</button>
+  <button class="btn-cap" id="cap30" onclick="setCaptura(30)">30s</button>
+</div>
 
 <!-- ══ Control de Música 1vs1 — justo debajo del rep seleccionado ══ -->
 <div style="display:flex;align-items:center;gap:8px;margin:8px 0 4px;">
@@ -278,6 +289,16 @@ function setSubs(val, btn){
 
 let capturando = false;
 
+let capturaSegs = parseInt(localStorage.getItem('rep_captura_segs')||'15',10) || 15;
+function setCaptura(s){
+  capturaSegs = s;
+  localStorage.setItem('rep_captura_segs', String(s));
+  [10,15,20,30].forEach(n=>{
+    const b=document.getElementById('cap'+n);
+    if(b) b.className = 'btn-cap' + (n===s ? ' on' : '');
+  });
+}
+
 function buscarRep(){
   if(capturando) return; // evitar doble clic
   capturando = true;
@@ -286,14 +307,14 @@ function buscarRep(){
   localStorage.setItem('yo_pool', JSON.stringify({}));
 
   const startCapture = Date.now();
-  const CAPTURE_MS = 10000; // captura 10 segundos desde que presionas
+  const CAPTURE_MS = capturaSegs * 1000; // configurable desde los botones del panel
 
   // Marca el momento de inicio — solo cuentan los "yo" DESPUÉS de este instante
   const btn = document.getElementById('btnBuscar');
   if(btn){ btn.disabled = true; }
 
   // Countdown visual
-  let remaining = 10;
+  let remaining = capturaSegs;
   setStatus(`🎬 Capturando "yo"... ${remaining}s`, 'loading');
   const countInt = setInterval(()=>{
     remaining--;
@@ -576,6 +597,9 @@ function toggleMusic(){
     btn.style.color='#FFD000';
   }
 }
+
+// Marcar el botón de captura guardado al cargar
+setCaptura(capturaSegs);
 </script>
 </body>
 </html>
