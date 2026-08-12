@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Supervivencia — Overlay</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:transparent;overflow:hidden;width:1920px;height:1080px;
+  font-family:'Inter',sans-serif;}
+
+/* ══ Rejilla de participantes ══ */
+#grid{
+  position:fixed;top:70px;left:0;right:0;
+  display:flex;flex-wrap:wrap;justify-content:center;gap:16px;
+  padding:0 60px;z-index:20;
+  opacity:0;transition:opacity .4s ease;
+}
+#grid.visible{opacity:1;}
+
+.card{
+  position:relative;width:210px;padding:16px 14px 14px;border-radius:16px;
+  background:rgba(10,10,16,.72);border:1px solid rgba(255,255,255,.09);
+  backdrop-filter:blur(6px);
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  transition:opacity .5s ease, transform .5s ease, filter .5s ease;
+}
+.card .num{
+  position:absolute;top:-9px;left:-9px;width:28px;height:28px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:900;background:#FFD000;color:#12121a;
+  box-shadow:0 3px 10px rgba(0,0,0,.5);
+}
+.card .name{
+  font-size:17px;font-weight:900;color:#fff;text-align:center;
+  max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  text-shadow:0 2px 10px rgba(0,0,0,.8);
+}
+.card .src{
+  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  color:rgba(255,255,255,.32);font-weight:700;
+}
+
+/* Tachado al eliminar */
+.card .strike{
+  position:absolute;left:8%;right:8%;top:50%;height:5px;
+  background:#FF2020;box-shadow:0 0 16px rgba(255,0,0,.9);
+  transform:scaleX(0) rotate(-7deg);transform-origin:left center;border-radius:3px;
+  transition:transform .38s cubic-bezier(.2,.8,.3,1);
+}
+.card.dead .strike{transform:scaleX(1) rotate(-7deg);}
+.card.dead{
+  opacity:.42;filter:grayscale(1) brightness(.65);
+  border-color:rgba(255,40,40,.3);
+}
+.card.dead .num{background:#7a1010;color:rgba(255,255,255,.55);}
+.card.dead .name{color:rgba(255,255,255,.55);}
+
+/* Card hablando */
+.card.talk{
+  border-color:rgba(255,208,0,.75);
+  box-shadow:0 0 26px rgba(255,208,0,.4), 0 0 60px rgba(255,208,0,.14);
+  transform:translateY(-5px) scale(1.035);
+}
+
+/* Ganador */
+.card.win{
+  border-color:rgba(255,208,0,.95);
+  box-shadow:0 0 40px rgba(255,208,0,.65), 0 0 100px rgba(255,208,0,.28);
+  animation:winPulse 1.25s ease-in-out infinite;
+}
+@keyframes winPulse{
+  0%,100%{transform:scale(1);}
+  50%{transform:scale(1.055);}
+}
+.crown{position:absolute;top:-34px;left:50%;transform:translateX(-50%);font-size:28px;
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,.7));}
+
+/* ══ Burbuja del mensaje ══ */
+#bubble{
+  position:fixed;bottom:110px;left:50%;transform:translateX(-50%) translateY(28px);
+  max-width:1080px;padding:20px 34px;border-radius:20px;
+  background:rgba(10,10,16,.88);border:1px solid rgba(255,208,0,.42);
+  backdrop-filter:blur(8px);z-index:40;
+  opacity:0;transition:opacity .28s ease, transform .28s ease;
+  box-shadow:0 10px 44px rgba(0,0,0,.65);
+}
+#bubble.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#bubbleUser{
+  font-size:15px;font-weight:900;color:#FFD000;letter-spacing:2.5px;
+  text-transform:uppercase;margin-bottom:7px;text-align:center;
+}
+#bubbleText{
+  font-size:29px;font-weight:700;color:#fff;text-align:center;line-height:1.34;
+  text-shadow:0 2px 12px rgba(0,0,0,.85);word-wrap:break-word;
+}
+
+/* ══ Contador ══ */
+#counter{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  padding:9px 26px;border-radius:13px;z-index:30;
+  background:rgba(10,10,16,.75);border:1px solid rgba(255,255,255,.11);
+  backdrop-filter:blur(6px);
+  font-size:15px;font-weight:900;letter-spacing:3px;color:#FFD000;
+  text-transform:uppercase;opacity:0;transition:opacity .4s;
+}
+#counter.visible{opacity:1;}
+</style>
+</head>
+<body>
+
+<div id="counter">Supervivencia</div>
+<div id="grid"></div>
+
+<div id="bubble">
+  <div id="bubbleUser"></div>
+  <div id="bubbleText"></div>
+</div>
+
+<script>
+const LS     = 'equipo_state';
+const LS_MSG = 'equipo_message';
+
+let participantes = [];
+let lastTs        = 0;
+let lastAccionTs  = 0;
+let lastMute      = 0;
+let vozPorUser    = {};        // userId -> perfil de voz fijo
+
+// ══ AUDIO ══
+let AC = null;
+function getAC(){
+  if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  if(AC && AC.state === 'suspended') AC.resume();
+  return AC;
+}
+['click','keydown','mousemove'].forEach(ev=>
+  window.addEventListener(ev, ()=>getAC(), {once:true}));
+
+function playKill(){
+  const ac = getAC(); if(!ac) return;
+  const t = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.connect(g); g.connect(ac.destination); o.type='sawtooth';
+  o.frequency.setValueAtTime(220,t);
+  o.frequency.exponentialRampToValueAtTime(45,t+.36);
+  g.gain.setValueAtTime(.32,t);
+  g.gain.exponentialRampToValueAtTime(.001,t+.4);
+  o.start(t); o.stop(t+.4);
+}
+
+function playWin(){
+  const ac = getAC(); if(!ac) return;
+  [523,659,784,1047].forEach((f,i)=>{
+    const o=ac.createOscillator(), g=ac.createGain();
+    o.connect(g); g.connect(ac.destination); o.type='triangle';
+    const t=ac.currentTime+i*.13;
+    o.frequency.value=f;
+    g.gain.setValueAtTime(.26,t);
+    g.gain.exponentialRampToValueAtTime(.001,t+.32);
+    o.start(t); o.stop(t+.32);
+  });
+}
+
+// ══ TTS: voz FIJA por usuario (cada participante suena distinto) ══
+function perfilDe(userId){
+  if(vozPorUser[userId]) return vozPorUser[userId];
+  const voces = window.speechSynthesis.getVoices().filter(v=>v.lang.startsWith('es'));
+  // Semilla estable a partir del userId → mismo usuario, misma voz siempre
+  let h = 0;
+  for(let i=0;i<userId.length;i++) h = (h*31 + userId.charCodeAt(i)) >>> 0;
+  const p = {
+    voice: voces.length ? voces[h % voces.length] : null,
+    rate:  0.85 + ((h>>3) % 45)/100,     // 0.85 – 1.30
+    pitch: 0.75 + ((h>>7) % 70)/100      // 0.75 – 1.45
+  };
+  vozPorUser[userId] = p;
+  return p;
+}
+window.speechSynthesis.onvoiceschanged = ()=>{ vozPorUser = {}; };
+
+// ══ COLA DE MENSAJES — uno a la vez, sin encimarse ══
+let cola = [];
+let hablando = false;
+let vistos = new Set();
+
+function encolar(msg){
+  if(vistos.has(msg.mid)) return;
+  vistos.add(msg.mid);
+  if(vistos.size > 300) vistos = new Set([...vistos].slice(-150));
+  cola.push(msg);
+  if(cola.length > 12) cola = cola.slice(-12);   // si se satura, quedarse con lo reciente
+  procesarCola();
+}
+
+function procesarCola(){
+  if(hablando || cola.length===0) return;
+  const msg = cola.shift();
+
+  // Si ya lo eliminaron mientras esperaba en la cola, saltarlo
+  const p = participantes[msg.idx];
+  if(!p || p.dead){ procesarCola(); return; }
+
+  hablando = true;
+
+  const bubble = document.getElementById('bubble');
+  document.getElementById('bubbleUser').textContent = (msg.username||'').toUpperCase();
+  document.getElementById('bubbleText').textContent = msg.text||'';
+  bubble.classList.add('show');
+
+  const card = document.getElementById('card_'+msg.idx);
+  if(card) card.classList.add('talk');
+
+  const perfil = perfilDe(msg.userId);
+  let terminado = false;
+  const finalizar = ()=>{
+    if(terminado) return;
+    terminado = true;
+    bubble.classList.remove('show');
+    if(card) card.classList.remove('talk');
+    hablando = false;
+    setTimeout(procesarCola, 260);   // respiro entre mensajes
+  };
+
+  try{
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(msg.text||'');
+    utt.lang='es-MX'; utt.rate=perfil.rate; utt.pitch=perfil.pitch;
+    if(perfil.voice) utt.voice=perfil.voice;
+    utt.onend = finalizar;
+    utt.onerror = finalizar;
+    window.speechSynthesis.speak(utt);
+    // Red de seguridad: si el TTS nunca dispara onend, no dejar la cola trabada
+    setTimeout(finalizar, Math.min(11000, 2600 + (msg.text||'').length*95));
+  }catch(e){
+    setTimeout(finalizar, 2600);
+  }
+}
+
+// ══ RENDER ══
+function render(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+
+  participantes.forEach((p,i)=>{
+    const d = document.createElement('div');
+    d.className = 'card' + (p.dead ? ' dead' : '');
+    d.id = 'card_'+i;
+    d.innerHTML =
+      `<div class="num">${i+1}</div>
+       <div class="strike"></div>
+       <div class="name">${escapeHtml(p.username)}</div>
+       <div class="src">${escapeHtml(p.src||'')}</div>`;
+    grid.appendChild(d);
+  });
+
+  // Ganador
+  const vivos = participantes.filter(p=>!p.dead);
+  if(vivos.length===1 && participantes.length>1){
+    const idx = participantes.findIndex(p=>!p.dead);
+    const c = document.getElementById('card_'+idx);
+    if(c && !c.querySelector('.crown')){
+      c.classList.add('win');
+      const cr = document.createElement('div');
+      cr.className='crown'; cr.textContent='👑';
+      c.appendChild(cr);
+    }
+  }
+
+  const counter = document.getElementById('counter');
+  if(participantes.length>0){
+    counter.textContent = vivos.length===1 && participantes.length>1
+      ? '🏆 ' + vivos[0].username
+      : `Sobreviven ${vivos.length} / ${participantes.length}`;
+  }
+}
+
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function mostrar(v){
+  document.getElementById('grid').classList.toggle('visible', v);
+  document.getElementById('counter').classList.toggle('visible', v);
+}
+
+// ══ POLLING DE ESTADO ══
+setInterval(()=>{
+  try{
+    const raw = localStorage.getItem(LS);
+    if(!raw) return;
+    const s = JSON.parse(raw);
+    if(!s.ts || s.ts === lastTs) return;
+    lastTs = s.ts;
+
+    const antes = participantes.map(p=>p.dead);
+    participantes = Array.isArray(s.participantes) ? s.participantes : [];
+
+    render();
+    mostrar(!s.oculto && participantes.length>0);
+
+    // Sonidos según la acción
+    if(s.accionTs && s.accionTs !== lastAccionTs){
+      lastAccionTs = s.accionTs;
+      if(s.accion === 'kill'){
+        playKill();
+        const vivos = participantes.filter(p=>!p.dead).length;
+        if(vivos===1 && participantes.length>1) setTimeout(playWin, 700);
+      } else if(s.accion === 'reset'){
+        cola = []; hablando = false; vistos = new Set();
+        window.speechSynthesis.cancel();
+        document.getElementById('bubble').classList.remove('show');
+      }
+    }
+  }catch(e){}
+}, 250);
+
+// ══ POLLING DE MENSAJES ══
+setInterval(()=>{
+  try{
+    // Mute
+    const mt = parseInt(localStorage.getItem('equipo_mute')||'0',10);
+    if(mt && mt !== lastMute){
+      lastMute = mt;
+      cola = []; hablando = false;
+      window.speechSynthesis.cancel();
+      document.getElementById('bubble').classList.remove('show');
+      return;
+    }
+
+    const raw = localStorage.getItem(LS_MSG);
+    if(!raw) return;
+    const arr = JSON.parse(raw);
+    if(!Array.isArray(arr) || arr.length===0) return;
+    arr.forEach(encolar);
+  }catch(e){}
+}, 150);
+
+render();
+</script>
+</body>
+</html>

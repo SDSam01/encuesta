@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Supervivencia — Control</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0d0d12;color:#eee;font-family:'Inter',sans-serif;padding:10px;font-size:13px;}
+
+.status{padding:7px 10px;border-radius:8px;font-size:11px;margin-bottom:8px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.5);}
+.status.ok{background:rgba(60,220,120,.1);border-color:rgba(60,220,120,.3);color:#4ade80;}
+.status.loading{background:rgba(255,208,0,.1);border-color:rgba(255,208,0,.3);color:#FFD000;}
+.status.err{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:#f87171;}
+
+.btn-main{width:100%;padding:13px;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;
+  border:1px solid;transition:.15s;font-family:'Inter',sans-serif;margin-bottom:6px;}
+.btn-buscar{background:rgba(255,208,0,.15);border-color:rgba(255,208,0,.4);color:#FFD000;}
+.btn-buscar:hover{background:rgba(255,208,0,.28);}
+.btn-buscar:disabled{opacity:.4;cursor:not-allowed;}
+.btn-reset{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.35);color:#f87171;}
+.btn-reset:hover{background:rgba(248,113,113,.22);}
+
+.row{display:flex;align-items:center;gap:6px;margin:6px 0;font-size:11px;color:rgba(255,255,255,.45);}
+.btn-s{padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:.12s;background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35);}
+.btn-s:hover{opacity:.75;}
+.btn-s.on{background:rgba(255,208,0,.15);border-color:rgba(255,208,0,.5);color:#FFD000;}
+
+.sec{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.3);
+  margin:12px 0 6px;font-weight:700;}
+
+/* Lista de participantes */
+.plist{display:flex;flex-direction:column;gap:5px;}
+.pcard{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;
+  background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);transition:.15s;}
+.pcard.dead{opacity:.35;background:rgba(248,113,113,.06);border-color:rgba(248,113,113,.18);}
+.pcard.dead .pname{text-decoration:line-through;color:rgba(255,255,255,.4);}
+.pnum{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:900;background:rgba(255,208,0,.15);color:#FFD000;flex-shrink:0;}
+.pcard.dead .pnum{background:rgba(248,113,113,.15);color:#f87171;}
+.pinfo{flex:1;min-width:0;}
+.pname{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.psrc{font-size:9px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.5px;}
+.pbtn{padding:4px 9px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;
+  font-family:'Inter',sans-serif;flex-shrink:0;transition:.12s;
+  background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);color:#f87171;}
+.pbtn:hover{background:rgba(248,113,113,.25);}
+.pbtn.rev{background:rgba(60,220,120,.1);border-color:rgba(60,220,120,.3);color:#4ade80;}
+
+.empty{padding:20px 10px;text-align:center;font-size:11px;color:rgba(255,255,255,.25);}
+.winner{padding:10px;border-radius:9px;text-align:center;margin-top:8px;
+  background:rgba(255,208,0,.12);border:1px solid rgba(255,208,0,.4);color:#FFD000;
+  font-size:13px;font-weight:900;letter-spacing:.5px;}
+</style>
+</head>
+<body>
+
+<div class="status" id="statusBar">Listo — presiona buscar para capturar participantes</div>
+
+<button class="btn-main btn-buscar" id="btnBuscar" onclick="buscarParticipantes()">🎯 BUSCAR PARTICIPANTES</button>
+
+<div class="row">
+  <span>👥 Cupo:</span>
+  <button class="btn-s" id="n5"  onclick="setCupo(5)">5</button>
+  <button class="btn-s" id="n6"  onclick="setCupo(6)">6</button>
+  <button class="btn-s" id="n8"  onclick="setCupo(8)">8</button>
+  <button class="btn-s" id="n10" onclick="setCupo(10)">10</button>
+</div>
+
+<div class="row">
+  <span>⏱️ Captura:</span>
+  <button class="btn-s" id="c10" onclick="setCaptura(10)">10s</button>
+  <button class="btn-s" id="c15" onclick="setCaptura(15)">15s</button>
+  <button class="btn-s" id="c20" onclick="setCaptura(20)">20s</button>
+  <button class="btn-s" id="c30" onclick="setCaptura(30)">30s</button>
+</div>
+
+<div class="sec">Participantes</div>
+<div class="plist" id="plist"><div class="empty">Nadie todavía</div></div>
+
+<div id="winnerBox"></div>
+
+<div class="sec">Acciones</div>
+<button class="btn-main btn-reset" onclick="resetTodo()">🔄 RESET — limpiar todo</button>
+<button class="btn-main" style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);color:rgba(255,255,255,.5);" onclick="toggleOverlay()" id="btnHide">👁️ Ocultar overlay</button>
+<button class="btn-main" style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);color:rgba(255,255,255,.5);" onclick="silenciarTTS()">🔇 Silenciar TTS</button>
+
+<script>
+const LS       = 'equipo_state';
+const LS_MSG   = 'equipo_message';
+const LS_QUEUE = 'chat_queue';
+
+let participantes = [];   // {userId, username, src, dead}
+let capturando    = false;
+let oculto        = false;
+let lastMsgTs     = 0;
+
+let cupo        = parseInt(localStorage.getItem('equipo_cupo')||'8',10)  || 8;
+let capturaSegs = parseInt(localStorage.getItem('equipo_captura')||'15',10) || 15;
+
+function setCupo(n){
+  cupo = n;
+  localStorage.setItem('equipo_cupo', String(n));
+  [5,6,8,10].forEach(x=>{
+    const b=document.getElementById('n'+x);
+    if(b) b.className = 'btn-s' + (x===n ? ' on' : '');
+  });
+}
+
+function setCaptura(s){
+  capturaSegs = s;
+  localStorage.setItem('equipo_captura', String(s));
+  [10,15,20,30].forEach(x=>{
+    const b=document.getElementById('c'+x);
+    if(b) b.className = 'btn-s' + (x===s ? ' on' : '');
+  });
+}
+
+function setStatus(msg,type){
+  const el=document.getElementById('statusBar');
+  el.textContent=msg; el.className='status '+(type||'');
+}
+
+function save(extra={}){
+  localStorage.setItem(LS, JSON.stringify({
+    participantes,
+    oculto,
+    ts: Date.now(),
+    ...extra
+  }));
+}
+
+// ══ CAPTURA DE PARTICIPANTES ══
+function buscarParticipantes(){
+  if(capturando) return;
+  capturando = true;
+
+  localStorage.setItem('yo_pool', JSON.stringify({}));
+  const startCapture = Date.now();
+  const CAPTURE_MS   = capturaSegs * 1000;
+
+  const btn = document.getElementById('btnBuscar');
+  if(btn) btn.disabled = true;
+
+  let remaining = capturaSegs;
+  setStatus(`🎬 Capturando "yo"... ${remaining}s`, 'loading');
+
+  const countInt = setInterval(()=>{
+    remaining--;
+    let live = {};
+    try{ live = JSON.parse(localStorage.getItem('yo_pool')||'{}'); }catch(e){}
+    const n = Object.entries(live).filter(([id,u])=>u.ts>=startCapture).length;
+    if(remaining>0) setStatus(`🎬 Capturando "yo"... ${remaining}s — ${n} personas`, 'loading');
+  }, 1000);
+
+  setTimeout(()=>{
+    clearInterval(countInt);
+    capturando = false;
+    if(btn) btn.disabled = false;
+
+    let yoPool = {};
+    try{ yoPool = JSON.parse(localStorage.getItem('yo_pool')||'{}'); }catch(e){}
+
+    let pool = Object.entries(yoPool).filter(([id,u])=>u.ts>=startCapture);
+    if(pool.length===0){
+      const now = Date.now();
+      pool = Object.entries(yoPool).filter(([id,u])=>now-u.ts<=20000);
+    }
+
+    if(pool.length===0){
+      setStatus('❌ Nadie escribió "yo" — intenta de nuevo','err');
+      return;
+    }
+
+    // Sorteo aleatorio sin repetir (Fisher-Yates)
+    for(let i=pool.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [pool[i],pool[j]]=[pool[j],pool[i]];
+    }
+
+    participantes = pool.slice(0, cupo).map(([id,u])=>({
+      userId: id, username: u.username, src: u.src||'', dead: false
+    }));
+
+    lastMsgTs = Date.now();
+    renderLista();
+    save({trigger: Date.now()});
+    setStatus(`✅ ${participantes.length} participantes de ${pool.length} que escribieron`,'ok');
+  }, CAPTURE_MS);
+}
+
+// ══ LISTA ══
+function renderLista(){
+  const box = document.getElementById('plist');
+  box.innerHTML = '';
+
+  if(participantes.length===0){
+    box.innerHTML = '<div class="empty">Nadie todavía</div>';
+    document.getElementById('winnerBox').innerHTML = '';
+    return;
+  }
+
+  participantes.forEach((p,i)=>{
+    const d = document.createElement('div');
+    d.className = 'pcard' + (p.dead ? ' dead' : '');
+    d.innerHTML =
+      `<div class="pnum">${i+1}</div>
+       <div class="pinfo">
+         <div class="pname">${escapeHtml(p.username)}</div>
+         <div class="psrc">${escapeHtml(p.src||'—')}</div>
+       </div>
+       <button class="pbtn${p.dead?' rev':''}" onclick="toggleMuerte(${i})">${p.dead?'↩ Revivir':'✖ Eliminar'}</button>`;
+    box.appendChild(d);
+  });
+
+  // ¿Queda uno solo vivo?
+  const vivos = participantes.filter(p=>!p.dead);
+  const wb = document.getElementById('winnerBox');
+  if(vivos.length===1 && participantes.length>1){
+    wb.innerHTML = `<div class="winner">🏆 GANA ${escapeHtml(vivos[0].username)}</div>`;
+  } else if(vivos.length===0 && participantes.length>0){
+    wb.innerHTML = `<div class="winner" style="background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.4);color:#f87171;">TODOS ELIMINADOS</div>`;
+  } else {
+    wb.innerHTML = '';
+  }
+}
+
+function toggleMuerte(i){
+  if(!participantes[i]) return;
+  participantes[i].dead = !participantes[i].dead;
+  renderLista();
+  save({
+    accion: participantes[i].dead ? 'kill' : 'revive',
+    idx: i,
+    accionTs: Date.now()
+  });
+  const vivos = participantes.filter(p=>!p.dead).length;
+  setStatus(`${participantes[i].dead?'✖ Eliminado':'↩ Revivido'}: ${participantes[i].username} — quedan ${vivos}`, 'ok');
+}
+
+function resetTodo(){
+  participantes = [];
+  lastMsgTs = 0;
+  localStorage.setItem(LS_MSG, JSON.stringify([]));
+  renderLista();
+  save({accion:'reset', accionTs: Date.now()});
+  setStatus('🔄 Todo limpio','ok');
+}
+
+function toggleOverlay(){
+  oculto = !oculto;
+  save();
+  document.getElementById('btnHide').textContent = oculto ? '👁️ Mostrar overlay' : '👁️ Ocultar overlay';
+  setStatus(oculto ? 'Overlay oculto' : 'Overlay visible','ok');
+}
+
+function silenciarTTS(){
+  localStorage.setItem(LS_MSG, JSON.stringify([]));
+  localStorage.setItem('equipo_mute', String(Date.now()));
+  setStatus('🔇 TTS silenciado','ok');
+}
+
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ══ RELAY DE MENSAJES: lee chat_queue y reenvía los de participantes vivos ══
+let lastQueueRaw = null;
+let msgSeq = 0;
+setInterval(()=>{
+  try{
+    if(participantes.length===0) return;
+    const raw = localStorage.getItem(LS_QUEUE);
+    if(!raw) return;
+    if(raw === lastQueueRaw) return;      // evita re-parsear si no cambió
+    lastQueueRaw = raw;
+
+    const queue = JSON.parse(raw);
+    if(!Array.isArray(queue)) return;
+
+    // Solo participantes VIVOS
+    const vivos = new Set(participantes.filter(p=>!p.dead).map(p=>p.userId));
+    const nuevos = queue.filter(m => m && m.ts > lastMsgTs && vivos.has(m.userId) && (m.text||'').trim());
+    if(nuevos.length===0) return;
+
+    lastMsgTs = Math.max(...nuevos.map(m=>m.ts));
+
+    // Acumular en una COLA (no escribir uno por uno a la misma key:
+    // en un bucle síncrono solo sobreviviría el último)
+    let cola = [];
+    try{ cola = JSON.parse(localStorage.getItem(LS_MSG)||'[]'); }catch(e){}
+    if(!Array.isArray(cola)) cola = [];
+
+    nuevos.forEach(m=>{
+      const idx = participantes.findIndex(p=>p.userId===m.userId);
+      cola.push({
+        mid: (++msgSeq),
+        userId: m.userId,
+        username: m.username,
+        text: String(m.text).slice(0,200),
+        idx
+      });
+    });
+    if(cola.length > 40) cola = cola.slice(-40);   // no dejar que crezca sin control
+    localStorage.setItem(LS_MSG, JSON.stringify(cola));
+  }catch(e){}
+}, 150);
+
+// ══ INIT ══
+setCupo(cupo);
+setCaptura(capturaSegs);
+renderLista();
+</script>
+</body>
+</html>
