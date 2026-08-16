@@ -371,11 +371,31 @@ function pintarSlot(side, slot, comodin){
   if(!el) return;
   el.textContent = comodin.emoji;
   el.classList.remove('locked','empty','used');
-  // Los persistentes se quedan encendidos; los demás quedan gastados
-  if(PERSISTENTES.includes(comodin.titulo)) el.classList.add('activo');
-  else el.classList.add('used');
+  el.classList.add('activo');       // todos quedan prendidos en el HUD
   el.classList.add('landing');
+  playLanding();                    // sonido al caer en el cuadrito
   setTimeout(()=>el.classList.remove('landing'), 520);
+}
+
+// Sonido de aterrizaje en el HUD
+function playLanding(){
+  const ac = getAC(); if(!ac) return;
+  const t = ac.currentTime;
+  // Golpe grave
+  const o1=ac.createOscillator(), g1=ac.createGain();
+  o1.connect(g1); g1.connect(ac.destination); o1.type='sine';
+  o1.frequency.setValueAtTime(320,t);
+  o1.frequency.exponentialRampToValueAtTime(110,t+.16);
+  g1.gain.setValueAtTime(.3,t);
+  g1.gain.exponentialRampToValueAtTime(.001,t+.24);
+  o1.start(t); o1.stop(t+.24);
+  // Brillo metálico encima
+  const o2=ac.createOscillator(), g2=ac.createGain();
+  o2.connect(g2); g2.connect(ac.destination); o2.type='triangle';
+  o2.frequency.setValueAtTime(1760,t+.03);
+  g2.gain.setValueAtTime(.14,t+.03);
+  g2.gain.exponentialRampToValueAtTime(.001,t+.42);
+  o2.start(t+.03); o2.stop(t+.42);
 }
 
 function playTick(){
