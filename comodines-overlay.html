@@ -503,6 +503,8 @@ setInterval(()=>{
     else if(a==='activateSam1')  activateComodin('sam',1);
     else if(a==='activateChat0') activateComodin('chat',0);
     else if(a==='activateChat1') activateComodin('chat',1);
+    else if(a==='showHud')    showHudAnimated();
+    else if(a==='hideHud')    document.getElementById('hud').classList.remove('show','entering');
     else if(a==='girar')      girarRuleta(s.side, s.slot, s.ganador, s.pool);
     else if(a==='resetSlots') resetSlots();
     else if(a==='closeAct')   closeActivation();
