@@ -110,6 +110,8 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
 <div style="margin:10px 0 6px;padding:9px;border-radius:10px;background:rgba(255,208,0,.05);border:1px solid rgba(255,208,0,.2);">
   <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#FFD000;font-weight:700;margin-bottom:7px;">🎰 Modo ruleta — 3 por jugador</div>
 
+  <button class="bg" id="btnHud" style="width:100%;margin-bottom:8px;padding:9px;font-size:12px;" onclick="toggleHud()">✨ Mostrar HUD</button>
+
   <div style="font-size:10px;color:rgba(255,255,255,.4);margin:5px 0 3px;">SAM</div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
     <button class="bg" id="gSam0" onclick="girar('sam',0)">🃏 1</button>
@@ -221,6 +223,16 @@ function setFormato(f){
 const PERSIST = ['Ángel de la guarda','Cambiar Personaje'];
 let slots = {sam:[null,null,null], chat:[null,null,null]};
 let girando = false;
+
+let hudVisible = false;
+function toggleHud(){
+  hudVisible = !hudVisible;
+  save({action: hudVisible ? 'showHud' : 'hideHud'});
+  const b=document.getElementById('btnHud');
+  b.textContent = hudVisible ? '🙈 Ocultar HUD' : '✨ Mostrar HUD';
+  b.className = 'bg' + (hudVisible ? ' activo' : '');
+  setStatus(hudVisible ? '✨ HUD en pantalla' : 'HUD oculto','ok');
+}
 
 function girar(side, slot){
   if(girando) return;
