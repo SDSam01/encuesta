@@ -51,6 +51,15 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
 .btn-em{background:rgba(255,80,80,.07);border-color:rgba(255,80,80,.3);color:rgba(255,100,100,.7);grid-column:1/-1;font-size:9px;}
 .btn-hide{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.1);color:rgba(255,255,255,.35);grid-column:1/-1;font-size:9px;}
 
+.bg{padding:7px 4px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:.12s;background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.45);}
+.bg:hover{background:rgba(255,208,0,.12);border-color:rgba(255,208,0,.4);color:#FFD000;}
+.bg:disabled{opacity:.3;cursor:not-allowed;}
+.bg.usado{background:rgba(255,255,255,.02);border-color:rgba(255,255,255,.07);
+  color:rgba(255,255,255,.2);text-decoration:line-through;}
+.bg.activo{background:rgba(255,208,0,.16);border-color:rgba(255,208,0,.6);color:#FFD000;}
+
 /* Selector de formato */
 .fmt{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:7px;}
 .bf{padding:8px 5px;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;text-align:center;transition:.12s;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35);}
@@ -97,6 +106,27 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
   <button class="bf" id="fmtPuerta" onclick="setFormato('puerta')">🚪 Elige tu puerta</button>
 </div>
 
+<!-- ══ MODO RULETA ══ -->
+<div style="margin:10px 0 6px;padding:9px;border-radius:10px;background:rgba(255,208,0,.05);border:1px solid rgba(255,208,0,.2);">
+  <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#FFD000;font-weight:700;margin-bottom:7px;">🎰 Modo ruleta — 3 por jugador</div>
+
+  <div style="font-size:10px;color:rgba(255,255,255,.4);margin:5px 0 3px;">SAM</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
+    <button class="bg" id="gSam0" onclick="girar('sam',0)">🃏 1</button>
+    <button class="bg" id="gSam1" onclick="girar('sam',1)">🃏 2</button>
+    <button class="bg" id="gSam2" onclick="girar('sam',2)">🃏 3</button>
+  </div>
+
+  <div style="font-size:10px;color:rgba(255,255,255,.4);margin:7px 0 3px;">CHAT</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
+    <button class="bg" id="gChat0" onclick="girar('chat',0)">🃏 1</button>
+    <button class="bg" id="gChat1" onclick="girar('chat',1)">🃏 2</button>
+    <button class="bg" id="gChat2" onclick="girar('chat',2)">🃏 3</button>
+  </div>
+
+  <button class="bg" style="width:100%;margin-top:7px;" onclick="resetRuleta()">🔄 Reiniciar slots</button>
+</div>
+
 <button class="btn-sorteo" onclick="iniciarSorteo()">🃏 Iniciar sorteo — mostrar cartas en stream</button>
 
 <!-- Selectores -->
@@ -127,6 +157,20 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
 
 <script>
 const LS='comodines_state';
+const MAZO_RULETA=[
+  {emoji:'🎲',titulo:'Aura o Laura',      desc:'50/50 al instante: ganas o pierdes media vida.'},
+  {emoji:'🔄',titulo:'Buena mala suerte', desc:'Esta ronda el rival tiene que responder MAL para ganar.'},
+  {emoji:'⚔️',titulo:'Error de rata',     desc:'Si el rival falla esta ronda, pierde 1 vida en vez de media.'},
+  {emoji:'🩸',titulo:'Robo de vida',      desc:'Le quitas media vida al rival y te la sumas.'},
+  {emoji:'🔀',titulo:'Ruleta de vidas',   desc:'Las vidas de Sam y Chat se intercambian.'},
+  {emoji:'😇',titulo:'Ángel de la guarda',desc:'Te blinda de perder con media vida.'},
+  {emoji:'⚖️',titulo:'Tregua',            desc:'Esta ronda nadie pierde vida, pase lo que pase.'},
+  {emoji:'🎭',titulo:'Cambiar Personaje', desc:'Guardado: actívalo cuando quieras. El rep responde como el personaje que Sam elija.'},
+  {emoji:'🎁',titulo:'Doble premio',      desc:'Si ganas esta ronda, media vida extra.'},
+  {emoji:'🔗',titulo:'Destino compartido',desc:'Esta ronda si uno pierde vida, el otro también.'},
+  {emoji:'🎰',titulo:'Todo o nada',       desc:'Ganas la ronda: +1 vida. La pierdes: -1 vida.'},
+];
+
 const MAZO_COMPANERO=[
   {emoji:'🎲',titulo:'Aura o Laura',     desc:'Ganas o pierdes media vida al azar. 50/50.'},
   {emoji:'🔄',titulo:'Buena mala suerte',desc:'El rival tiene que votar mal para ganar esta ronda.'},
@@ -170,6 +214,50 @@ function setFormato(f){
   document.getElementById('fmtPuerta').className = 'bf' + (f==='puerta' ? ' on' : '');
   renderRef();
   setStatus(f==='puerta' ? 'Formato: Elige tu puerta — aplica al próximo sorteo' : 'Formato: Elige tu compañero — aplica al próximo sorteo','ok');
+}
+
+
+// ══ MODO RULETA ══
+const PERSIST = ['Ángel de la guarda','Cambiar Personaje'];
+let slots = {sam:[null,null,null], chat:[null,null,null]};
+let girando = false;
+
+function girar(side, slot){
+  if(girando) return;
+  if(slots[side][slot]) { setStatus('Ese slot ya se usó','err'); return; }
+  girando = true;
+
+  // Sorteo con repetición permitida
+  const ganador = MAZO_RULETA[Math.floor(Math.random()*MAZO_RULETA.length)];
+  slots[side][slot] = ganador;
+
+  save({action:'girar', side, slot, ganador, pool:MAZO_RULETA});
+  setStatus(`🎰 Girando para ${side==='sam'?'Sam':'Chat'}...`, 'loading');
+
+  // La animación del overlay dura ~6s
+  setTimeout(()=>{
+    girando = false;
+    pintarBtn(side, slot);
+    const p = PERSIST.includes(ganador.titulo);
+    setStatus(`${ganador.emoji} ${ganador.titulo}${p?' — QUEDA ACTIVO':''}`, 'ok');
+  }, 6100);
+}
+
+function pintarBtn(side, slot){
+  const b = document.getElementById('g'+(side==='sam'?'Sam':'Chat')+slot);
+  if(!b) return;
+  const c = slots[side][slot];
+  if(!c) { b.className='bg'; b.textContent='🃏 '+(slot+1); return; }
+  b.textContent = c.emoji+' '+c.titulo.slice(0,11);
+  b.className = 'bg ' + (PERSIST.includes(c.titulo) ? 'activo' : 'usado');
+}
+
+function resetRuleta(){
+  slots = {sam:[null,null,null], chat:[null,null,null]};
+  girando = false;
+  ['sam','chat'].forEach(s=>[0,1,2].forEach(i=>pintarBtn(s,i)));
+  save({action:'resetSlots'});
+  setStatus('🔄 Slots reiniciados','ok');
 }
 
 function iniciarSorteo(){
@@ -290,7 +378,7 @@ function setStatus(msg,type){const el=document.getElementById('statusBar');el.te
 // Referencia en orden alfabético
 function renderRef(){
   const g=document.getElementById('refGrid');g.innerHTML='';
-  [...TODOS].sort((a,b)=>a.titulo.localeCompare(b.titulo)).forEach(c=>{
+  [...MAZO_RULETA].sort((a,b)=>a.titulo.localeCompare(b.titulo)).forEach(c=>{
     const d=document.createElement('div');d.className='rr';
     d.innerHTML=`<div class="re">${c.emoji}</div><div class="ri"><div class="rn">${c.titulo}</div><div class="rd">${c.desc}</div></div>`;
     g.appendChild(d);
