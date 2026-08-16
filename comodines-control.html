@@ -82,29 +82,7 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
 </head>
 <body>
 <h1>🃏 Comodines Control</h1>
-<div class="sub">2 comodines por lado — todos con igual probabilidad</div>
-
-<div class="holders">
-  <div class="holder">
-    <div class="ht">⚔️ TUS CARTAS</div>
-    <div class="hcards" id="samCards">
-      <div class="hcard empty">Carta 1 — sin elegir</div>
-      <div class="hcard empty">Carta 2 — sin elegir</div>
-    </div>
-  </div>
-  <div class="holder ch">
-    <div class="ht">💬 CARTAS CHAT</div>
-    <div class="hcards" id="chatCards">
-      <div class="hcard empty">Carta 1 — sin elegir</div>
-      <div class="hcard empty">Carta 2 — sin elegir</div>
-    </div>
-  </div>
-</div>
-
-<div class="fmt">
-  <button class="bf on" id="fmtComp" onclick="setFormato('companero')">👥 Elige tu compañero</button>
-  <button class="bf" id="fmtPuerta" onclick="setFormato('puerta')">🚪 Elige tu puerta</button>
-</div>
+<div class="sub">3 comodines por lado — se sortean al usarlos</div>
 
 <!-- ══ MODO RULETA ══ -->
 <div style="margin:10px 0 6px;padding:9px;border-radius:10px;background:rgba(255,208,0,.05);border:1px solid rgba(255,208,0,.2);">
@@ -129,27 +107,8 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
   <button class="bg" style="width:100%;margin-top:7px;" onclick="resetRuleta()">🔄 Reiniciar slots</button>
 </div>
 
-<button class="btn-sorteo" onclick="iniciarSorteo()">🃏 Iniciar sorteo — mostrar cartas en stream</button>
-
-<!-- Selectores -->
-<div class="sel" id="selSam0"><div class="sel-title">⚔️ SAM — elige primera carta:</div><div class="num-grid" id="ngSam0"></div></div>
-<div class="sel" id="selSam1"><div class="sel-title">⚔️ SAM — elige segunda carta:</div><div class="num-grid" id="ngSam1"></div></div>
-<div class="sel ch" id="selChat0"><div class="sel-title">💬 CHAT — asigna primera carta:</div><div class="num-grid" id="ngChat0"></div></div>
-<div class="sel ch" id="selChat1"><div class="sel-title">💬 CHAT — asigna segunda carta:</div><div class="num-grid" id="ngChat1"></div></div>
-
 <div class="ag">
-  <button class="ba rev1" id="bRevS0" disabled onclick="revelar('sam',0)">🟡 Sam 1</button>
-  <button class="ba rev1" id="bRevS1" disabled onclick="revelar('sam',1)">🟡 Sam 2</button>
-  <button class="ba rev2" id="bRevC0" disabled onclick="revelar('chat',0)">🟠 Chat 1</button>
-  <button class="ba rev2" id="bRevC1" disabled onclick="revelar('chat',1)">🟠 Chat 2</button>
-  <button class="ba act" id="bActS0" disabled onclick="activar('sam',0)">⚡ Sam 1</button>
-  <button class="ba act" id="bActS1" disabled onclick="activar('sam',1)">⚡ Sam 2</button>
-  <button class="ba act ch" id="bActC0" disabled onclick="activar('chat',0)">⚡ Chat 1</button>
-  <button class="ba act ch" id="bActC1" disabled onclick="activar('chat',1)">⚡ Chat 2</button>
-  <button class="ba btn-compact wide" onclick="hacerCompacto()">⬛ Hacer pequeño</button>
-  <button class="ba wide" onclick="cerrarActivacion()" style="background:rgba(255,180,0,.06);border-color:rgba(255,180,0,.25);color:rgba(255,180,0,.6);">✕ Cerrar activación</button>
-  <button class="ba btn-hide" onclick="ocultarTodo()">🙈 Ocultar HUD</button>
-  <button class="ba btn-em" onclick="resetEmergencia()">🔄 RESET EMERGENCIA</button>
+  <button class="ba wide btn-em" onclick="resetEmergencia()">🔄 RESET EMERGENCIA</button>
 </div>
 
 <div class="rt">Referencia — qué hace cada comodín</div>
@@ -212,8 +171,9 @@ function setFormato(f){
   formato = f;
   TODOS = (f==='puerta') ? MAZO_PUERTA : MAZO_COMPANERO;
   localStorage.setItem('comodines_formato', f);
-  document.getElementById('fmtComp').className = 'bf' + (f==='companero' ? ' on' : '');
-  document.getElementById('fmtPuerta').className = 'bf' + (f==='puerta' ? ' on' : '');
+  const a=document.getElementById('fmtComp'), b=document.getElementById('fmtPuerta');
+  if(a) a.className = 'bf' + (f==='companero' ? ' on' : '');
+  if(b) b.className = 'bf' + (f==='puerta' ? ' on' : '');
   renderRef();
   setStatus(f==='puerta' ? 'Formato: Elige tu puerta — aplica al próximo sorteo' : 'Formato: Elige tu compañero — aplica al próximo sorteo','ok');
 }
@@ -261,7 +221,7 @@ function pintarBtn(side, slot){
   const c = slots[side][slot];
   if(!c) { b.className='bg'; b.textContent='🃏 '+(slot+1); return; }
   b.textContent = c.emoji+' '+c.titulo.slice(0,11);
-  b.className = 'bg ' + (PERSIST.includes(c.titulo) ? 'activo' : 'usado');
+  b.className = 'bg activo';
 }
 
 function resetRuleta(){
@@ -354,6 +314,7 @@ function resetEmergencia(){
 }
 
 function updateHolderUI(){
+  if(!document.getElementById('samCards')) return;
   const sc=document.getElementById('samCards');
   const cc=document.getElementById('chatCards');
   sc.innerHTML='';cc.innerHTML='';
@@ -370,6 +331,7 @@ function updateHolderUI(){
 }
 
 function updateBtns(){
+  if(!document.getElementById('bRevS0')) return;
   [['bRevS0','sam',0],['bRevS1','sam',1],['bRevC0','chat',0],['bRevC1','chat',1]].forEach(([id,s,i])=>{
     const picks=s==='sam'?samPicks:chatPicks;
     document.getElementById(id).disabled=!picks[i];
@@ -398,8 +360,7 @@ function renderRef(){
 }
 renderRef();
 // Restaurar el formato guardado al cargar (marca el botón correcto)
-document.getElementById('fmtComp').className = 'bf' + (formato==='companero' ? ' on' : '');
-document.getElementById('fmtPuerta').className = 'bf' + (formato==='puerta' ? ' on' : '');
+// (selector de formato retirado — el mazo de la ruleta es único)
 </script>
 </body>
 </html>
