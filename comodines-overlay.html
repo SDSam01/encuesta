@@ -92,6 +92,61 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 .hud-mini.used{opacity:.2;text-decoration:line-through;}
 .hud-mini.empty{opacity:.2;}
 
+/* Slot bloqueado: gris apagado, sin revelar nada */
+.hud-mini.locked{
+  opacity:.32;filter:grayscale(1) brightness(.55);
+  border-color:rgba(255,255,255,.18);
+  background:rgba(255,255,255,.03);
+  color:rgba(255,255,255,.4);
+}
+/* Comodín persistente encendido (Ángel / Personaje) */
+.hud-mini.activo{
+  opacity:1;filter:none;
+  border-color:rgba(255,208,0,.9);
+  background:rgba(255,208,0,.16);
+  box-shadow:0 0 12px rgba(255,208,0,.45);
+  animation:activoPulse 1.8s ease-in-out infinite;
+}
+@keyframes activoPulse{
+  0%,100%{box-shadow:0 0 10px rgba(255,208,0,.35);}
+  50%{box-shadow:0 0 20px rgba(255,208,0,.7);}
+}
+/* Slot recibiendo el resultado */
+.hud-mini.landing{animation:landPop .5s cubic-bezier(.34,1.56,.64,1);}
+@keyframes landPop{0%{transform:scale(2.2);opacity:0;}55%{transform:scale(1.18);opacity:1;}100%{transform:scale(1);}}
+
+/* ══ RULETA CENTRAL ══ */
+#ruleta{
+  position:fixed;inset:0;z-index:34;display:none;
+  align-items:center;justify-content:center;flex-direction:column;gap:16px;
+  background:radial-gradient(ellipse at center, rgba(0,0,0,.72) 0%, rgba(0,0,0,.93) 100%);
+}
+#ruleta.show{display:flex;}
+#ruletaWho{
+  font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:9px;
+  color:rgba(255,208,0,.85);text-shadow:0 0 22px rgba(255,208,0,.5);
+}
+#ruletaEmoji{
+  font-size:190px;line-height:1;
+  filter:drop-shadow(0 10px 34px rgba(0,0,0,.9));
+}
+#ruletaEmoji.spin{animation:ruletaSpin .09s linear infinite;}
+@keyframes ruletaSpin{0%{transform:scale(.94);}50%{transform:scale(1.03);}100%{transform:scale(.94);}}
+#ruletaEmoji.landed{animation:ruletaLand .75s cubic-bezier(.2,1.5,.35,1);}
+@keyframes ruletaLand{0%{transform:scale(2.1);}45%{transform:scale(.88);}70%{transform:scale(1.09);}100%{transform:scale(1);}}
+#ruletaName{
+  font-family:'Bebas Neue',sans-serif;font-size:82px;letter-spacing:4px;
+  color:#FFD000;text-shadow:0 0 44px rgba(255,208,0,.75),0 5px 22px rgba(0,0,0,.95);
+  opacity:0;transition:opacity .3s;text-align:center;
+}
+#ruletaName.show{opacity:1;}
+#ruletaDesc{
+  font-family:'Inter',sans-serif;font-size:26px;font-weight:600;
+  color:rgba(255,255,255,.9);max-width:1000px;text-align:center;line-height:1.4;
+  opacity:0;transition:opacity .35s;text-shadow:0 3px 16px rgba(0,0,0,.9);
+}
+#ruletaDesc.show{opacity:1;}
+
 /* ══ ACTIVACIÓN ══ */
 #activation{
   position:fixed;inset:0;z-index:30;
@@ -125,19 +180,28 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
   <div id="cardRow"></div>
 </div>
 
+<div id="ruleta">
+  <div id="ruletaWho"></div>
+  <div id="ruletaEmoji">🃏</div>
+  <div id="ruletaName"></div>
+  <div id="ruletaDesc"></div>
+</div>
+
 <div id="hud">
   <div class="hud-row" id="hudRowSam">
     <div class="hud-side">SAM</div>
     <div class="hud-cards">
-      <div class="hud-mini empty" id="hudSam0">🃏</div>
-      <div class="hud-mini empty" id="hudSam1">🃏</div>
+      <div class="hud-mini locked" id="hudSam0">🃏</div>
+      <div class="hud-mini locked" id="hudSam1">🃏</div>
+      <div class="hud-mini locked" id="hudSam2">🃏</div>
     </div>
   </div>
   <div class="hud-row" id="hudRowChat">
     <div class="hud-side">CHAT</div>
     <div class="hud-cards">
-      <div class="hud-mini empty" id="hudChat0">🃏</div>
-      <div class="hud-mini empty" id="hudChat1">🃏</div>
+      <div class="hud-mini locked" id="hudChat0">🃏</div>
+      <div class="hud-mini locked" id="hudChat1">🃏</div>
+      <div class="hud-mini locked" id="hudChat2">🃏</div>
     </div>
   </div>
 </div>
@@ -241,6 +305,112 @@ function updateHudMinis(){
   });
 }
 
+// ══════ RULETA DE COMODINES ══════
+function getAC(){ try{ if(AC.state==='suspended') AC.resume(); }catch(e){} return AC; }
+const PERSISTENTES = ['Ángel de la guarda','Cambiar Personaje'];
+let ruletaRAF = null;
+
+function girarRuleta(side, slot, ganador, pool){
+  if(!ganador || !Array.isArray(pool) || pool.length===0) return;
+
+  const box   = document.getElementById('ruleta');
+  const emoji = document.getElementById('ruletaEmoji');
+  const name  = document.getElementById('ruletaName');
+  const desc  = document.getElementById('ruletaDesc');
+  const who   = document.getElementById('ruletaWho');
+
+  who.textContent = (side==='sam' ? 'SAM' : 'CHAT');
+  name.classList.remove('show');
+  desc.classList.remove('show');
+  emoji.classList.remove('landed');
+  emoji.classList.add('spin');
+  box.classList.add('show');
+
+  let i = 0, delay = 55, t0 = performance.now(), acumulado = 0;
+  const DURACION = 2600;
+
+  function frame(now){
+    const t = now - t0;
+    // Desacelerar: rápido al principio, lento al final
+    const p = Math.min(1, t / DURACION);
+    delay = 55 + p*p*p * 330;
+
+    if(now - acumulado >= delay){
+      acumulado = now;
+      i = (i + 1) % pool.length;
+      emoji.textContent = pool[i].emoji;
+      playTick();
+    }
+
+    if(t < DURACION){
+      ruletaRAF = requestAnimationFrame(frame);
+    } else {
+      // Aterrizar en el ganador
+      emoji.classList.remove('spin');
+      emoji.textContent = ganador.emoji;
+      emoji.classList.add('landed');
+      name.textContent = ganador.titulo;
+      desc.textContent = ganador.desc;
+      setTimeout(()=>name.classList.add('show'), 90);
+      setTimeout(()=>desc.classList.add('show'), 320);
+      playReveal();
+      ruletaRAF = null;
+
+      // Bajar el resultado al cuadrito del HUD
+      setTimeout(()=>{
+        box.classList.remove('show');
+        pintarSlot(side, slot, ganador);
+      }, 3400);
+    }
+  }
+  ruletaRAF = requestAnimationFrame(frame);
+}
+
+function pintarSlot(side, slot, comodin){
+  const el = document.getElementById('hud'+(side==='sam'?'Sam':'Chat')+slot);
+  if(!el) return;
+  el.textContent = comodin.emoji;
+  el.classList.remove('locked','empty','used');
+  // Los persistentes se quedan encendidos; los demás quedan gastados
+  if(PERSISTENTES.includes(comodin.titulo)) el.classList.add('activo');
+  else el.classList.add('used');
+  el.classList.add('landing');
+  setTimeout(()=>el.classList.remove('landing'), 520);
+}
+
+function playTick(){
+  const ac = getAC(); if(!ac) return;
+  const t = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.connect(g); g.connect(ac.destination); o.type='square';
+  o.frequency.setValueAtTime(1150, t);
+  g.gain.setValueAtTime(.06, t);
+  g.gain.exponentialRampToValueAtTime(.001, t+.035);
+  o.start(t); o.stop(t+.035);
+}
+
+function playReveal(){
+  const ac = getAC(); if(!ac) return;
+  [523,659,784,1047].forEach((f,i)=>{
+    const o=ac.createOscillator(), g=ac.createGain();
+    o.connect(g); g.connect(ac.destination); o.type='triangle';
+    const t=ac.currentTime+i*.1;
+    o.frequency.value=f;
+    g.gain.setValueAtTime(.22,t);
+    g.gain.exponentialRampToValueAtTime(.001,t+.34);
+    o.start(t); o.stop(t+.34);
+  });
+}
+
+function resetSlots(){
+  ['Sam','Chat'].forEach(s=>[0,1,2].forEach(i=>{
+    const el=document.getElementById('hud'+s+i);
+    if(el){ el.textContent='🃏'; el.className='hud-mini locked'; }
+  }));
+  if(ruletaRAF){ cancelAnimationFrame(ruletaRAF); ruletaRAF=null; }
+  document.getElementById('ruleta').classList.remove('show');
+}
+
 function resetHudMinis(){
   ['Sam','Chat'].forEach(side=>['0','1'].forEach(i=>{
     const el=document.getElementById('hud'+side+i);
@@ -285,6 +455,7 @@ function closeActivation(){
 }
 
 function resetAll(){
+  resetSlots();
   closeActivation();hideSorteo();
   document.getElementById('hud').classList.remove('show');
   resetHudMinis();
@@ -332,6 +503,8 @@ setInterval(()=>{
     else if(a==='activateSam1')  activateComodin('sam',1);
     else if(a==='activateChat0') activateComodin('chat',0);
     else if(a==='activateChat1') activateComodin('chat',1);
+    else if(a==='girar')      girarRuleta(s.side, s.slot, s.ganador, s.pool);
+    else if(a==='resetSlots') resetSlots();
     else if(a==='closeAct')   closeActivation();
     else if(a==='reset')      resetAll();
   }catch(e){}
