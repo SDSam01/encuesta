@@ -88,6 +88,11 @@ h1{font-size:13px;font-weight:700;margin-bottom:2px;color:#FFD000;}
 <div style="margin:10px 0 6px;padding:9px;border-radius:10px;background:rgba(255,208,0,.05);border:1px solid rgba(255,208,0,.2);">
   <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#FFD000;font-weight:700;margin-bottom:7px;">🎰 Modo ruleta — 3 por jugador</div>
 
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px;">
+    <button class="bf on" id="fmtComp" onclick="setMazo('companero')">👥 Compañero</button>
+    <button class="bf" id="fmtPuerta" onclick="setMazo('puerta')">🚪 Puerta</button>
+  </div>
+
   <button class="bg" id="btnHud" style="width:100%;margin-bottom:8px;padding:9px;font-size:12px;" onclick="toggleHud()">✨ Mostrar HUD</button>
 
   <div style="font-size:10px;color:rgba(255,255,255,.4);margin:5px 0 3px;">SAM</div>
@@ -154,8 +159,9 @@ const MAZO_PUERTA=[
   {emoji:'🎲',titulo:'Lotería',          desc:'Ganas o pierdes media vida al azar. 50/50.'},
   {emoji:'💀',titulo:'Error letal',      desc:'Si el rival falla esta ronda, pierde 1 vida completa en lugar de media.'},
   {emoji:'🍀',titulo:'Suertudo',         desc:'Si eliges bien recuperas 1 vida completa.'},
-  {emoji:'⚖️',titulo:'Tregua',           desc:'Nadie pierde vida esta ronda, pase lo que pase.'},
-  {emoji:'🚫',titulo:'Anular',           desc:'Cancelas el comodín que el rival active esta ronda.'},
+  {emoji:'⚖️',titulo:'Tregua',           desc:'Esta ronda nadie pierde vida, pase lo que pase.'},
+  {emoji:'🎁',titulo:'Doble premio',     desc:'Si ganas esta ronda, media vida extra.'},
+  {emoji:'🔗',titulo:'Destino compartido',desc:'Esta ronda si uno pierde vida, el otro también.'},
 ];
 
 // Mazo activo — cambia según el formato seleccionado
@@ -184,6 +190,19 @@ const PERSIST = ['Ángel de la guarda','Cambiar Personaje'];
 let slots = {sam:[null,null,null], chat:[null,null,null]};
 let girando = false;
 
+let mazoActivo = localStorage.getItem('comodines_formato') || 'companero';
+function pool(){ return mazoActivo==='puerta' ? MAZO_PUERTA : MAZO_RULETA; }
+
+function setMazo(f){
+  mazoActivo = f;
+  localStorage.setItem('comodines_formato', f);
+  const a=document.getElementById('fmtComp'), b=document.getElementById('fmtPuerta');
+  if(a) a.className='bf'+(f==='companero'?' on':'');
+  if(b) b.className='bf'+(f==='puerta'?' on':'');
+  renderRef();
+  setStatus(f==='puerta'?'🚪 Mazo: Elige tu puerta':'👥 Mazo: Elige tu compañero','ok');
+}
+
 let hudVisible = false;
 function toggleHud(){
   hudVisible = !hudVisible;
@@ -200,10 +219,11 @@ function girar(side, slot){
   girando = true;
 
   // Sorteo con repetición permitida
-  const ganador = MAZO_RULETA[Math.floor(Math.random()*MAZO_RULETA.length)];
+  const P = pool();
+  const ganador = P[Math.floor(Math.random()*P.length)];
   slots[side][slot] = ganador;
 
-  save({action:'girar', side, slot, ganador, pool:MAZO_RULETA});
+  save({action:'girar', side, slot, ganador, pool:P});
   setStatus(`🎰 Girando para ${side==='sam'?'Sam':'Chat'}...`, 'loading');
 
   // La animación del overlay dura ~6s
@@ -352,7 +372,7 @@ function setStatus(msg,type){const el=document.getElementById('statusBar');el.te
 // Referencia en orden alfabético
 function renderRef(){
   const g=document.getElementById('refGrid');g.innerHTML='';
-  [...MAZO_RULETA].sort((a,b)=>a.titulo.localeCompare(b.titulo)).forEach(c=>{
+  [...pool()].sort((a,b)=>a.titulo.localeCompare(b.titulo)).forEach(c=>{
     const d=document.createElement('div');d.className='rr';
     d.innerHTML=`<div class="re">${c.emoji}</div><div class="ri"><div class="rn">${c.titulo}</div><div class="rd">${c.desc}</div></div>`;
     g.appendChild(d);
@@ -360,7 +380,7 @@ function renderRef(){
 }
 renderRef();
 // Restaurar el formato guardado al cargar (marca el botón correcto)
-// (selector de formato retirado — el mazo de la ruleta es único)
+setMazo(mazoActivo);
 </script>
 </body>
 </html>
