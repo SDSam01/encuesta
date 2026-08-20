@@ -50,6 +50,15 @@ body{background:#0d0d12;color:#eee;font-family:'Inter',sans-serif;padding:10px;f
 .pbtn:hover{background:rgba(248,113,113,.25);}
 .pbtn.rev{background:rgba(60,220,120,.1);border-color:rgba(60,220,120,.3);color:#4ade80;}
 
+.pacts{display:flex;gap:3px;align-items:center;flex-shrink:0;}
+.mini{width:23px;height:23px;border-radius:5px;font-size:10px;cursor:pointer;
+  font-family:'Inter',sans-serif;padding:0;transition:.12s;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;}
+.mini:hover{background:rgba(255,208,0,.15);border-color:rgba(255,208,0,.4);color:#FFD000;}
+.mini.act{background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.4);color:#f87171;}
+.pbtn{padding:4px 7px;}
+
 .empty{padding:20px 10px;text-align:center;font-size:11px;color:rgba(255,255,255,.25);}
 .winner{padding:10px;border-radius:9px;text-align:center;margin-top:8px;
   background:rgba(255,208,0,.12);border:1px solid rgba(255,208,0,.4);color:#FFD000;
@@ -61,14 +70,6 @@ body{background:#0d0d12;color:#eee;font-family:'Inter',sans-serif;padding:10px;f
 <div class="status" id="statusBar">Listo — presiona buscar para capturar participantes</div>
 
 <button class="btn-main btn-buscar" id="btnBuscar" onclick="buscarParticipantes()">🎯 BUSCAR PARTICIPANTES</button>
-
-<div class="row">
-  <span>👥 Cupo:</span>
-  <button class="btn-s" id="n5"  onclick="setCupo(5)">5</button>
-  <button class="btn-s" id="n6"  onclick="setCupo(6)">6</button>
-  <button class="btn-s" id="n8"  onclick="setCupo(8)">8</button>
-  <button class="btn-s" id="n10" onclick="setCupo(10)">10</button>
-</div>
 
 <div class="row">
   <span>⏱️ Captura:</span>
@@ -93,22 +94,14 @@ const LS       = 'equipo_state';
 const LS_MSG   = 'equipo_message';
 const LS_QUEUE = 'chat_queue';
 
-let participantes = [];   // {userId, username, src, dead}
+let participantes = [];   // {userId, username, src, dead, mute, voz}
+let poolCompleto  = [];   // todos los que escribieron "yo" (para re-roll)
 let capturando    = false;
 let oculto        = false;
 let lastMsgTs     = 0;
 
-let cupo        = parseInt(localStorage.getItem('equipo_cupo')||'8',10)  || 8;
+const cupo = 6;   // fijo
 let capturaSegs = parseInt(localStorage.getItem('equipo_captura')||'15',10) || 15;
-
-function setCupo(n){
-  cupo = n;
-  localStorage.setItem('equipo_cupo', String(n));
-  [5,6,8,10].forEach(x=>{
-    const b=document.getElementById('n'+x);
-    if(b) b.className = 'btn-s' + (x===n ? ' on' : '');
-  });
-}
 
 function setCaptura(s){
   capturaSegs = s;
@@ -181,8 +174,11 @@ function buscarParticipantes(){
       [pool[i],pool[j]]=[pool[j],pool[i]];
     }
 
-    participantes = pool.slice(0, cupo).map(([id,u])=>({
-      userId: id, username: u.username, src: u.src||'', dead: false
+    poolCompleto = pool.map(([id,u])=>({userId:id, username:u.username, src:u.src||''}));
+
+    participantes = pool.slice(0, cupo).map(([id,u],i)=>({
+      userId: id, username: u.username, src: u.src||'',
+      dead: false, mute: false, voz: i   // voz = índice de perfil, editable
     }));
 
     lastMsgTs = Date.now();
@@ -209,10 +205,16 @@ function renderLista(){
     d.innerHTML =
       `<div class="pnum">${i+1}</div>
        <div class="pinfo">
-         <div class="pname">${escapeHtml(p.username)}</div>
+         <div class="pname">${escapeHtml(p.username)}${p.mute?' 🔇':''}</div>
          <div class="psrc">${escapeHtml(p.src||'—')}</div>
        </div>
-       <button class="pbtn${p.dead?' rev':''}" onclick="toggleMuerte(${i})">${p.dead?'↩ Revivir':'✖ Eliminar'}</button>`;
+       <div class="pacts">
+         <button class="mini" onclick="mover(${i},-1)" title="Subir">▲</button>
+         <button class="mini" onclick="mover(${i},1)" title="Bajar">▼</button>
+         <button class="mini${p.mute?' act':''}" onclick="toggleMute(${i})" title="Silenciar">${p.mute?'🔇':'🔊'}</button>
+         <button class="mini" onclick="reroll(${i})" title="Cambiar persona">🎲</button>
+         <button class="pbtn${p.dead?' rev':''}" onclick="toggleMuerte(${i})">${p.dead?'↩':'✖'}</button>
+       </div>`;
     box.appendChild(d);
   });
 
@@ -239,6 +241,42 @@ function toggleMuerte(i){
   });
   const vivos = participantes.filter(p=>!p.dead).length;
   setStatus(`${participantes[i].dead?'✖ Eliminado':'↩ Revivido'}: ${participantes[i].username} — quedan ${vivos}`, 'ok');
+}
+
+// ── Silenciar a uno solo ──
+function toggleMute(i){
+  if(!participantes[i]) return;
+  participantes[i].mute = !participantes[i].mute;
+  renderLista();
+  save();
+  setStatus(`${participantes[i].mute?'🔇 Silenciado':'🔊 Activado'}: ${participantes[i].username}`,'ok');
+}
+
+// ── Re-roll: cambiar a alguien por otro del pool ──
+function reroll(i){
+  if(!participantes[i]) return;
+  const usados = new Set(participantes.map(p=>p.userId));
+  const libres = poolCompleto.filter(p=>!usados.has(p.userId));
+  if(libres.length===0){ setStatus('❌ No queda nadie más en el pool','err'); return; }
+  const nuevo = libres[Math.floor(Math.random()*libres.length)];
+  const viejo = participantes[i].username;
+  participantes[i] = {
+    userId:nuevo.userId, username:nuevo.username, src:nuevo.src,
+    dead:false, mute:false, voz:i
+  };
+  renderLista();
+  save({accion:'reroll', idx:i, accionTs:Date.now()});
+  setStatus(`🎲 ${viejo} → ${nuevo.username}`,'ok');
+}
+
+// ── Mover de posición (asignar número) ──
+function mover(i, dir){
+  const j = i + dir;
+  if(j<0 || j>=participantes.length) return;
+  [participantes[i], participantes[j]] = [participantes[j], participantes[i]];
+  renderLista();
+  save({accion:'reorden', accionTs:Date.now()});
+  setStatus(`Movido a la posición ${j+1}`,'ok');
 }
 
 function resetTodo(){
@@ -283,7 +321,7 @@ setInterval(()=>{
     if(!Array.isArray(queue)) return;
 
     // Solo participantes VIVOS
-    const vivos = new Set(participantes.filter(p=>!p.dead).map(p=>p.userId));
+    const vivos = new Set(participantes.filter(p=>!p.dead && !p.mute).map(p=>p.userId));
     const nuevos = queue.filter(m => m && m.ts > lastMsgTs && vivos.has(m.userId) && (m.text||'').trim());
     if(nuevos.length===0) return;
 
@@ -311,7 +349,6 @@ setInterval(()=>{
 }, 150);
 
 // ══ INIT ══
-setCupo(cupo);
 setCaptura(capturaSegs);
 renderLista();
 </script>
