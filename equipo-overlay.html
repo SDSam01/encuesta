@@ -53,6 +53,38 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;
   opacity:.42;filter:grayscale(1) brightness(.65);
   border-color:rgba(255,40,40,.3);
 }
+/* Animación al momento de eliminar */
+.card.killing{animation:killShake .62s cubic-bezier(.36,.07,.19,.97);}
+@keyframes killShake{
+  0%{transform:translateX(0) scale(1);}
+  8%{transform:translateX(-11px) scale(1.06);filter:brightness(2.4) saturate(.2);}
+  18%{transform:translateX(10px) scale(1.05);filter:brightness(1.1);}
+  28%{transform:translateX(-8px) scale(1.02);filter:brightness(1.8);}
+  40%{transform:translateX(6px) scale(1);}
+  55%{transform:translateX(-4px);}
+  70%{transform:translateX(3px) rotate(-1.5deg);}
+  85%{transform:translateX(-2px) rotate(1deg);}
+  100%{transform:translateX(0) rotate(0);}
+}
+/* Destello rojo detrás de la tarjeta */
+.card .kflash{
+  position:absolute;inset:-4px;border-radius:18px;pointer-events:none;
+  background:radial-gradient(circle, rgba(255,30,30,.85) 0%, rgba(255,0,0,0) 72%);
+  opacity:0;
+}
+.card .kflash.on{animation:kflash .7s ease-out;}
+@keyframes kflash{0%{opacity:0;transform:scale(.6);}22%{opacity:1;transform:scale(1.15);}100%{opacity:0;transform:scale(1.3);}}
+
+/* Calavera que sube */
+.skull{position:absolute;top:38%;left:50%;transform:translateX(-50%);font-size:44px;
+  pointer-events:none;opacity:0;z-index:5;}
+.skull.on{animation:skullUp 1.15s ease-out forwards;}
+@keyframes skullUp{
+  0%{opacity:0;transform:translateX(-50%) translateY(14px) scale(.4);}
+  20%{opacity:1;transform:translateX(-50%) translateY(0) scale(1.25);}
+  45%{opacity:1;transform:translateX(-50%) translateY(-10px) scale(1);}
+  100%{opacity:0;transform:translateX(-50%) translateY(-58px) scale(.85);}
+}
 .card.dead .num{background:#7a1010;color:rgba(255,255,255,.55);}
 .card.dead .name{color:rgba(255,255,255,.55);}
 
@@ -125,7 +157,7 @@ let participantes = [];
 let lastTs        = 0;
 let lastAccionTs  = 0;
 let lastMute      = 0;
-let vozPorUser    = {};        // userId -> perfil de voz fijo
+
 
 // ══ AUDIO ══
 let AC = null;
@@ -163,33 +195,40 @@ function playWin(){
 }
 
 // ══ TTS: voz FIJA por usuario (cada participante suena distinto) ══
-function perfilDe(userId){
-  if(vozPorUser[userId]) return vozPorUser[userId];
+function perfilDe(userId, vozIdx){
   const voces = window.speechSynthesis.getVoices().filter(v=>v.lang.startsWith('es'));
-  // Semilla estable a partir del userId → mismo usuario, misma voz siempre
-  let h = 0;
-  for(let i=0;i<userId.length;i++) h = (h*31 + userId.charCodeAt(i)) >>> 0;
-  const p = {
-    voice: voces.length ? voces[h % voces.length] : null,
-    rate:  0.85 + ((h>>3) % 45)/100,     // 0.85 – 1.30
-    pitch: 0.75 + ((h>>7) % 70)/100      // 0.75 – 1.45
+  const n = (typeof vozIdx === 'number') ? vozIdx : 0;
+  // 12 perfiles bien distintos: alterna voz base + pitch + velocidad
+  const PITCH = [1.35, 0.72, 1.10, 0.85, 1.50, 0.95, 1.22, 0.65, 1.05, 1.42, 0.80, 1.15];
+  const RATE  = [1.05, 0.92, 1.18, 1.00, 0.88, 1.25, 0.95, 1.10, 1.30, 0.85, 1.15, 1.00];
+  return {
+    voice: voces.length ? voces[n % voces.length] : null,
+    rate:  RATE[n % 12],
+    pitch: PITCH[n % 12]
   };
-  vozPorUser[userId] = p;
-  return p;
 }
-window.speechSynthesis.onvoiceschanged = ()=>{ vozPorUser = {}; };
+window.speechSynthesis.onvoiceschanged = ()=>{};
 
 // ══ COLA DE MENSAJES — uno a la vez, sin encimarse ══
 let cola = [];
 let hablando = false;
 let vistos = new Set();
 
+const COOLDOWN_MS = 3500;   // mismo usuario no puede hablar más seguido que esto
+const MAX_POR_USER = 2;     // máximo de mensajes suyos esperando en la cola
+let ultimoHablo = {};       // userId -> timestamp
+
 function encolar(msg){
   if(vistos.has(msg.mid)) return;
   vistos.add(msg.mid);
   if(vistos.size > 300) vistos = new Set([...vistos].slice(-150));
+
+  // Anti-monopolio: si ya tiene MAX_POR_USER esperando, ignorar el nuevo
+  const suyos = cola.filter(m=>m.userId===msg.userId).length;
+  if(suyos >= MAX_POR_USER) return;
+
   cola.push(msg);
-  if(cola.length > 12) cola = cola.slice(-12);   // si se satura, quedarse con lo reciente
+  if(cola.length > 12) cola = cola.slice(-12);
   procesarCola();
 }
 
@@ -197,9 +236,19 @@ function procesarCola(){
   if(hablando || cola.length===0) return;
   const msg = cola.shift();
 
-  // Si ya lo eliminaron mientras esperaba en la cola, saltarlo
+  // Si ya lo eliminaron o silenciaron mientras esperaba, saltarlo
   const p = participantes[msg.idx];
-  if(!p || p.dead){ procesarCola(); return; }
+  if(!p || p.dead || p.mute){ procesarCola(); return; }
+
+  // Cooldown: si habló hace muy poco, devolverlo al final de la cola
+  const ahora = Date.now();
+  const ult = ultimoHablo[msg.userId] || 0;
+  if(ahora - ult < COOLDOWN_MS && cola.length > 0){
+    cola.push(msg);
+    setTimeout(procesarCola, 400);
+    return;
+  }
+  ultimoHablo[msg.userId] = ahora;
 
   hablando = true;
 
@@ -211,7 +260,7 @@ function procesarCola(){
   const card = document.getElementById('card_'+msg.idx);
   if(card) card.classList.add('talk');
 
-  const perfil = perfilDe(msg.userId);
+  const perfil = perfilDe(msg.userId, (p && typeof p.voz==='number') ? p.voz : msg.idx);
   let terminado = false;
   const finalizar = ()=>{
     if(terminado) return;
@@ -275,6 +324,18 @@ function render(){
   }
 }
 
+function animarMuerte(idx){
+  const c = document.getElementById('card_'+idx);
+  if(!c) return;
+  c.classList.add('killing');
+  const f = document.createElement('div'); f.className='kflash';
+  c.appendChild(f); void f.offsetWidth; f.classList.add('on');
+  const k = document.createElement('div'); k.className='skull'; k.textContent='💀';
+  c.appendChild(k); void k.offsetWidth; k.classList.add('on');
+  setTimeout(()=>{ c.classList.remove('killing'); f.remove(); }, 760);
+  setTimeout(()=>k.remove(), 1250);
+}
+
 function escapeHtml(s){
   return String(s||'').replace(/[&<>"']/g, c =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -305,10 +366,11 @@ setInterval(()=>{
       lastAccionTs = s.accionTs;
       if(s.accion === 'kill'){
         playKill();
+        animarMuerte(s.idx);
         const vivos = participantes.filter(p=>!p.dead).length;
         if(vivos===1 && participantes.length>1) setTimeout(playWin, 700);
       } else if(s.accion === 'reset'){
-        cola = []; hablando = false; vistos = new Set();
+        cola = []; hablando = false; vistos = new Set(); ultimoHablo = {};
         window.speechSynthesis.cancel();
         document.getElementById('bubble').classList.remove('show');
       }
