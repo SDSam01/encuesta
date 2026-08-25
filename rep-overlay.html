@@ -320,6 +320,31 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
   <div class="jp-sub-badge" id="jpSubBadge">⭐ REPRESENTANTE OFICIAL ⭐</div>
 </div>
 
+<style>
+/* ══ MODO CONVOCATORIA: reusa la zona del HUD y del mensaje ══ */
+#repHud.convoca .hud-label{color:rgba(255,255,255,.55);}
+#repHud.convoca .hud-name{
+  color:#FFD000;letter-spacing:3px;
+  text-shadow:0 0 22px rgba(255,208,0,.75);
+  animation:convocaPulse 1.3s ease-in-out infinite;
+}
+@keyframes convocaPulse{
+  0%,100%{opacity:1;transform:scale(1);}
+  50%{opacity:.82;transform:scale(1.04);}
+}
+#ttsMsg.timer .tts-user{color:rgba(255,255,255,.5);letter-spacing:3px;}
+#ttsMsg.timer .tts-text{
+  font-size:60px;font-weight:900;color:#FFD000;
+  text-shadow:0 0 30px rgba(255,208,0,.7);
+  font-variant-numeric:tabular-nums;
+}
+#ttsMsg.timer.urgente .tts-text{
+  color:#FF4040;text-shadow:0 0 30px rgba(255,40,40,.8);
+  animation:urgente .5s ease-in-out infinite;
+}
+@keyframes urgente{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
+</style>
+
 <div id="repHud" class="normal">
   <span class="hud-dot"></span>
   <span id="hudCrown" style="display:none" class="hud-crown">👑</span>
@@ -680,7 +705,55 @@ function activateRep(isSub){
   stopParticles();
 }
 
+// ══════ CONVOCATORIA: palabra + countdown en la zona del rep ══════
+let convocaInt = null, lastConvocaTs = 0;
+
+function iniciarConvocatoria(palabra, segs){
+  if(convocaInt){ clearInterval(convocaInt); convocaInt=null; }
+
+  const hud   = document.getElementById('repHud');
+  const label = hud.querySelector('.hud-label');
+  const name  = document.getElementById('hudName');
+  const tts   = document.getElementById('ttsMsg');
+  const tUser = document.getElementById('ttsMsgUser');
+  const tText = document.getElementById('ttsMsgText');
+
+  // Zona del nombre -> la palabra
+  hud.classList.add('convoca','show');
+  label.textContent = 'ESCRIBE:';
+  name.textContent  = String(palabra||'').toUpperCase();
+
+  // Zona del mensaje -> el countdown
+  tts.classList.add('timer','show');
+  tts.classList.remove('urgente');
+  tUser.textContent = 'TIEMPO RESTANTE';
+
+  let queda = segs;
+  tText.textContent = queda;
+
+  convocaInt = setInterval(()=>{
+    queda--;
+    tText.textContent = queda > 0 ? queda : '¡YA!';
+    if(queda <= 5 && queda > 0) tts.classList.add('urgente');
+    if(queda <= 0){
+      clearInterval(convocaInt); convocaInt=null;
+      setTimeout(terminarConvocatoria, 1200);
+    }
+  }, 1000);
+}
+
+function terminarConvocatoria(){
+  if(convocaInt){ clearInterval(convocaInt); convocaInt=null; }
+  const hud = document.getElementById('repHud');
+  const tts = document.getElementById('ttsMsg');
+  hud.classList.remove('convoca');
+  hud.querySelector('.hud-label').textContent = 'REP:';
+  tts.classList.remove('timer','urgente','show');
+  document.getElementById('ttsMsgText').textContent = '';
+}
+
 function clearRep(){
+  terminarConvocatoria();
   animActive=false;
   // Cancelar animaciones en curso
   if(normalRAF){cancelAnimationFrame(normalRAF);normalRAF=null;}
@@ -845,6 +918,13 @@ setInterval(()=>{
     const raw=localStorage.getItem(LS); if(!raw)return;
     const s=JSON.parse(raw); if(!s.ts||s.ts===lastTs)return;
     lastTs=s.ts;
+    // Convocatoria: palabra + countdown en la zona del rep
+    if(s.convocaTs && s.convocaTs!==lastConvocaTs){
+      lastConvocaTs=s.convocaTs;
+      if(s.convocaPalabra) iniciarConvocatoria(s.convocaPalabra, s.convocaSegs||30);
+      else terminarConvocatoria();
+      return;
+    }
     if(s.trigger&&s.trigger!==lastTrigger){
       lastTrigger=s.trigger;
       pendingRep={userId:s.repUserId,username:s.repUsername,isMember:!!s.repIsMember};
