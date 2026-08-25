@@ -123,6 +123,14 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
 </div>
 
 <button class="btn-siren" id="btnSiren" onclick="activarModVip()">🚨 ACTIVAR MODO VIP — Representante Suscriptor</button>
+<div style="display:flex;gap:5px;margin-bottom:6px;">
+  <input id="palabraInput" placeholder="Palabra (vacío = yo)" maxlength="20"
+    style="flex:1;padding:9px;border-radius:9px;font-size:13px;font-weight:700;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);
+    color:#FFD000;font-family:'Inter',sans-serif;text-transform:uppercase;outline:none;">
+</div>
+<div id="sugerencia" style="font-size:10px;color:rgba(255,255,255,.35);margin-bottom:6px;"></div>
+
 <button class="btn-main btn-buscar" id="btnBuscar" onclick="buscarRep()">🎲 BUSCAR REPRESENTANTE</button>
 
 <div style="display:flex;align-items:center;gap:6px;margin:6px 0 4px;font-size:11px;color:rgba(255,255,255,.45);">
@@ -299,6 +307,22 @@ function setCaptura(s){
   });
 }
 
+// ══ Palabra de convocatoria ══
+function palabraActual(){
+  const el=document.getElementById('palabraInput');
+  return el ? el.value.trim().toUpperCase() : '';
+}
+
+function sugerirTiempo(){
+  const p=palabraActual();
+  const el=document.getElementById('sugerencia');
+  if(!el) return;
+  if(!p){ el.textContent='Sin palabra: se usa "yo" (15s recomendado)'; return; }
+  const n=p.length;
+  const rec = n<=6 ? 15 : (n<=10 ? 20 : 25);
+  el.textContent = `"${p}" — ${n} letras · ${rec}s recomendado`;
+}
+
 function buscarRep(){
   if(capturando) return; // evitar doble clic
   capturando = true;
@@ -314,6 +338,19 @@ function buscarRep(){
   if(btn){ btn.disabled = true; }
 
   // Countdown visual
+  // Avisar al overlay: palabra + countdown
+  const _pal = palabraActual();
+  try{
+    const _st = JSON.parse(localStorage.getItem(LS_REP)||'{}');
+    _st.convocaPalabra = _pal || 'YO';
+    _st.convocaSegs    = capturaSegs;
+    _st.convocaTs      = Date.now();
+    _st.ts             = Date.now();
+    localStorage.setItem(LS_REP, JSON.stringify(_st));
+  }catch(e){}
+  // Decirle al chat-reader qué palabra aceptar
+  localStorage.setItem('palabra_clave', JSON.stringify({palabra:_pal, ts:Date.now()}));
+
   let remaining = capturaSegs;
   setStatus(`🎬 Capturando "yo"... ${remaining}s`, 'loading');
   const countInt = setInterval(()=>{
@@ -600,6 +637,8 @@ function toggleMusic(){
 
 // Marcar el botón de captura guardado al cargar
 setCaptura(capturaSegs);
+const _pi=document.getElementById('palabraInput');
+if(_pi){ _pi.addEventListener('input', sugerirTiempo); sugerirTiempo(); }
 </script>
 </body>
 </html>
