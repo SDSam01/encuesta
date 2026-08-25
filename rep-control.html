@@ -128,6 +128,10 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
     style="flex:1;padding:9px;border-radius:9px;font-size:13px;font-weight:700;
     background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);
     color:#FFD000;font-family:'Inter',sans-serif;text-transform:uppercase;outline:none;">
+  <button onclick="limpiarPalabra()" title="Borrar palabra"
+    style="padding:9px 12px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14);
+    color:rgba(255,255,255,.45);font-family:'Inter',sans-serif;">✕</button>
 </div>
 <div id="sugerencia" style="font-size:10px;color:rgba(255,255,255,.35);margin-bottom:6px;"></div>
 
@@ -313,6 +317,14 @@ function palabraActual(){
   return el ? el.value.trim().toUpperCase() : '';
 }
 
+function limpiarPalabra(){
+  const el=document.getElementById('palabraInput');
+  if(el) el.value='';
+  localStorage.setItem('palabra_clave', JSON.stringify({palabra:'', ts:Date.now()}));
+  sugerirTiempo();
+  setStatus('Palabra borrada — vuelve a "yo"','ok');
+}
+
 function sugerirTiempo(){
   const p=palabraActual();
   const el=document.getElementById('sugerencia');
@@ -409,6 +421,11 @@ function buscarRep(){
     }));
 
     armRepAutoTimer();
+    // Reiniciar la palabra: el próximo sorteo arranca limpio
+    const _pi2=document.getElementById('palabraInput');
+    if(_pi2) _pi2.value='';
+    localStorage.setItem('palabra_clave', JSON.stringify({palabra:'', ts:Date.now()}));
+    sugerirTiempo();
     setStatus(`🎤 ${user.username} — sorteado entre ${active.length} personas`, 'ok');
   }, CAPTURE_MS);
 }
