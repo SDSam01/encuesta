@@ -349,7 +349,7 @@ function buscarRep(){
     localStorage.setItem(LS_REP, JSON.stringify(_st));
   }catch(e){}
   // Decirle al chat-reader qué palabra aceptar
-  localStorage.setItem('palabra_clave', JSON.stringify({palabra:_pal, ts:Date.now()}));
+  localStorage.setItem('palabra_clave', JSON.stringify({palabra:_pal||'', ts:Date.now()}));
 
   let remaining = capturaSegs;
   setStatus(`🎬 Capturando "yo"... ${remaining}s`, 'loading');
