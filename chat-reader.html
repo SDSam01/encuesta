@@ -2,735 +2,643 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Chat Reader</title>
-<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<title>Rep Control</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:#0a0a0f;font-family:'Inter',sans-serif;color:#fff;padding:14px;max-width:460px;margin:0 auto;}
-h1{font-size:13px;font-weight:700;margin-bottom:2px;}
-.sub{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:12px;}
-.section{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px;margin-bottom:8px;}
-.sec-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:8px;}
-label{display:block;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:3px;}
-input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:7px 10px;color:#fff;font-size:12px;font-family:'Inter',sans-serif;outline:none;transition:.2s;margin-bottom:3px;}
-input:focus{border-color:rgba(255,185,0,.4);}
-.saved{font-size:10px;color:rgba(255,185,0,.5);display:none;}
-.btn-connect{width:100%;padding:10px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(255,185,0,.35);background:rgba(255,185,0,.12);color:#FFD000;transition:.15s;font-family:'Inter',sans-serif;margin-top:4px;}
-.btn-connect:hover{background:rgba(255,185,0,.22);}
-.btn-connect:disabled{opacity:.35;cursor:not-allowed;}
-.conn-row{display:flex;gap:6px;margin-top:6px;}
+body{background:#0f0f0f;font-family:'Inter',sans-serif;color:#fff;padding:16px;max-width:460px;margin:0 auto;}
+h1{font-size:15px;font-weight:700;margin-bottom:3px;}
+.sub{font-size:11px;color:rgba(255,255,255,.3);margin-bottom:14px;}
+.section{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;margin-bottom:10px;}
+.section-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:10px;}
+.rep-card{background:rgba(255,208,0,.06);border:1px solid rgba(255,208,0,.2);border-radius:10px;padding:12px 14px;margin-bottom:10px;display:none;}
+.rep-card.show{display:block;}
+.rep-name{font-size:22px;font-weight:900;color:#FFD000;letter-spacing:1px;margin-bottom:2px;}
+.rep-src{font-size:11px;color:rgba(255,208,0,.5);letter-spacing:1px;}
+.rep-last{font-size:12px;color:rgba(255,255,255,.4);margin-top:6px;font-style:italic;max-height:36px;overflow:hidden;}
+/* FIX: countdown del rep activo */
+.rep-timer{font-size:10px;color:rgba(255,208,0,.4);margin-top:4px;letter-spacing:.5px;}
+.reader-status{font-size:11px;padding:8px 12px;border-radius:8px;margin-bottom:10px;text-align:center;font-weight:600;}
+.reader-ok{background:rgba(68,222,128,0.1);border:1px solid rgba(68,222,128,0.3);color:#4ade80;}
+.reader-err{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#f87171;}
+/* FIX: banner demo visible */
+.demo-warning{display:none;background:rgba(255,165,0,.12);border:1px solid rgba(255,165,0,.4);border-radius:8px;padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#FFA500;margin-bottom:10px;letter-spacing:.5px;}
+.conn-row{display:flex;gap:6px;margin-top:8px;}
 .cbadge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.5px;opacity:.25;transition:.3s;}
 .cbadge.on{opacity:1;}
 .cb-yt{background:rgba(255,0,0,.12);color:#ff5555;border:1px solid rgba(255,85,85,.2);}
 .cb-kick{background:rgba(83,252,83,.07);color:#53fc53;border:1px solid rgba(83,252,83,.18);}
-.cb-twitch{background:rgba(145,70,255,.1);color:#9146FF;border:1px solid rgba(145,70,255,.25);}
-.cb-tiktok{background:rgba(0,0,0,.15);color:#fff;border:1px solid rgba(255,255,255,.15);}
-.cb-tiktok.on{background:rgba(255,0,80,.15);color:#ff0050;border-color:rgba(255,0,80,.4);}
-.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;}
-.stat{background:rgba(255,255,255,.04);border-radius:8px;padding:8px;text-align:center;}
-.stat-num{font-size:20px;font-weight:900;color:#FFD000;}
-.stat-lbl{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
-.log{max-height:100px;overflow-y:auto;margin-top:8px;}
-.log-item{font-size:10px;color:rgba(255,255,255,.4);padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);}
-.src-yt{color:#ff5555;}.src-kick{color:#53fc53;}.src-twitch{color:#9146FF;}
-.status-bar{font-size:11px;text-align:center;margin-top:8px;min-height:16px;padding:6px;border-radius:8px;}
-.status-bar.ok{color:#4ade80;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);}
-.status-bar.err{color:#f87171;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);}
-.status-bar.loading{color:rgba(255,185,0,.8);background:rgba(255,185,0,.06);border:1px solid rgba(255,185,0,.2);}
-.btn-row{display:flex;gap:6px;margin-top:6px;}
-.power-btn{width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;}
-.power-btn.on{background:rgba(74,222,128,.15);border:2px solid rgba(74,222,128,.5);color:#4ade80;box-shadow:0 0 20px rgba(74,222,128,.2);}
-.power-btn.off{background:rgba(248,113,113,.12);border:2px solid rgba(248,113,113,.4);color:#f87171;box-shadow:0 0 20px rgba(248,113,113,.15);animation:powerPulse 1.5s infinite;}
-@keyframes powerPulse{0%,100%{box-shadow:0 0 20px rgba(248,113,113,.15);}50%{box-shadow:0 0 30px rgba(248,113,113,.4);}}
-.btn-sm{flex:1;padding:7px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.15s;}
-.btn-force{border:1px solid rgba(74,222,128,.3);background:rgba(74,222,128,.08);color:#4ade80;}
-.btn-force:hover{background:rgba(74,222,128,.15);}
-#bigStatus{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;padding:8px 12px;border-radius:8px;text-align:center;margin-bottom:8px;display:none;}
-#bigStatus.ok{background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);color:#4ade80;display:block;}
-#bigStatus.err{background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.4);color:#f87171;display:block;animation:flash .8s infinite;}
-@keyframes flash{0%,100%{opacity:1;}50%{opacity:.4;}}
+.candidates{margin-top:6px;}
+.cand-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:5px;}
+.cand-list{display:flex;flex-wrap:wrap;gap:4px;max-height:60px;overflow:hidden;}
+.cand-tag{font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);}
+.cand-tag.yt{border-left:2px solid #ff5555;}
+.cand-tag.kick{border-left:2px solid #53fc53;}
+.cand-tag.twitch{border-left:2px solid #9146FF;}
+.cand-count{font-size:11px;color:rgba(255,255,255,.25);margin-top:4px;}
+.window-row{display:flex;align-items:center;gap:8px;margin-top:6px;}
+.window-label{font-size:10px;color:rgba(255,255,255,.3);font-weight:600;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
+.window-btns{display:flex;gap:4px;}
+.wbtn{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.4);transition:.15s;font-family:'Inter',sans-serif;}
+.wbtn:hover,.wbtn.on{background:rgba(255,185,0,.15);border-color:rgba(255,185,0,.35);color:#FFD000;}
+.btn-main{width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:1px solid;transition:.15s;font-family:'Inter',sans-serif;margin-bottom:6px;}
+.btn-cap{padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.12s;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35);}
+.btn-cap:hover{opacity:.75;}
+.btn-cap.on{background:rgba(255,208,0,.15);border-color:rgba(255,208,0,.5);color:#FFD000;}
+.btn-buscar{background:rgba(255,208,0,.15);border-color:rgba(255,208,0,.4);color:#FFD000;}
+.btn-buscar:hover{background:rgba(255,208,0,.28);}
+.btn-buscar:disabled{opacity:.35;cursor:not-allowed;}
+.btn-row2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;}
+.btn-sm{padding:9px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid;transition:.15s;font-family:'Inter',sans-serif;}
+.btn-nuevo{background:rgba(100,200,255,.08);border-color:rgba(100,200,255,.2);color:#66CCFF;}
+.btn-nuevo:hover{background:rgba(100,200,255,.18);}
+.btn-silenciar{background:rgba(255,100,100,.08);border-color:rgba(255,100,100,.2);color:#FF8888;}
+.btn-silenciar:hover{background:rgba(255,100,100,.18);}
+.btn-reset-all{width:100%;padding:9px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,100,100,.25);background:rgba(255,100,100,.07);color:rgba(255,100,100,.6);transition:.15s;font-family:'Inter',sans-serif;margin-bottom:6px;}
+.btn-reset-all:hover{color:#ff8888;background:rgba(255,100,100,.15);}
+.btn-limpiar{width:100%;padding:9px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.35);transition:.15s;font-family:'Inter',sans-serif;}
+.btn-limpiar:hover{color:#fff;background:rgba(255,255,255,.1);}
+.btn-siren{width:100%;padding:12px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(255,50,50,.5);background:rgba(255,30,30,.15);color:#FF5555;transition:.15s;font-family:'Inter',sans-serif;margin-bottom:6px;letter-spacing:.5px;}
+.btn-siren:hover{background:rgba(255,30,30,.28);}
+.btn-siren:disabled{opacity:.35;cursor:not-allowed;}
+.btn-demo{width:100%;padding:9px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(100,200,100,.2);background:rgba(100,200,100,.07);color:rgba(100,200,100,.6);transition:.15s;font-family:'Inter',sans-serif;margin-top:8px;}
+.btn-demo:hover{color:#8eff8e;background:rgba(100,200,100,.15);}
+.tts-test-row{display:flex;gap:6px;margin-top:8px;}
+.tts-test-row input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 10px;color:#fff;font-size:12px;font-family:'Inter',sans-serif;outline:none;}
+.tts-test-row input:focus{border-color:rgba(255,208,0,.4);}
+.btn-tts{padding:7px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,208,0,.3);background:rgba(255,208,0,.1);color:#FFD000;white-space:nowrap;font-family:'Inter',sans-serif;transition:.15s;}
+.btn-tts:hover{background:rgba(255,208,0,.2);}
+.status{font-size:11px;text-align:center;margin-top:8px;min-height:16px;color:rgba(255,255,255,.3);}
+.status.ok{color:#4ade80;}.status.err{color:#f87171;}.status.loading{color:rgba(255,185,0,.7);}
 </style>
 </head>
 <body>
 
-<h1>📡 Chat Reader — Fuente única</h1>
-<div class="sub">Lee YouTube + Kick + Twitch. Todos los widgets leen de aquí.</div>
+<h1>🎤 Representante del Stream</h1>
+<div class="sub">Selecciona un representante del chat y activa su TTS</div>
 
-<div id="bigStatus"></div>
+<!-- FIX: Banner demo visible para no confundirse en stream real -->
+<div class="demo-warning" id="demoWarning">
+  ⚠️ MODO PRUEBA ACTIVO — Los datos del chat son FALSOS
+</div>
+
+<div id="readerStatus" class="reader-status reader-err">⚠️ Chat Reader no conectado</div>
+
+<div class="rep-card" id="repCard">
+  <div class="rep-name" id="repName">—</div>
+  <div class="rep-src" id="repSrc">YOUTUBE</div>
+  <div class="rep-last" id="repLast">Esperando mensaje...</div>
+  <!-- FIX: mostrar hace cuánto fue seleccionado + aviso de auto-clear -->
+  <div class="rep-timer" id="repTimer"></div>
+</div>
 
 <div class="section">
-  <div class="sec-title">YouTube</div>
-  <label>Channel ID</label>
-  <input type="password" id="channelId" placeholder="UCxxxxxxx...">
-  <div class="saved" id="savedCh">✓ Guardado</div>
+  <div class="section-title">Candidatos activos</div>
+  <div class="window-row">
+    <span class="window-label">Ventana:</span>
+    <div class="window-btns">
+      <button class="wbtn" onclick="setWindow(30,this)">30s</button>
+      <button class="wbtn on" onclick="setWindow(60,this)">1min</button>
+      <button class="wbtn" onclick="setWindow(90,this)">90s</button>
+      <button class="wbtn" onclick="setWindow(120,this)">2min</button>
+    </div>
+  </div>
+  <div class="window-row" style="margin-top:8px;">
+    <span class="window-label">Candidatos:</span>
+    <div class="window-btns">
+      <button class="wbtn" id="btnTodos" onclick="setSubs(false,this)" style="background:rgba(255,185,0,.15);border-color:rgba(255,185,0,.35);color:#FFD000;">Todos</button>
+      <button class="wbtn" id="btnSubs" onclick="setSubs(true,this)">⭐ Solo suscritos</button>
+    </div>
+  </div>
   <div class="conn-row">
     <span class="cbadge cb-yt" id="dotYT">▶ YouTube</span>
     <span class="cbadge cb-kick" id="dotKick">⚡ Kick</span>
-    <span class="cbadge cb-twitch" id="dotTwitch">🟣 Twitch</span>
-    <span class="cbadge cb-tiktok" id="dotTiktok" onclick="toggleTiktok()" style="cursor:pointer;" title="Clic para activar/desactivar TikTok">🎵 TikTok</span>
+    <span class="cbadge" style="background:rgba(145,70,255,.1);color:#9146FF;border:1px solid rgba(145,70,255,.25);" id="dotTwitch">🟣 Twitch</span>
+    <span class="cbadge" style="background:rgba(255,0,80,.1);color:#ff0050;border:1px solid rgba(255,0,80,.25);" id="dotTiktok">🎵 TikTok</span>
   </div>
-  <button class="power-btn off" id="powerBtn" onclick="togglePower()">
-    <span id="powerIcon">⏻</span>
-    <span id="powerText">DESCONECTADO — Toca para conectar</span>
-  </button>
-  <div class="btn-row">
-    <button class="btn-sm btn-force" onclick="forceReconnect()">↺ Reconectar</button>
+  <div class="candidates">
+    <div class="cand-count" id="candCount">0 personas activas en el chat</div>
+    <div class="cand-list" id="candList"></div>
   </div>
 </div>
 
-<div class="section">
-  <div class="sec-title">Actividad</div>
-  <div class="stats">
-    <div class="stat"><div class="stat-num" id="statMsg">0</div><div class="stat-lbl">Mensajes</div></div>
-    <div class="stat"><div class="stat-num" id="statUsers">0</div><div class="stat-lbl">Usuarios</div></div>
-    <div class="stat"><div class="stat-num" id="statKey">1</div><div class="stat-lbl">API Key</div></div>
-  </div>
-  <!-- Contador de votos de encuesta activa -->
-  <div id="voteStatBar" style="display:none;margin-top:8px;background:rgba(255,185,0,.06);border:1px solid rgba(255,185,0,.15);border-radius:8px;padding:6px 10px;font-size:10px;color:rgba(255,185,0,.7);font-weight:700;letter-spacing:.5px;">
-    🗳️ ENCUESTA: <span id="statVoteA">0</span>A — <span id="statVoteB">0</span>B — <span id="statVoteC" style="display:none">0</span><span id="labelC" style="display:none">C — </span><span id="statVoteD" style="display:none">0</span><span id="labelD" style="display:none">D — </span>Total: <span id="statVoteTotal">0</span>
-  </div>
-  <div class="log" id="logEl"></div>
+<button class="btn-siren" id="btnSiren" onclick="activarModVip()">🚨 ACTIVAR MODO VIP — Representante Suscriptor</button>
+<div style="display:flex;gap:5px;margin-bottom:6px;">
+  <input id="palabraInput" placeholder="Palabra (vacío = yo)" maxlength="20"
+    style="flex:1;padding:9px;border-radius:9px;font-size:13px;font-weight:700;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);
+    color:#FFD000;font-family:'Inter',sans-serif;text-transform:uppercase;outline:none;">
+</div>
+<div id="sugerencia" style="font-size:10px;color:rgba(255,255,255,.35);margin-bottom:6px;"></div>
+
+<button class="btn-main btn-buscar" id="btnBuscar" onclick="buscarRep()">🎲 BUSCAR REPRESENTANTE</button>
+
+<div style="display:flex;align-items:center;gap:6px;margin:6px 0 4px;font-size:11px;color:rgba(255,255,255,.45);">
+  <span>⏱️ Captura:</span>
+  <button class="btn-cap" id="cap10" onclick="setCaptura(10)">10s</button>
+  <button class="btn-cap" id="cap15" onclick="setCaptura(15)">15s</button>
+  <button class="btn-cap" id="cap20" onclick="setCaptura(20)">20s</button>
+  <button class="btn-cap" id="cap30" onclick="setCaptura(30)">30s</button>
 </div>
 
-<div class="status-bar" id="statusBar">Ingresa tu Channel ID y conecta</div>
+<!-- ══ Control de Música 1vs1 — justo debajo del rep seleccionado ══ -->
+<div style="display:flex;align-items:center;gap:8px;margin:8px 0 4px;">
+  <button id="musicBtn" onclick="toggleMusic()" style="flex:1;padding:9px;border-radius:9px;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;border:1px solid rgba(255,208,0,.3);background:rgba(255,208,0,.1);color:#FFD000;transition:.15s;white-space:nowrap;">🎵 Música</button>
+  <input type="range" id="musicVol" min="0" max="100" value="65" style="flex:1;accent-color:#FFD000;" oninput="updateMusicVol(this.value)">
+  <span id="musicVolNum" style="font-size:11px;font-weight:700;color:#FFD000;min-width:32px;text-align:right;">65%</span>
+</div>
+
+<div class="btn-row2">
+  <button class="btn-sm btn-nuevo" onclick="buscarRep()">🔄 Nuevo rep</button>
+  <button class="btn-sm btn-silenciar" onclick="silenciarTTS()">🔇 Silenciar TTS</button>
+</div>
+<button class="btn-reset-all" onclick="resetTodo()">🔄 Reset completo — limpiar todo</button>
+<button class="btn-limpiar" onclick="limpiarRep()">✕ Quitar representante</button>
+<button class="btn-demo" onclick="modoDemo()">🧪 Modo prueba (sin stream)</button>
+  <button class="btn-demo" onclick="testVipDirecto()" style="background:rgba(255,180,0,.1);border-color:rgba(255,180,0,.3);color:rgba(255,180,0,.8);margin-top:4px;">⭐ TEST VIP directo (saltarse todo)</button>
+<div id="pastRepsCount" style="font-size:10px;color:rgba(248,113,113,.6);text-align:center;margin-top:4px;min-height:14px;"></div>
+<button onclick="resetPastReps()" style="width:100%;padding:5px;border-radius:7px;font-size:10px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;background:transparent;border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.25);margin-top:2px;">♻️ Reiniciar lista de exclusión</button>
+<div class="tts-test-row">
+  <input type="text" id="ttsTestInput" placeholder="Escribe un mensaje de prueba..." />
+  <button class="btn-tts" onclick="testTTS()">🔊 Probar voz</button>
+</div>
+
+<div class="status" id="statusBar">Abre el Chat Reader primero</div>
 
 <script>
-const API_KEYS = [
-  'AIzaSyCeQDuKLiY8G5GO0Vezm0tfZwsezfLpdME',
-  'AIzaSyDqlaHU156M6ilgaFaabHmQort4gMLIzEs',
-  'AIzaSyBTaPw7pPv1X78X_Wif6_wMGJDmg8xpi1w',
-  'AIzaSyBQEc3IlQHgemp1-wX8TwRnmIU0s4Ti004',
-  'AIzaSyD51Nwd1mMiLo8RfrQBiPdXi1J0ejNkHOQ',
-  'AIzaSyAivMGIzQtJozYnrdRpfOMZaAtcAQP0BaE'
-];
-const KICK_ROOM_ID    = '6043540';
-const TWITCH_CHANNEL  = 'sdsam';
+const LS_REP = 'rep_state';
+const LS_MSG = 'rep_message';
 
-let twitchWs = null, twitchReconnectTimer = null;
+let windowSecs  = 60;
+let soloSubs    = false;
+let currentRep  = null;
+let recentUsers = {};
 
-const LS_CHAT   = 'chat_messages';
-const LS_USERS  = 'chat_users';
-const LS_STATUS = 'chat_status';
-const LS_QUEUE  = 'chat_queue';
-const LS_CHATID = 'yt_chat_id';
-const CACHE_TTL = 8 * 60 * 60 * 1000;
+// pastReps — solo en memoria del stream actual
+let pastReps = new Set();
+function savePastReps(){} // no-op, sin persistencia
 
-let keyIdx = 0, ytChatId = null, ytNextToken = '';
-let totalMsg = 0, connected = false;
-let pollTimer = null, reconnectTimer = null, lastPollSuccess = 0;
-let lastMsgPublishedAt = '';
+// FIX: timeout automático para rep (45 min) — evita que quede pegado indefinidamente
+const REP_AUTO_CLEAR_MS = 45 * 60 * 1000;
+let repAutoTimer   = null;
+let repStartTime   = 0;
+let repTimerTicker = null;
 
-// ══ pushMessage — mensajes individuales (Kick / Twitch) ══
-function pushMessage(userId, username, text, src, isMember) {
-  if(!text) return;
-  const msg = { userId, username, text, src, isMember:!!isMember, ts:Date.now() };
-  batchPushMessages([msg]);
-}
-
-// ══ batchPushMessages — lote completo, 1 sola escritura ══
-function batchPushMessages(msgs) {
-  if(!msgs.length) return;
-  const now = Date.now();
-
-  // Último mensaje para rep-control
-  const last = msgs[msgs.length - 1];
-  localStorage.setItem(LS_CHAT, JSON.stringify(last));
-
-  // Queue (para rep-control y compatibilidad)
-  let queue = [];
-  try { queue = JSON.parse(localStorage.getItem(LS_QUEUE) || '[]'); } catch(e) {}
-  queue.push(...msgs);
-  if(queue.length > 1200) queue = queue.slice(-1200);
-  localStorage.setItem(LS_QUEUE, JSON.stringify(queue));
-
-  // Usuarios activos — TTL 45min, max 1500
-  let users = {};
-  try { users = JSON.parse(localStorage.getItem(LS_USERS) || '{}'); } catch(e) {}
-  for(const msg of msgs) {
-    // Solo guardar campos esenciales (no guardar text para ahorrar RAM)
-    users[msg.userId] = { username:msg.username, src:msg.src, lastSeen:now, isMember:!!msg.isMember };
+// ══ Monitorear Chat Reader ══
+setInterval(()=>{
+  const cs = JSON.parse(localStorage.getItem('chat_status')||'{}');
+  const el = document.getElementById('readerStatus');
+  if(cs.ytConnected){
+    el.className='reader-status reader-ok';
+    el.textContent='🟢 Chat Reader activo — key '+(cs.keyIdx+1||1)+'/6';
+    document.getElementById('dotYT').classList.add('on');
+    if(cs.kickConnected) document.getElementById('dotKick').classList.add('on');
+    if(cs.twitchConnected) document.getElementById('dotTwitch').classList.add('on');
+    else document.getElementById('dotTwitch').classList.remove('on');
+    // TikTok — detectar via yo_pool reciente
+    const yoPool = JSON.parse(localStorage.getItem('yo_pool')||'{}');
+    const hasTiktok = Object.values(yoPool).some(u=>u.src==='tiktok'&&Date.now()-u.ts<120000);
+    document.getElementById('dotTiktok').classList.toggle('on', hasTiktok);
+  } else {
+    el.className='reader-status reader-err';
+    el.textContent='⚠️ Chat Reader no conectado — ábrelo primero';
   }
-  const cutoff = now - 45 * 60 * 1000; // 45 minutos
-  for(const uid in users) { if(users[uid].lastSeen < cutoff) delete users[uid]; }
-  // Cap: máximo 1500 usuarios (quitar los más antiguos)
-  const userEntries = Object.entries(users);
-  if(userEntries.length > 1500){
-    userEntries.sort((a,b)=>b[1].lastSeen-a[1].lastSeen);
-    users = Object.fromEntries(userEntries.slice(0,1500));
-  }
-  localStorage.setItem(LS_USERS, JSON.stringify(users));
+}, 1000);
 
-  // ══ Pool de "yo" — acepta yo, yoooo, yyyoo, YO!!, etc. ══
-  const YO_REGEX = /^\s*y+o+\s*[!.,~¡]*\s*$/i;
-  // Si ya hay un representante activo, NO seguir acumulando yo_pool (reduce delay)
-  let repActivo = false;
-  try {
-    const rs = JSON.parse(localStorage.getItem('rep_state')||'{}');
-    repActivo = !!(rs.repUserId && !rs.clear);
-  } catch(e) {}
-  let yoPool = {};
-  try { yoPool = JSON.parse(localStorage.getItem('yo_pool') || '{}'); } catch(e) {}
-  if(!repActivo){
-    for(const msg of msgs) {
-      if(YO_REGEX.test((msg.text||'').trim())){
-        yoPool[msg.userId] = { username:msg.username, src:msg.src, isMember:!!msg.isMember, ts:now };
-      }
-    }
-  }
-  // Limpiar yo_pool: quitar entradas de más de 10 minutos + cap 1500
-  const yoCutoff = now - 10*60*1000;
-  for(const uid in yoPool){ if(yoPool[uid].ts < yoCutoff) delete yoPool[uid]; }
-  const yoEntries = Object.entries(yoPool);
-  if(yoEntries.length > 1500){
-    yoEntries.sort((a,b)=>b[1].ts-a[1].ts);
-    yoPool = Object.fromEntries(yoEntries.slice(0,1500));
-  }
-  localStorage.setItem('yo_pool', JSON.stringify(yoPool));
-
-  // UI
-  totalMsg += msgs.length;
-  document.getElementById('statMsg').textContent = totalMsg;
-  document.getElementById('statUsers').textContent = Object.keys(users).length;
-  addLog(last.username, last.text, last.src);
-  saveStatus(true);
-
-  // ══ CONTEO DE VOTOS EN LA FUENTE ══
-  // Los votos se cuentan aquí, antes de cualquier queue.
-  // Con 2000 mensajes por poll, ningún voto se pierde.
-  countVotesFromBatch(msgs);
-}
-
-// ══ countVotesFromBatch — núcleo del nuevo sistema de votos ══
-// FIX 1: regex más amplio — captura "aa", "aaa", "a!", "!a!", "A!!", etc.
-// FIX 2: escribe vA/vB en clave separada (poll_votes_delta) para evitar
-//         race condition con save() de poll-control que sobreescribe poll_state.
-function countVotesFromBatch(msgs) {
-  try {
-    const pollRaw = localStorage.getItem('poll_state');
-    if(!pollRaw) return;
-    const poll = JSON.parse(pollRaw);
-    if(!poll.active) return;
-    if(poll.timerEnd > 0 && Date.now() > poll.timerEnd) return;
-
-    let voters = {};
-    try { voters = JSON.parse(localStorage.getItem('poll_voters') || '{}'); } catch(e) {}
-
-    const numOpts = poll.numOpts || 2;
-    const isComodin = numOpts === 10;
-
-    // Modo comodines: votos por número 1-9
-    if(isComodin){
-      const deltas = {};
-      for(let i=1;i<=10;i++) deltas[String(i)]=0;
-
-      for(const msg of msgs){
-        const txt=(msg.text||'').trim();
-        const uid=msg.userId;
-        if(!uid||voters[uid]) continue;
-        const m=txt.match(/^([1-9]|10)$/);
-        if(m){ voters[uid]=m[0]; deltas[m[0]]++; }
-      }
-
-      const hasVotes=Object.values(deltas).some(v=>v>0);
-      if(!hasVotes) return;
-
-      let delta={};
-      try{ delta=JSON.parse(localStorage.getItem('poll_vote_delta')||'{}'); }catch(e){}
-      for(let i=1;i<=10;i++){
-        const k=String(i);
-        delta[k]=(delta[k]||0)+deltas[k];
-      }
-      delta.ts=Date.now();
-      localStorage.setItem('poll_vote_delta', JSON.stringify(delta));
-      localStorage.setItem('poll_voters', JSON.stringify(voters));
-
-      try{
-        const latest=JSON.parse(localStorage.getItem('poll_state')||'{}');
-        if(latest.active){
-          for(let i=1;i<=10;i++){
-            const k='v'+i;
-            latest[k]=(latest[k]||0)+deltas[String(i)];
-          }
-          localStorage.setItem('poll_state',JSON.stringify(latest));
-        }
-      }catch(e){}
-      return;
-    }
-
-    // Modo normal: votos A/B/C/D
-    const isVoteA = txt => /^!*a+!*$/i.test(txt);
-    const isVoteB = txt => /^!*b+!*$/i.test(txt);
-    const isVoteC = txt => /^!*c+!*$/i.test(txt);
-    const isVoteD = txt => /^!*d+!*$/i.test(txt);
-
-    let dA=0, dB=0, dC=0, dD=0;
-    for(const msg of msgs) {
-      const txt = (msg.text || '').trim();
-      const uid = msg.userId;
-      if(!uid || voters[uid]) continue;
-      if(isVoteA(txt))                        { voters[uid]='A'; dA++; }
-      else if(isVoteB(txt))                   { voters[uid]='B'; dB++; }
-      else if(numOpts>=3 && isVoteC(txt))     { voters[uid]='C'; dC++; }
-      else if(numOpts>=4 && isVoteD(txt))     { voters[uid]='D'; dD++; }
-    }
-
-    if(dA===0 && dB===0 && dC===0 && dD===0) return;
-
-    let delta={vA:0,vB:0,vC:0,vD:0,ts:0};
-    try{ delta=JSON.parse(localStorage.getItem('poll_vote_delta')||'{"vA":0,"vB":0,"vC":0,"vD":0,"ts":0}'); }catch(e){}
-    delta.vA+=dA; delta.vB+=dB; delta.vC+=dC; delta.vD+=dD;
-    delta.ts=Date.now();
-    localStorage.setItem('poll_vote_delta', JSON.stringify(delta));
-    localStorage.setItem('poll_voters', JSON.stringify(voters));
-
-    try{
-      const latest=JSON.parse(localStorage.getItem('poll_state')||'{}');
-      if(latest.active){
-        latest.vA=(latest.vA||0)+dA; latest.vB=(latest.vB||0)+dB;
-        latest.vC=(latest.vC||0)+dC; latest.vD=(latest.vD||0)+dD;
-        localStorage.setItem('poll_state',JSON.stringify(latest));
-      }
-    }catch(e){}
-  } catch(e) {}
-}
-
-// ══ Deduplicación por ID de mensaje (no por timestamp) ══
-// El bug original: publishedAt <= lastMsgPublishedAt descartaba TODOS los mensajes
-// del mismo segundo. Con 1400 viewers votando "a" al mismo tiempo, solo 1 pasaba.
-// Ahora usamos el ID único de cada mensaje — correcto y sin pérdidas.
-const MAX_SEEN = 3000;
-let seenMsgIds = new Set();
-
-function isDuplicate(msgId) {
-  if(!msgId) return false;
-  if(seenMsgIds.has(msgId)) return true;
-  seenMsgIds.add(msgId);
-  // Limpiar cuando crece mucho — eliminar 500 más viejos
-  if(seenMsgIds.size > MAX_SEEN) {
-    const iter = seenMsgIds.values();
-    for(let i = 0; i < 500; i++) seenMsgIds.delete(iter.next().value);
-  }
-  return false;
-}
-
-function addLog(username, text, src) {
-  const el = document.getElementById('logEl');
-  const item = document.createElement('div');
-  item.className = 'log-item';
-  item.innerHTML = `<span class="src-${src}">${src.toUpperCase()}</span> <b>${username}:</b> ${text.substring(0,40)}`;
-  el.insertBefore(item, el.firstChild);
-  if(el.children.length > 20) el.removeChild(el.lastChild);
-}
-
-function saveStatus(ytOn) {
-  localStorage.setItem(LS_STATUS, JSON.stringify({
-    ytConnected: ytOn,
-    kickConnected: document.getElementById('dotKick').classList.contains('on'),
-    twitchConnected: document.getElementById('dotTwitch').classList.contains('on'),
-    keyIdx,
-    ts: Date.now()
-  }));
-}
-
-// ══ Diagnóstico — muestra votos detectados en tiempo real ══
+// ══ Leer usuarios del chat-reader ══
 setInterval(()=>{
   try{
-    const pollRaw = localStorage.getItem('poll_state');
-    const bar = document.getElementById('voteStatBar');
-    if(!pollRaw){ bar.style.display='none'; return; }
-    const poll = JSON.parse(pollRaw);
-    if(!poll.active){ bar.style.display='none'; return; }
-
-    bar.style.display='block';
-    const numOpts = poll.numOpts || 2;
-    let delta = {vA:0,vB:0,vC:0,vD:0};
-    try{ delta = JSON.parse(localStorage.getItem('poll_vote_delta')||'{}'); }catch(e){}
-
-    document.getElementById('statVoteA').textContent = delta.vA||0;
-    document.getElementById('statVoteB').textContent = delta.vB||0;
-
-    if(numOpts>=3){
-      document.getElementById('statVoteC').style.display='inline';
-      document.getElementById('labelC').style.display='inline';
-      document.getElementById('statVoteC').textContent = delta.vC||0;
-    } else {
-      document.getElementById('statVoteC').style.display='none';
-      document.getElementById('labelC').style.display='none';
-    }
-    if(numOpts>=4){
-      document.getElementById('statVoteD').style.display='inline';
-      document.getElementById('labelD').style.display='inline';
-      document.getElementById('statVoteD').textContent = delta.vD||0;
-    } else {
-      document.getElementById('statVoteD').style.display='none';
-      document.getElementById('labelD').style.display='none';
-    }
-
-    const total=(delta.vA||0)+(delta.vB||0)+(delta.vC||0)+(delta.vD||0);
-    document.getElementById('statVoteTotal').textContent = total;
+    const raw = localStorage.getItem('chat_users');
+    if(!raw) return;
+    recentUsers = JSON.parse(raw);
   }catch(e){}
 }, 500);
 
-async function findChatId(channelId) {
-  let attempts = 0;
-  while(attempts < API_KEYS.length) {
-    setStatus(`🔍 Buscando stream... (key ${keyIdx+1}/${API_KEYS.length})`, 'loading');
-    try {
-      const sRes = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${API_KEYS[keyIdx]}`);
-      const sData = await sRes.json();
-      if(sData.error) {
-        if(sData.error.code === 403 || sData.error.code === 429) { rotateKey(); attempts++; continue; }
-        throw new Error(sData.error.message);
-      }
-      if(!sData.items?.length) throw new Error('No hay stream en vivo activo');
-      const videoId = sData.items[0].id.videoId;
-      const vRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${API_KEYS[keyIdx]}`);
-      const vData = await vRes.json();
-      const chatId = vData?.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
-      if(!chatId) throw new Error('No se pudo obtener el chat ID');
-      localStorage.setItem(LS_CHATID, JSON.stringify({ id:chatId, ts:Date.now() }));
-      return chatId;
-    } catch(e) {
-      if(attempts >= API_KEYS.length - 1) throw e;
-      attempts++;
+// ══ Escuchar mensajes del rep — escanea chat_queue, no chat_messages ══
+// ANTES: leía chat_messages (último mensaje). Con 1400 personas, el mensaje
+//        del rep se sobreescribía antes de que el interval de 100ms lo leyera.
+// AHORA: escanea chat_queue buscando mensajes del rep por userId.
+//        Con queue de 500 mensajes, ningún mensaje del rep se pierde.
+let lastRepQueueTs = 0;
+let lastQueueRaw = null;
+setInterval(()=>{
+  try{
+    if(!currentRep) return;
+    const raw = localStorage.getItem('chat_queue');
+    if(!raw) return;
+    if(raw === lastQueueRaw) return; // sin cambios: evitar parsear 500 msgs
+    lastQueueRaw = raw;
+    const queue = JSON.parse(raw);
+    // Buscar mensajes del rep más recientes que el último procesado
+    const repMsgs = queue.filter(m => m.userId === currentRep.userId && m.ts > lastRepQueueTs);
+    if(!repMsgs.length) return;
+    // Actualizar timestamp para no reprocesar
+    lastRepQueueTs = Math.max(...repMsgs.map(m => m.ts));
+    // Relayar el más reciente
+    const latest = repMsgs[repMsgs.length - 1];
+    relayMessage(latest.userId, latest.username, latest.text);
+  }catch(e){}
+}, 100);
+
+// ══ Actualizar candidatos ══
+setInterval(()=>{
+  const now = Date.now();
+  const active = Object.entries(recentUsers)
+    .filter(([_,u]) => now - u.lastSeen <= windowSecs * 1000)
+    .sort((a,b) => b[1].lastSeen - a[1].lastSeen);
+
+  document.getElementById('candCount').textContent =
+    active.length + ' persona' + (active.length===1?'':'s') + ' activas en el chat';
+
+  const list = document.getElementById('candList');
+  list.innerHTML = active.slice(0,12).map(([_,u]) =>
+    `<span class="cand-tag ${u.src}">${u.isMember?'⭐ ':''}${u.username}</span>`
+  ).join('');
+}, 1000);
+
+// FIX: ticker que muestra hace cuánto está activo el rep y avisa del auto-clear
+function startRepTicker(){
+  if(repTimerTicker) clearInterval(repTimerTicker);
+  repStartTime = Date.now();
+  repTimerTicker = setInterval(()=>{
+    if(!currentRep){ clearInterval(repTimerTicker); return; }
+    const elapsed = Date.now() - repStartTime;
+    const mins = Math.floor(elapsed / 60000);
+    const secs = Math.floor((elapsed % 60000) / 1000);
+    const remaining = Math.max(0, REP_AUTO_CLEAR_MS - elapsed);
+    const remMins = Math.floor(remaining / 60000);
+    const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+    const el = document.getElementById('repTimer');
+    if(remMins <= 5) {
+      el.textContent = `⏰ Activo ${timeStr} — auto-clear en ${remMins}min`;
+      el.style.color = 'rgba(255,100,100,.6)';
+    } else {
+      el.textContent = `Activo ${timeStr}`;
+      el.style.color = 'rgba(255,208,0,.4)';
     }
-  }
-  throw new Error('Todas las keys agotadas al buscar stream');
+  }, 1000);
 }
 
-async function connect() {
-  const channelId = document.getElementById('channelId').value.trim();
-  if(!channelId) { setStatus('⚠️ Necesitas el Channel ID', 'err'); return; }
-  setBigStatus('', '');
-
-  try {
-    let cachedId = null;
-    try {
-      const raw = localStorage.getItem(LS_CHATID);
-      if(raw) {
-        const parsed = JSON.parse(raw);
-        const id = parsed?.id || parsed;
-        const ts = parsed?.ts || 0;
-        const age = Date.now() - ts;
-        if(typeof id === 'string' && id && age < CACHE_TTL) cachedId = id;
-        else if(age >= CACHE_TTL) { localStorage.removeItem(LS_CHATID); setStatus('⚠️ Caché expirado — buscando stream nuevo...', 'loading'); }
-      }
-    } catch(e) { localStorage.removeItem(LS_CHATID); }
-
-    ytChatId = cachedId || await findChatId(channelId);
-    if(cachedId) setStatus(`⚡ Chat ID en caché — key ${keyIdx+1}/${API_KEYS.length}`, 'loading');
-
-    localStorage.setItem('yt_channel_id', channelId);
-    document.getElementById('savedCh').style.display = 'block';
-    document.getElementById('dotYT').classList.add('on');
-    connected = true;
-    lastPollSuccess = Date.now();
-    setBigStatus('🟢 CONECTADO — EN VIVO', 'ok');
-    setConnectedUI();
-    saveStatus(true);
-    startPolling();
-    connectKick();
-    connectTwitch();
-    startWatchdog();
-  } catch(e) {
-    setStatus('❌ ' + e.message, 'err');
-    setBigStatus('❌ ' + e.message, 'err');
-  }
+function setWindow(s, btn){
+  windowSecs=s;
+  document.querySelectorAll('.wbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
 }
 
-function startPolling() {
-  if(pollTimer) clearTimeout(pollTimer);
-  pollYouTube();
+function setSubs(val, btn){
+  soloSubs=val;
+  document.querySelectorAll('#btnTodos, #btnSubs').forEach(b=>{
+    b.style.background=''; b.style.borderColor=''; b.style.color='';
+  });
+  btn.style.background='rgba(255,185,0,.15)';
+  btn.style.borderColor='rgba(255,185,0,.35)';
+  btn.style.color='#FFD000';
 }
 
-async function pollYouTube() {
-  if(!ytChatId) return;
-  try {
-    const url = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${ytChatId}&part=snippet,authorDetails&maxResults=2000&key=${API_KEYS[keyIdx]}${ytNextToken ? '&pageToken='+ytNextToken : ''}`;
-    const res  = await fetch(url);
-    const data = await res.json();
+let capturando = false;
 
-    if(data.error) {
-      const reason = data.error.errors?.[0]?.reason || '';
-      if(reason === 'quotaExceeded' || data.error.code === 403 || data.error.code === 429) {
-        rotateKey(); pollTimer = setTimeout(pollYouTube, 2000); return;
-      }
-      if(reason === 'liveChatNotFound' || reason === 'liveChatEnded') {
-        localStorage.removeItem(LS_CHATID);
-        seenMsgIds = new Set();
-        setConnectedUI(false);
-        setBigStatus('⏹ Stream terminado', 'err');
-        setStatus('⏹ Stream terminado — chat ID inválido', 'err');
-        return;
-      }
-      pollTimer = setTimeout(pollYouTube, 5000); return;
+let capturaSegs = parseInt(localStorage.getItem('rep_captura_segs')||'15',10) || 15;
+function setCaptura(s){
+  capturaSegs = s;
+  localStorage.setItem('rep_captura_segs', String(s));
+  [10,15,20,30].forEach(n=>{
+    const b=document.getElementById('cap'+n);
+    if(b) b.className = 'btn-cap' + (n===s ? ' on' : '');
+  });
+}
+
+// ══ Palabra de convocatoria ══
+function palabraActual(){
+  const el=document.getElementById('palabraInput');
+  return el ? el.value.trim().toUpperCase() : '';
+}
+
+function sugerirTiempo(){
+  const p=palabraActual();
+  const el=document.getElementById('sugerencia');
+  if(!el) return;
+  if(!p){ el.textContent='Sin palabra: se usa "yo" (15s recomendado)'; return; }
+  const n=p.length;
+  const rec = n<=6 ? 15 : (n<=10 ? 20 : 25);
+  el.textContent = `"${p}" — ${n} letras · ${rec}s recomendado`;
+}
+
+function buscarRep(){
+  if(capturando) return; // evitar doble clic
+  capturando = true;
+
+  // Vaciar yo_pool viejo para arrancar la captura desde cero
+  localStorage.setItem('yo_pool', JSON.stringify({}));
+
+  const startCapture = Date.now();
+  const CAPTURE_MS = capturaSegs * 1000; // configurable desde los botones del panel
+
+  // Marca el momento de inicio — solo cuentan los "yo" DESPUÉS de este instante
+  const btn = document.getElementById('btnBuscar');
+  if(btn){ btn.disabled = true; }
+
+  // Countdown visual
+  // Avisar al overlay: palabra + countdown
+  const _pal = palabraActual();
+  try{
+    const _st = JSON.parse(localStorage.getItem(LS_REP)||'{}');
+    _st.convocaPalabra = _pal || 'YO';
+    _st.convocaSegs    = capturaSegs;
+    _st.convocaTs      = Date.now();
+    _st.ts             = Date.now();
+    localStorage.setItem(LS_REP, JSON.stringify(_st));
+  }catch(e){}
+  // Decirle al chat-reader qué palabra aceptar
+  localStorage.setItem('palabra_clave', JSON.stringify({palabra:_pal, ts:Date.now()}));
+
+  let remaining = capturaSegs;
+  setStatus(`🎬 Capturando "yo"... ${remaining}s`, 'loading');
+  const countInt = setInterval(()=>{
+    remaining--;
+    // Contar cuántos van escribiendo en vivo
+    let live = {};
+    try{ live = JSON.parse(localStorage.getItem('yo_pool')||'{}'); }catch(e){}
+    const nuevos = Object.entries(live).filter(([id,u])=>u.ts>=startCapture&&!pastReps.has(id)).length;
+    if(remaining>0) setStatus(`🎬 Capturando "yo"... ${remaining}s — ${nuevos} personas`, 'loading');
+  }, 1000);
+
+  // Al terminar la captura, sortear
+  setTimeout(()=>{
+    clearInterval(countInt);
+    capturando = false;
+    if(btn){ btn.disabled = false; }
+
+    const now = Date.now();
+    let yoPool = {};
+    try{ yoPool = JSON.parse(localStorage.getItem('yo_pool')||'{}'); }catch(e){}
+
+    // Solo los "yo" que llegaron DESPUÉS de presionar el botón, sin repetir de este stream
+    let active = Object.entries(yoPool)
+      .filter(([id,u])=>u.ts>=startCapture && !pastReps.has(id));
+
+    if(active.length===0){
+      // Fallback: si nadie escribió en esos 4s, tomar los últimos 20 segundos
+      active = Object.entries(yoPool)
+        .filter(([id,u])=>now-u.ts<=20000 && !pastReps.has(id));
     }
 
-    lastPollSuccess = Date.now();
-    ytNextToken = data.nextPageToken || ytNextToken;
-    document.getElementById('statKey').textContent = keyIdx + 1;
-    setStatus(`🟢 YouTube activo — key ${keyIdx+1}/${API_KEYS.length}`, 'ok');
-    setBigStatus('🟢 CONECTADO — EN VIVO', 'ok');
-    setConnectedUI(true);
-    saveStatus(true);
-
-    const batch = [];
-    for(const item of (data.items || [])) {
-      const msgId    = item.id;
-      const uid      = item.authorDetails?.channelId;
-      const name     = item.authorDetails?.displayName || 'Usuario';
-      const text     = item.snippet?.displayMessage || '';
-      // isMember = solo suscriptores/miembros pagando (isChatSponsor)
-      // isChatModerator y isChatOwner NO son miembros pagados
-      const isMember = !!(item.authorDetails?.isChatSponsor);
-      if(!uid || !text) continue;
-      if(isDuplicate(msgId)) continue;   // ← ID único, nunca pierde mensajes del mismo segundo
-      batch.push({ userId:uid, username:name, text, src:'yt', isMember:!!isMember, ts:Date.now() });
+    if(active.length===0){
+      setStatus('⚠️ Nadie escribió "yo" en la ventana', 'err');
+      return;
     }
-    if(batch.length) batchPushMessages(batch);
 
-    // ══ Polling adaptativo: más rápido durante encuestas activas ══
-    // Durante los 30s de una encuesta, los votos llegan en ráfaga.
-    // Bajamos el intervalo a ~1.5s para capturar más mensajes en menos tiempo.
-    // Fuera de encuestas, mantenemos el intervalo normal para ahorrar quota.
-    let interval = Math.max(3000, data.pollingIntervalMillis || 3000);
-    try {
-      const ps = JSON.parse(localStorage.getItem('poll_state') || '{}');
-      if(ps.active && ps.timerEnd && ps.timerEnd > Date.now()) {
-        interval = 1500;
-      }
-    } catch(e) {}
-    pollTimer = setTimeout(pollYouTube, interval);
-  } catch(e) {
-    pollTimer = setTimeout(pollYouTube, 5000);
-  }
+    // Sorteo verdaderamente aleatorio entre TODOS los capturados
+    const [userId,user] = active[Math.floor(Math.random()*active.length)];
+    pastReps.add(userId); savePastReps();
+    updatePastRepsCount();
+    currentRep = {userId, username:user.username, src:user.src};
+    lastRepQueueTs = Date.now();
+
+    document.getElementById('repCard').classList.add('show');
+    document.getElementById('repName').textContent = user.username;
+    document.getElementById('repSrc').textContent =
+      user.src==='yt'?'▶ YOUTUBE':user.src==='kick'?'⚡ KICK':user.src==='tiktok'?'🎵 TIKTOK':'🟣 TWITCH';
+    document.getElementById('repLast').textContent = 'Esperando mensaje...';
+
+    const candidates = active.map(([_,u])=>u.username).slice(0,30);
+    localStorage.setItem(LS_REP, JSON.stringify({
+      ts:Date.now(), trigger:Date.now(), candidates,
+      chosen:user.username,
+      repUserId:userId, repUsername:user.username,
+      repIsMember:false, clear:0,
+    }));
+
+    armRepAutoTimer();
+    setStatus(`🎤 ${user.username} — sorteado entre ${active.length} personas`, 'ok');
+  }, CAPTURE_MS);
 }
 
-function rotateKey() {
-  const prev = keyIdx;
-  keyIdx = (keyIdx + 1) % API_KEYS.length;
-  document.getElementById('statKey').textContent = keyIdx + 1;
-  setStatus(`⚠️ Key ${prev+1} agotada → rotando a key ${keyIdx+1}`, 'loading');
-  saveStatus(connected);
-}
-
-function startWatchdog() {
-  if(reconnectTimer) clearInterval(reconnectTimer);
-  reconnectTimer = setInterval(() => {
-    if(!connected) return;
-    if(Date.now() - lastPollSuccess > 60000) {
-      setBigStatus('⚠️ Sin actividad — reconectando...', 'err');
-      setStatus('⚠️ Reconectando automáticamente...', 'loading');
-      lightReconnect();
-    }
-  }, 15000);
-}
-
-function lightReconnect() {
-  if(pollTimer) clearTimeout(pollTimer);
-  ytNextToken = '';
-  lastPollSuccess = Date.now();
-  if(ytChatId) { setStatus('🔄 Reiniciando polling...', 'loading'); pollYouTube(); }
-  else forceReconnect();
-}
-
-function forceReconnect() {
-  if(pollTimer) clearTimeout(pollTimer);
-  ytNextToken = ''; ytChatId = null; seenMsgIds = new Set();
-  localStorage.removeItem(LS_CHATID);
-  connect();
-}
-
-function togglePower() {
-  if(connected) {
-    connected = false; ytChatId = null;
-    if(pollTimer) clearTimeout(pollTimer);
-    if(reconnectTimer) clearInterval(reconnectTimer);
-    if(twitchWs) { try{ twitchWs.close(); }catch(e){} twitchWs = null; }
-    if(twitchReconnectTimer) { clearTimeout(twitchReconnectTimer); twitchReconnectTimer = null; }
-    document.getElementById('dotYT').classList.remove('on');
-    document.getElementById('dotKick').classList.remove('on');
-    document.getElementById('dotTwitch').classList.remove('on');
-    setConnectedUI(false);
-    setBigStatus('', '');
-    setStatus('Desconectado', '');
-    localStorage.setItem(LS_STATUS, JSON.stringify({ ytConnected:false, kickConnected:false, twitchConnected:false, keyIdx, ts:Date.now() }));
-  } else { connect(); }
-}
-
-function setConnectedUI(on=true) {
-  const btn = document.getElementById('powerBtn');
-  const text = document.getElementById('powerText');
-  if(on) { btn.className='power-btn on'; text.textContent='CONECTADO — Toca para desconectar'; }
-  else    { btn.className='power-btn off'; text.textContent='DESCONECTADO — Toca para conectar'; }
-}
-
-function connectKick() {
-  try {
-    Pusher.logToConsole = false;
-    const pusher  = new Pusher('32cbd69e4b950bf97679', { cluster:'us2', forceTLS:true, disableStats:true });
-    const channel = pusher.subscribe(`chatrooms.${KICK_ROOM_ID}.v2`);
-    channel.bind('pusher:subscription_succeeded', () => { document.getElementById('dotKick').classList.add('on'); saveStatus(connected); });
-    channel.bind('App\\Events\\ChatMessageEvent', (data) => {
-      const uid   = 'kick_' + (data?.sender?.id || '');
-      const name  = data?.sender?.username || 'Usuario';
-      const text  = data?.content || '';
-      const isSub = !!(data?.sender?.subscribed_for > 0 || data?.sender?.is_subscribed);
-      pushMessage(uid, name, text, 'kick', isSub);
-    });
-  } catch(e) {}
-}
-
-function connectTwitch() {
-  if(twitchReconnectTimer){ clearTimeout(twitchReconnectTimer); twitchReconnectTimer=null; }
-  if(twitchWs){ try{ twitchWs.close(); }catch(e){} }
-  try {
-    const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-    twitchWs = ws;
-    ws.onopen = () => {
-      ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
-      ws.send('NICK justinfan' + Math.floor(Math.random() * 99999));
-      ws.send(`JOIN #${TWITCH_CHANNEL}`);
-    };
-    ws.onmessage = (e) => {
-      const raw = e.data.trim();
-      if(raw.startsWith('PING')) { ws.send('PONG :tmi.twitch.tv'); return; }
-      if(raw.includes(`JOIN #${TWITCH_CHANNEL}`)) { document.getElementById('dotTwitch').classList.add('on'); saveStatus(connected); return; }
-      if(!raw.includes('PRIVMSG')) return;
-      let tags = {};
-      if(raw.startsWith('@')) {
-        const tagEnd = raw.indexOf(' ');
-        raw.slice(1, tagEnd).split(';').forEach(tag => { const eq=tag.indexOf('='); if(eq>-1) tags[tag.slice(0,eq)]=tag.slice(eq+1); });
-      }
-      const match = raw.match(/:(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :(.+)$/);
-      if(!match) return;
-      const username = match[1], text = match[2].trim();
-      if(!text || !username) return;
-      const isSub = tags['subscriber']==='1' || (tags['badges']||'').includes('subscriber') || (tags['badges']||'').includes('founder');
-      pushMessage('twitch_'+username, username, text, 'twitch', isSub);
-    };
-    ws.onclose = () => { document.getElementById('dotTwitch').classList.remove('on'); saveStatus(connected); if(connected) twitchReconnectTimer=setTimeout(connectTwitch,5000); };
-    ws.onerror = () => { ws.close(); };
-  } catch(e) { if(connected) twitchReconnectTimer=setTimeout(connectTwitch,8000); }
-}
-
-// ══ TikTok Bridge — lee mensajes del script local Node.js ══
-// Requiere tiktok-bridge.js corriendo en tu PC (node tiktok-bridge.js)
-// TikTok Bridge — tik.tools (node tiktok-bridge.js)
-// TikTok Bridge — tik.tools (node tiktok-bridge.js)
-const TIKTOK_BRIDGE_URL = 'http://localhost:3000/messages';
-const TIKTOK_CTRL_URL   = 'http://localhost:3000';
-let tiktokConnected = false;
-let tiktokEnabled   = false;
-let tiktokRetryTimer = null;
-let tiktokLastId = 0; // cursor: hasta qué id ya recibimos (evita perder mensajes)
-
-async function toggleTiktok(){
-  if(tiktokEnabled){
-    // Desactivar
-    try{ await fetch(TIKTOK_CTRL_URL+'/disable'); }catch(e){}
-    tiktokEnabled=false;
-    tiktokConnected=false;
-    const dot=document.getElementById('dotTiktok');
-    dot.classList.remove('on');
-    dot.textContent='🎵 TikTok';
-    dot.style.opacity='0.5';
-  } else {
-    // Activar
-    try{ await fetch(TIKTOK_CTRL_URL+'/enable'); }catch(e){}
-    tiktokEnabled=true;
-    const dot=document.getElementById('dotTiktok');
-    dot.textContent='🎵 TikTok ⏳';
-    dot.style.opacity='1';
-  }
-}
-
-async function pollTikTok() {
-  if(!tiktokEnabled){
-    tiktokRetryTimer = setTimeout(pollTikTok, 3000);
-    return;
-  }
-  try {
-    const res = await fetch(TIKTOK_BRIDGE_URL + '?since=' + tiktokLastId, { signal: AbortSignal.timeout(5000) });
-    if(!res.ok) throw new Error('status '+res.status);
-    const msgs = await res.json();
-    if(!tiktokConnected) {
-      tiktokConnected = true;
-      const dot=document.getElementById('dotTiktok');
-      dot.classList.add('on'); dot.textContent='🎵 TikTok ✅';
-      saveStatus(connected);
-    }
-    if(Array.isArray(msgs) && msgs.length > 0) {
-      batchPushMessages(msgs);
-      // Avanzar el cursor SOLO despues de procesarlos: si algo falla arriba,
-      // el bridge nos los vuelve a mandar en la siguiente vuelta
-      const maxId = Math.max(...msgs.map(m => m.id || 0));
-      if(maxId > tiktokLastId) tiktokLastId = maxId;
-    }
-  } catch(e) {
-    if(tiktokConnected) {
-      tiktokConnected = false;
-      const dot2=document.getElementById('dotTiktok');
-      dot2.classList.remove('on'); dot2.textContent='🎵 TikTok';
-      saveStatus(connected);
-    }
-  }
-  tiktokRetryTimer = setTimeout(pollTikTok, 2000);
-}
-pollTikTok();
-
-// ══ LIMPIEZA DE MEMORIA PERIÓDICA ══
-function limpiarMemoria(full=false){
+function activarModVip(){
   const now=Date.now();
-  // chat_users - quitar expirados
-  try{
-    let u=JSON.parse(localStorage.getItem('chat_users')||'{}');
-    const cutoff=now-45*60*1000;
-    Object.keys(u).forEach(k=>{if(u[k].lastSeen<cutoff)delete u[k];});
-    localStorage.setItem('chat_users',JSON.stringify(u));
-  }catch(e){}
-  // yo_pool - quitar expirados
-  try{
-    let y=JSON.parse(localStorage.getItem('yo_pool')||'{}');
-    const yoCutoff=now-10*60*1000;
-    Object.keys(y).forEach(k=>{if(y[k].ts<yoCutoff)delete y[k];});
-    localStorage.setItem('yo_pool',JSON.stringify(y));
-  }catch(e){}
-  // poll_voters - limpiar si no hay encuesta activa
-  try{
-    const ps=JSON.parse(localStorage.getItem('poll_state')||'{}');
-    if(!ps.active) localStorage.removeItem('poll_voters');
-  }catch(e){}
-  if(full){
-    // Limpieza completa - quitar todo menos lo esencial
-    localStorage.removeItem('poll_voters');
-    localStorage.removeItem('poll_vote_delta');
-    console.log('[SDSAM] Limpieza completa de memoria');
+
+  // Pool principal: subs activos en ventana, sin haber salido ya
+  let activeSubs=Object.entries(recentUsers)
+    .filter(([id,u])=>now-u.lastSeen<=windowSecs*1000&&u.isMember&&!pastReps.has(id));
+
+  // Si pool pequeño, ampliar a 3 minutos
+  if(activeSubs.length<3){
+    const expanded=Object.entries(recentUsers)
+      .filter(([id,u])=>now-u.lastSeen<=180*1000&&u.isMember&&!pastReps.has(id));
+    if(expanded.length>activeSubs.length) activeSubs=expanded;
   }
-  console.log('[SDSAM] Limpieza de memoria OK');
-}
-// Limpieza automática cada 3 minutos
-setInterval(()=>limpiarMemoria(false), 3*60*1000);
 
-function setBigStatus(msg, type) { const el=document.getElementById('bigStatus'); el.textContent=msg; el.className=type||''; }
-function setStatus(msg, type) { const el=document.getElementById('statusBar'); el.textContent=msg; el.className='status-bar '+(type||''); }
-
-(function(){
-  keyIdx = 0;
-  const c = localStorage.getItem('yt_channel_id') || '';
-  if(c) { document.getElementById('channelId').value=c; document.getElementById('savedCh').style.display='block'; }
-  try {
-    const raw = localStorage.getItem(LS_CHATID);
-    if(raw) {
-      const parsed = JSON.parse(raw);
-      const ts = parsed?.ts || 0;
-      const age = Date.now() - ts;
-      if(age < CACHE_TTL) { const mins=Math.round(age/60000); setStatus(`⚡ Chat ID en caché (hace ${mins}min) — toca para conectar`,'loading'); }
-      else setStatus('⚠️ Caché expirado — se buscará stream nuevo al conectar','loading');
+  // Si aún vacío, ignorar exclusiones
+  if(activeSubs.length===0){
+    activeSubs=Object.entries(recentUsers)
+      .filter(([_,u])=>now-u.lastSeen<=windowSecs*1000&&u.isMember);
+    if(activeSubs.length===0){
+      setStatus(`⚠️ Sin suscriptores activos en ${windowSecs}s — amplía la ventana de tiempo`,'err');
+      return;
     }
-  } catch(e) { localStorage.removeItem(LS_CHATID); }
-})();
+    pastReps.clear(); updatePastRepsCount();
+  }
+
+  const btn=document.getElementById('btnSiren');
+  btn.disabled=true;
+  btn.textContent='🚨 Activando...';
+  localStorage.setItem('rep_siren',JSON.stringify({ts:Date.now()}));
+  setStatus('🚨 Sirena activada — buscando suscriptor...','loading');
+
+  setTimeout(()=>{
+    try {
+      const [userId,user]=activeSubs[Math.floor(Math.random()*activeSubs.length)];
+      pastReps.add(userId); savePastReps(); updatePastRepsCount();
+      currentRep={userId, username:user.username, src:user.src};
+      lastRepQueueTs = Date.now();
+
+      document.getElementById('repCard').classList.add('show');
+      document.getElementById('repName').textContent='⭐ '+user.username;
+      document.getElementById('repSrc').textContent=user.src==='yt'?'▶ YOUTUBE':user.src==='kick'?'⚡ KICK':'🟣 TWITCH';
+      document.getElementById('repLast').textContent='Esperando mensaje...';
+
+      const nowInner=Date.now();
+      const candidates=Object.entries(recentUsers)
+        .filter(([_,u])=>nowInner-u.lastSeen<=Math.max(windowSecs,30)*1000&&u.isMember)
+        .map(([_,u])=>u.username).slice(0,25);
+
+      localStorage.setItem(LS_REP, JSON.stringify({
+        ts:Date.now(), trigger:Date.now(), candidates,
+        chosen:user.username,
+        repUserId:userId, repUsername:user.username,
+        repIsMember:true,
+        clear:0,
+      }));
+
+      armRepAutoTimer();
+      setStatus('⭐ '+user.username+' es el representante VIP','ok');
+
+    } catch(e) {
+      setStatus('⚠️ Error al seleccionar suscriptor','err');
+    } finally {
+      // FIX: garantizar que el botón siempre se reactive aunque haya error
+      btn.disabled=false;
+      btn.textContent='🚨 ACTIVAR MODO VIP — Representante Suscriptor';
+    }
+  }, 4200);
+}
+
+// FIX: armar el timer de auto-clear del rep
+function armRepAutoTimer(){
+  if(repAutoTimer) clearTimeout(repAutoTimer);
+  repAutoTimer = setTimeout(()=>{
+    if(currentRep){
+      limpiarRep();
+      setStatus('⏰ Representante auto-eliminado (45min)','loading');
+    }
+  }, REP_AUTO_CLEAR_MS);
+  startRepTicker();
+}
+
+function relayMessage(userId,username,text){
+  if(!text) return;
+  localStorage.setItem(LS_MSG,JSON.stringify({userId,username,text,ts:Date.now()}));
+  document.getElementById('repLast').textContent='"'+text.substring(0,80)+'"';
+}
+
+function silenciarTTS(){
+  localStorage.setItem(LS_MSG,JSON.stringify({userId:'__mute__',text:'',ts:Date.now()}));
+  setStatus('🔇 TTS silenciado','ok');
+  setTimeout(()=>setStatus('',''),2000);
+}
+
+function limpiarRep(){
+  currentRep=null;
+  lastRepQueueTs = 0; // resetear para que el próximo rep empiece desde cero
+  if(repAutoTimer){ clearTimeout(repAutoTimer); repAutoTimer=null; }
+  if(repTimerTicker){ clearInterval(repTimerTicker); repTimerTicker=null; }
+  document.getElementById('repTimer').textContent='';
+  localStorage.setItem('chat_demand','0');
+  document.getElementById('repCard').classList.remove('show');
+  const prev=JSON.parse(localStorage.getItem(LS_REP)||'{}');
+  localStorage.setItem(LS_REP,JSON.stringify({...prev,ts:Date.now(),repUserId:null,repUsername:null,clear:Date.now()}));
+  setStatus('Representante eliminado','');
+}
+
+function resetTodo(){
+  limpiarRep();
+  // FIX: ocultar banner demo al resetear
+  document.getElementById('demoWarning').style.display='none';
+  localStorage.removeItem('chat_users');
+  localStorage.removeItem('chat_messages');
+  recentUsers={};
+  setStatus('Reset completo','ok');
+  setTimeout(()=>setStatus('',''),2000);
+}
+
+function testTTS(){
+  if(!currentRep){setStatus('⚠️ Primero elige un representante','err');return;}
+  const text=document.getElementById('ttsTestInput').value.trim();
+  if(!text){setStatus('⚠️ Escribe algo para probar','err');return;}
+  localStorage.setItem(LS_MSG,JSON.stringify({userId:currentRep.userId,username:currentRep.username,text,ts:Date.now()}));
+  setStatus('🔊 Reproduciendo con voz de '+currentRep.username,'ok');
+  setTimeout(()=>setStatus('',''),3000);
+}
+
+function testVipDirecto(){
+  // Bypasear todo — escribir directamente al rep_state para disparar la animación VIP
+  const fakeNames=['Carlos_VIP','SofiaGamer','LuisStreamer','MariaPro','DiegoFan'];
+  const chosen = fakeNames[Math.floor(Math.random()*fakeNames.length)];
+  localStorage.setItem(LS_REP, JSON.stringify({ts:Date.now(),
+    trigger: Date.now(),
+    candidates: fakeNames,
+    chosen: chosen,
+    repUserId: 'test_'+Date.now(),
+    repUsername: chosen,
+    repIsMember: true,
+    clear: 0,
+    ts: Date.now()
+  }));
+  setStatus('⭐ TEST VIP disparado → '+chosen,'ok');
+}
+
+function modoDemo(){
+  const fakeUsers=[
+    {id:'yt_demo1',name:'Pizzaboy_99',src:'yt',isMember:false},
+    {id:'yt_demo2',name:'ElGamerVisitante',src:'yt',isMember:false},
+    {id:'kick_d1',name:'sigma_proaidem',src:'kick',isMember:false},
+    {id:'kick_d2',name:'javvo77',src:'kick',isMember:false},
+    {id:'yt_sub1',name:'Lorena_Ramirez',src:'yt',isMember:true},
+    {id:'kick_s1',name:'Team_Canguro',src:'kick',isMember:true},
+    {id:'yt_sub2',name:'Alex_God',src:'yt',isMember:true},
+    {id:'kick_s2',name:'MR_ARBOLERO',src:'kick',isMember:true},
+    {id:'yt_demo3',name:'NachoPro2024',src:'yt',isMember:false},
+    {id:'yt_demo4',name:'ChelseaMX',src:'yt',isMember:false},
+    {id:'yt_demo5',name:'DragonBall_Fan',src:'yt',isMember:false},
+    {id:'tiktok_d1',name:'tktk_user1',src:'tiktok',isMember:false},
+    {id:'tiktok_d2',name:'luisito_official',src:'tiktok',isMember:false},
+  ];
+  const now=Date.now();
+  const users={};
+  fakeUsers.forEach(u=>{
+    users[u.id]={username:u.name,src:u.src,lastSeen:now,text:'yo',isMember:!!u.isMember};
+  });
+  localStorage.setItem('chat_users',JSON.stringify(users));
+
+  // ← CLAVE: llenar yo_pool para que el selector funcione
+  const yoPool={};
+  fakeUsers.forEach(u=>{
+    yoPool[u.id]={username:u.name,src:u.src,isMember:!!u.isMember,ts:now};
+  });
+  localStorage.setItem('yo_pool',JSON.stringify(yoPool));
+
+  localStorage.setItem('chat_status',JSON.stringify({ytConnected:true,kickConnected:true,keyIdx:0,ts:Date.now()}));
+
+  document.getElementById('demoWarning').style.display='block';
+  setStatus('🧪 Modo prueba — '+fakeUsers.length+' en yo_pool listos','ok');
+}
+
+function setStatus(msg,type){
+  const el=document.getElementById('statusBar');
+  el.textContent=msg; el.className='status '+(type||'');
+}
+
+function updatePastRepsCount(){
+  const el=document.getElementById('pastRepsCount');
+  if(el) el.textContent=pastReps.size>0?`🚫 ${pastReps.size} ya salieron este stream — no se repetirán`:'';
+}
+
+function resetPastReps(){
+  pastReps.clear(); updatePastRepsCount();
+  setStatus('♻️ Lista reiniciada — todos pueden volver a salir','ok');
+}
+
+// ══ Música 1vs1 ══
+let musicActive = false;
+function updateMusicVol(v){
+  document.getElementById('musicVolNum').textContent=v+'%';
+  const s=JSON.parse(localStorage.getItem('music_state')||'{}');
+  s.volume=parseInt(v)/100;
+  localStorage.setItem('music_state',JSON.stringify(s));
+}
+function toggleMusic(){
+  musicActive=!musicActive;
+  const btn=document.getElementById('musicBtn');
+  const s=JSON.parse(localStorage.getItem('music_state')||'{}');
+  s.manual=musicActive;
+  s.volume=parseInt(document.getElementById('musicVol').value)/100;
+  localStorage.setItem('music_state',JSON.stringify(s));
+  if(musicActive){
+    btn.textContent='■ Detener música 1vs1';
+    btn.style.background='rgba(248,113,113,.12)';
+    btn.style.borderColor='rgba(248,113,113,.35)';
+    btn.style.color='#f87171';
+  } else {
+    btn.textContent='▶ Activar música 1vs1';
+    btn.style.background='rgba(255,208,0,.1)';
+    btn.style.borderColor='rgba(255,208,0,.3)';
+    btn.style.color='#FFD000';
+  }
+}
+
+// Marcar el botón de captura guardado al cargar
+setCaptura(capturaSegs);
+const _pi=document.getElementById('palabraInput');
+if(_pi){ _pi.addEventListener('input', sugerirTiempo); sugerirTiempo(); }
 </script>
 </body>
 </html>
