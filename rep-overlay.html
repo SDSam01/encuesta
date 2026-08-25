@@ -332,13 +332,23 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;font-fami
   0%,100%{opacity:1;transform:scale(1);}
   50%{opacity:.82;transform:scale(1.04);}
 }
-#ttsMsg.timer .tts-user{color:rgba(255,255,255,.5);letter-spacing:3px;}
+#ttsMsg.timer .tts-user{display:none;}
 #ttsMsg.timer .tts-text{
   font-size:60px;font-weight:900;color:#FFD000;
   text-shadow:0 0 30px rgba(255,208,0,.7);
   font-variant-numeric:tabular-nums;
+  display:flex;align-items:center;justify-content:center;gap:26px;
 }
-#ttsMsg.timer.urgente .tts-text{
+#ttsMsg.timer .tts-text .num{min-width:80px;text-align:center;}
+#ttsMsg.timer .tts-text .sep{
+  width:3px;height:52px;border-radius:2px;
+  background:rgba(255,208,0,.35);box-shadow:none;
+}
+#ttsMsg.timer .tts-text .pal{
+  letter-spacing:4px;
+  animation:convocaPulse 1.3s ease-in-out infinite;
+}
+#ttsMsg.timer.urgente .tts-text .num{
   color:#FF4040;text-shadow:0 0 30px rgba(255,40,40,.8);
   animation:urgente .5s ease-in-out infinite;
 }
@@ -711,29 +721,28 @@ let convocaInt = null, lastConvocaTs = 0;
 function iniciarConvocatoria(palabra, segs){
   if(convocaInt){ clearInterval(convocaInt); convocaInt=null; }
 
-  const hud   = document.getElementById('repHud');
-  const label = hud.querySelector('.hud-label');
-  const name  = document.getElementById('hudName');
   const tts   = document.getElementById('ttsMsg');
   const tUser = document.getElementById('ttsMsgUser');
   const tText = document.getElementById('ttsMsgText');
 
-  // Zona del nombre -> la palabra
-  hud.classList.add('convoca','show');
-  label.textContent = 'ESCRIBE:';
-  name.textContent  = String(palabra||'').toUpperCase();
-
-  // Zona del mensaje -> el countdown
+  // Todo va en la caja de abajo: countdown + palabra lado a lado
+  const PAL = String(palabra||'').toUpperCase();
   tts.classList.add('timer','show');
   tts.classList.remove('urgente');
-  tUser.textContent = 'TIEMPO RESTANTE';
+  tUser.textContent = '';
 
   let queda = segs;
-  tText.textContent = queda;
+  const pinta = (n)=>{
+    tText.innerHTML =
+      '<span class="num">'+n+'</span>'+
+      '<span class="sep"></span>'+
+      '<span class="pal">'+PAL+'</span>';
+  };
+  pinta(queda);
 
   convocaInt = setInterval(()=>{
     queda--;
-    tText.textContent = queda > 0 ? queda : '¡YA!';
+    pinta(queda > 0 ? queda : '¡YA!');
     if(queda <= 5 && queda > 0) tts.classList.add('urgente');
     if(queda <= 0){
       clearInterval(convocaInt); convocaInt=null;
@@ -744,12 +753,9 @@ function iniciarConvocatoria(palabra, segs){
 
 function terminarConvocatoria(){
   if(convocaInt){ clearInterval(convocaInt); convocaInt=null; }
-  const hud = document.getElementById('repHud');
   const tts = document.getElementById('ttsMsg');
-  hud.classList.remove('convoca');
-  hud.querySelector('.hud-label').textContent = 'REP:';
   tts.classList.remove('timer','urgente','show');
-  document.getElementById('ttsMsgText').textContent = '';
+  document.getElementById('ttsMsgText').innerHTML = '';
 }
 
 function clearRep(){
