@@ -72,6 +72,15 @@ body{background:#0d0d12;color:#eee;font-family:'Inter',sans-serif;padding:10px;f
 <button class="btn-main btn-buscar" id="btnBuscar" onclick="buscarParticipantes()">🎯 BUSCAR PARTICIPANTES</button>
 
 <div class="row">
+  <span>👥 Grupo:</span>
+  <button class="btn-s" id="n4"  onclick="setCupo(4)">4</button>
+  <button class="btn-s" id="n5"  onclick="setCupo(5)">5</button>
+  <button class="btn-s" id="n6"  onclick="setCupo(6)">6</button>
+  <button class="btn-s" id="n8"  onclick="setCupo(8)">8</button>
+  <button class="btn-s" id="n10" onclick="setCupo(10)">10</button>
+</div>
+
+<div class="row">
   <span>⏱️ Captura:</span>
   <button class="btn-s" id="c10" onclick="setCaptura(10)">10s</button>
   <button class="btn-s" id="c15" onclick="setCaptura(15)">15s</button>
@@ -100,7 +109,15 @@ let capturando    = false;
 let oculto        = false;
 let lastMsgTs     = 0;
 
-const cupo = 6;   // fijo
+let cupo = parseInt(localStorage.getItem('equipo_cupo')||'6',10) || 6;
+function setCupo(n){
+  cupo = n;
+  localStorage.setItem('equipo_cupo', String(n));
+  [4,5,6,8,10].forEach(x=>{
+    const b=document.getElementById('n'+x);
+    if(b) b.className = 'btn-s' + (x===n ? ' on' : '');
+  });
+}
 let capturaSegs = parseInt(localStorage.getItem('equipo_captura')||'15',10) || 15;
 
 function setCaptura(s){
@@ -350,6 +367,7 @@ setInterval(()=>{
 
 // ══ INIT ══
 setCaptura(capturaSegs);
+setCupo(cupo);
 renderLista();
 </script>
 </body>
