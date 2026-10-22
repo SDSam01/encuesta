@@ -251,10 +251,15 @@ function fxLoop(){
     p.vx *= p.fr; p.vy *= p.fr;
     p.life -= p.decay;
     if(p.life<=0){ fxParts.splice(i,1); continue; }
+    const _a = Math.max(0,Math.min(1,p.life));
     fxCtx.save();
-    fxCtx.globalAlpha = Math.max(0,Math.min(1,p.life));
     fxCtx.fillStyle = p.color;
-    if(p.glow){ fxCtx.shadowColor = p.color; fxCtx.shadowBlur = 10; }
+    // Glow dibujado en vez de shadowBlur: mismo brillo, mucho más barato en GPU
+    if(p.glow){
+      fxCtx.globalAlpha = _a * 0.18;
+      fxCtx.beginPath(); fxCtx.arc(p.x,p.y,p.r*2.6,0,6.283); fxCtx.fill();
+    }
+    fxCtx.globalAlpha = _a;
     if(p.shape==='sq'){
       fxCtx.translate(p.x,p.y); fxCtx.rotate(p.rot); p.rot += p.spin;
       fxCtx.fillRect(-p.r,-p.r*.7,p.r*2,p.r*1.4);
