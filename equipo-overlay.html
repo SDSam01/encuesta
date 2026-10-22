@@ -209,10 +209,17 @@ function pararTodoTTS(){
   window.speechSynthesis.cancel();
   if(ttsAudio){ try{ ttsAudio.pause(); ttsAudio.src=''; }catch(e){} ttsAudio=null; }
 }
-// Voz Fish por POSICIÓN: el 1 la voz 1, el 2 la voz 2... sin repetir mientras alcancen
+// Voz Fish por participante: al cargarse el grupo, cada uno toma la siguiente voz
+// del turno global (compartido con el 1vs1), así no repiten entre ellos ni con el rep.
+const vozPorUserFish = {};
 function vozFishDe(idx){
   if(!ttsVoces.length) return '';
-  return ttsVoces[idx % ttsVoces.length];
+  const p = participantes[idx]; const uid = p ? p.userId : ('i'+idx);
+  if(vozPorUserFish[uid]) return vozPorUserFish[uid];
+  let turno = parseInt(localStorage.getItem('tts_turno')||'0',10) || 0;
+  vozPorUserFish[uid] = ttsVoces[turno % ttsVoces.length];
+  localStorage.setItem('tts_turno', String((turno+1) % ttsVoces.length));
+  return vozPorUserFish[uid];
 }
 
 // ══ TTS: voz FIJA por usuario (cada participante suena distinto) ══

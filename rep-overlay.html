@@ -712,11 +712,18 @@ function pararTTS(){
 }
 
 // Voz fija por representante: el mismo userId suena siempre igual
+// Rotación real: cada rep nuevo toma la SIGUIENTE voz de la lista, en orden.
+// Así nunca se repite hasta que se agoten todas. El turno vive en localStorage
+// para que sobreviva recargas y se comparta con supervivencia.
+let vozAsignadaA = null, vozAsignada = '';
 function vozDeRep(){
   if(!ttsVoces.length) return '';
-  let h=0; const id=repUserId||'x';
-  for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0;
-  return ttsVoces[h % ttsVoces.length];
+  if(vozAsignadaA === repUserId && vozAsignada) return vozAsignada;   // mismo rep, misma voz
+  let turno = parseInt(localStorage.getItem('tts_turno')||'0',10) || 0;
+  vozAsignada = ttsVoces[turno % ttsVoces.length];
+  vozAsignadaA = repUserId;
+  localStorage.setItem('tts_turno', String((turno+1) % ttsVoces.length));
+  return vozAsignada;
 }
 
 function speakNavegador(text){
