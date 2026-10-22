@@ -126,6 +126,23 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
   font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:9px;
   color:rgba(255,208,0,.85);text-shadow:0 0 22px rgba(255,208,0,.5);
 }
+#ruletaFx{position:absolute;inset:0;pointer-events:none;}
+#ruletaCentro{
+  position:relative;width:280px;height:280px;
+  display:flex;align-items:center;justify-content:center;
+}
+#ruletaAro{
+  position:absolute;inset:0;width:100%;height:100%;
+  transform:rotate(-90deg);pointer-events:none;
+}
+#ruletaAro .aro-base{
+  fill:none;stroke:rgba(255,208,0,.10);stroke-width:3;
+}
+#ruletaAro .aro-prog{
+  fill:none;stroke:#FFD000;stroke-width:4;stroke-linecap:round;
+  stroke-dasharray:678.6;stroke-dashoffset:678.6;
+  filter:drop-shadow(0 0 7px rgba(255,208,0,.8));
+}
 #ruletaEmoji{
   font-size:190px;line-height:1;
   filter:drop-shadow(0 10px 34px rgba(0,0,0,.9));
@@ -181,8 +198,15 @@ body{background:transparent;overflow:hidden;width:1920px;height:1080px;}
 </div>
 
 <div id="ruleta">
+  <canvas id="ruletaFx"></canvas>
   <div id="ruletaWho"></div>
-  <div id="ruletaEmoji">🃏</div>
+  <div id="ruletaCentro">
+    <svg id="ruletaAro" viewBox="0 0 240 240">
+      <circle class="aro-base" cx="120" cy="120" r="108"/>
+      <circle class="aro-prog" id="aroProg" cx="120" cy="120" r="108"/>
+    </svg>
+    <div id="ruletaEmoji">🃏</div>
+  </div>
   <div id="ruletaName"></div>
   <div id="ruletaDesc"></div>
 </div>
@@ -305,6 +329,99 @@ function updateHudMinis(){
   });
 }
 
+
+// ══ Energía de la ruleta: partículas que orbitan y revientan al aterrizar ══
+let rfxRAF=null, rfxParts=[], rfxOndas=[], rfxFuerza=0, rfxBoom=false;
+
+function rfxInit(){
+  const cv=document.getElementById('ruletaFx');
+  if(!cv) return null;
+  cv.width=cv.offsetWidth||1920; cv.height=cv.offsetHeight||1080;
+  return cv;
+}
+
+function rfxStart(){
+  const cv=rfxInit(); if(!cv) return;
+  const ctx=cv.getContext('2d');
+  const W=cv.width, H=cv.height, cx=W/2, cy=H/2;
+  rfxParts=[]; rfxOndas=[]; rfxFuerza=0; rfxBoom=false;
+
+  // 34 chispas en órbita
+  for(let i=0;i<34;i++){
+    rfxParts.push({
+      ang: Math.random()*6.283,
+      rad: 150 + Math.random()*230,
+      vel: (0.004 + Math.random()*0.010) * (Math.random()<.5?1:-1),
+      r:   1.2 + Math.random()*2.4,
+      hue: 42 + Math.random()*16,
+      a:   .25 + Math.random()*.5
+    });
+  }
+
+  function frame(){
+    ctx.clearRect(0,0,W,H);
+
+    // Halo que late con la fuerza acumulada
+    if(rfxFuerza > 0.01){
+      const g = ctx.createRadialGradient(cx,cy,30,cx,cy,120+rfxFuerza*220);
+      g.addColorStop(0, `rgba(255,208,0,${0.12*rfxFuerza})`);
+      g.addColorStop(1, 'rgba(255,208,0,0)');
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    }
+
+    rfxParts.forEach(p=>{
+      if(rfxBoom){
+        p.rad += 13; p.a -= 0.016;
+      } else {
+        // Mientras gira, las chispas se cierran hacia el centro y aceleran
+        p.ang += p.vel * (1 + rfxFuerza*5);
+        p.rad += Math.sin(performance.now()*0.001 + p.ang)*0.5 - rfxFuerza*0.8;
+        if(p.rad < 120) p.rad = 120;
+      }
+      if(p.a <= 0) return;
+      const x = cx + Math.cos(p.ang)*p.rad;
+      const y = cy + Math.sin(p.ang)*p.rad;
+      ctx.beginPath(); ctx.arc(x,y,p.r,0,6.283);
+      ctx.fillStyle=`hsla(${p.hue},100%,62%,${Math.max(0,p.a)})`; ctx.fill();
+      // Glow barato (sin shadowBlur)
+      ctx.beginPath(); ctx.arc(x,y,p.r*3,0,6.283);
+      ctx.fillStyle=`hsla(${p.hue},100%,62%,${Math.max(0,p.a)*0.08})`; ctx.fill();
+    });
+
+    // Ondas del aterrizaje
+    for(let i=rfxOndas.length-1;i>=0;i--){
+      const o=rfxOndas[i];
+      o.r+=o.sp; o.sp*=0.97; o.a-=0.014;
+      if(o.a<=0){ rfxOndas.splice(i,1); continue; }
+      ctx.beginPath(); ctx.arc(cx,cy,o.r,0,6.283);
+      ctx.strokeStyle=`rgba(255,208,0,${o.a})`; ctx.lineWidth=o.w; ctx.stroke();
+    }
+
+    rfxRAF=requestAnimationFrame(frame);
+  }
+  if(rfxRAF) cancelAnimationFrame(rfxRAF);
+  rfxRAF=requestAnimationFrame(frame);
+}
+
+function rfxStop(){
+  if(rfxRAF){ cancelAnimationFrame(rfxRAF); rfxRAF=null; }
+  const cv=document.getElementById('ruletaFx');
+  if(cv){ const c=cv.getContext('2d'); c.clearRect(0,0,cv.width,cv.height); }
+  rfxParts=[]; rfxOndas=[]; rfxFuerza=0; rfxBoom=false;
+}
+
+function rfxBoomNow(){
+  rfxBoom=true;
+  rfxOndas.push({r:60, sp:19, a:.9, w:6});
+  rfxOndas.push({r:30, sp:14, a:.6, w:3});
+}
+
+// Anillo de progreso alrededor del emoji
+function aroProgreso(p){
+  const el=document.getElementById('aroProg');
+  if(el) el.style.strokeDashoffset = String(678.6 * (1 - Math.max(0,Math.min(1,p))));
+}
+
 // ══════ RULETA DE COMODINES ══════
 function getAC(){ try{ if(AC.state==='suspended') AC.resume(); }catch(e){} return AC; }
 const PERSISTENTES = ['Ángel de la guarda','Cambiar Personaje'];
@@ -325,6 +442,8 @@ function girarRuleta(side, slot, ganador, pool){
   emoji.classList.remove('landed');
   emoji.classList.add('spin');
   box.classList.add('show');
+  aroProgreso(0);
+  rfxStart();
 
   let i = 0, delay = 55, t0 = performance.now(), acumulado = 0;
   const DURACION = 2600;
@@ -334,6 +453,8 @@ function girarRuleta(side, slot, ganador, pool){
     // Desacelerar: rápido al principio, lento al final
     const p = Math.min(1, t / DURACION);
     delay = 55 + p*p*p * 330;
+    rfxFuerza = p;        // la energía crece conforme desacelera
+    aroProgreso(p);       // el anillo se llena
 
     if(now - acumulado >= delay){
       acumulado = now;
@@ -349,6 +470,8 @@ function girarRuleta(side, slot, ganador, pool){
       emoji.classList.remove('spin');
       emoji.textContent = ganador.emoji;
       emoji.classList.add('landed');
+      aroProgreso(1);
+      rfxBoomNow();       // las chispas revientan hacia afuera
       name.textContent = ganador.titulo;
       desc.textContent = ganador.desc;
       setTimeout(()=>name.classList.add('show'), 90);
@@ -423,6 +546,7 @@ function playReveal(){
 }
 
 function resetSlots(){
+  rfxStop(); aroProgreso(0);
   ['Sam','Chat'].forEach(s=>[0,1,2].forEach(i=>{
     const el=document.getElementById('hud'+s+i);
     if(el){ el.textContent='🃏'; el.className='hud-mini locked'; }

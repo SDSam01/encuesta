@@ -686,13 +686,63 @@ function pickRandomVoiceProfile(){
 }
 window.speechSynthesis.onvoiceschanged=pickRandomVoiceProfile;
 
-function speakTTS(text){
-  if(!text) return;
+// ══ TTS: intenta Fish Audio por el bridge; si falla, voz del navegador ══
+const TTS_BRIDGE = 'http://localhost:3000/tts';
+let ttsAudio = null;          // el <audio> que está sonando
+let ttsVoces = [];            // voces de Fish disponibles (las carga el bridge)
+let ttsDisponible = null;     // null = sin probar, true/false = ya sabemos
+
+// Preguntar una vez si el bridge tiene TTS configurado
+(function probarTTS(){
+  fetch('http://localhost:3000/tts-estado', {signal:AbortSignal.timeout(2500)})
+    .then(r=>r.json())
+    .then(d=>{
+      ttsDisponible = !!d.listo;
+      if(ttsDisponible){
+        fetch('http://localhost:3000/tts-voces',{signal:AbortSignal.timeout(2500)})
+          .then(r=>r.json()).then(v=>{ ttsVoces = Array.isArray(v)?v:[]; }).catch(()=>{});
+      }
+    })
+    .catch(()=>{ ttsDisponible = false; });
+})();
+
+function pararTTS(){
+  window.speechSynthesis.cancel();
+  if(ttsAudio){ try{ ttsAudio.pause(); ttsAudio.src=''; }catch(e){} ttsAudio=null; }
+}
+
+// Voz fija por representante: el mismo userId suena siempre igual
+function vozDeRep(){
+  if(!ttsVoces.length) return '';
+  let h=0; const id=repUserId||'x';
+  for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0;
+  return ttsVoces[h % ttsVoces.length];
+}
+
+function speakNavegador(text){
   window.speechSynthesis.cancel();
   const utt=new SpeechSynthesisUtterance(text);
   utt.lang='es-MX'; utt.rate=vp.rate; utt.pitch=vp.pitch;
   if(vp.voice) utt.voice=vp.voice;
   window.speechSynthesis.speak(utt);
+}
+
+function speakTTS(text){
+  if(!text) return;
+  pararTTS();
+
+  // Sin bridge configurado: directo a la voz del navegador
+  if(ttsDisponible === false){ speakNavegador(text); return; }
+
+  const url = TTS_BRIDGE + '?t=' + encodeURIComponent(text) + '&v=' + encodeURIComponent(vozDeRep());
+  const a = new Audio(url);
+  ttsAudio = a;
+  a.onerror = () => {            // Fish falló o no hay key: no dejar al rep mudo
+    if(ttsAudio === a){ ttsAudio = null; speakNavegador(text); }
+  };
+  a.play().catch(()=>{
+    if(ttsAudio === a){ ttsAudio = null; speakNavegador(text); }
+  });
 }
 
 // ── Activate Rep ──
@@ -759,6 +809,7 @@ function terminarConvocatoria(){
 }
 
 function clearRep(){
+  pararTTS();          // al quitar el rep, callar su voz (navegador o Fish)
   terminarConvocatoria();
   animActive=false;
   // Cancelar animaciones en curso
@@ -982,7 +1033,7 @@ setInterval(()=>{
     const textEl=document.getElementById('ttsMsgText');
     // Mute: cancelar voz y ocultar mensaje
     if(s.userId==='__mute__'||!s.text){
-      window.speechSynthesis.cancel();
+      pararTTS();          // corta la voz del navegador Y el audio de Fish
       ttsEl.classList.remove('show');
       return;
     }

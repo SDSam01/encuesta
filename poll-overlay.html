@@ -55,6 +55,25 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
   z-index:2;
 }
 
+/* Brillo que recorre la barra A de izquierda a derecha, sin parar */
+#fillA::after{
+  content:'';position:absolute;top:0;bottom:0;width:38%;left:-40%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);
+  animation:barShine 2.6s ease-in-out infinite;
+}
+@keyframes barShine{0%{left:-40%;}100%{left:110%;}}
+/* Borde de la barra: línea viva que marca dónde va la pelea */
+#fillA::before{
+  content:'';position:absolute;top:0;bottom:0;right:-2px;width:4px;
+  background:#FFD27A;box-shadow:0 0 14px rgba(255,200,80,.9),0 0 30px rgba(255,160,40,.5);
+  animation:edgePulse 1.1s ease-in-out infinite;
+}
+@keyframes edgePulse{0%,100%{opacity:.75;}50%{opacity:1;}}
+/* Pulso al cambiar el porcentaje */
+.w-pct.bump{animation:pctBump .42s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pctBump{0%{transform:scale(1);}40%{transform:scale(1.22);}100%{transform:scale(1);}}
+#pollFx{position:absolute;inset:0;z-index:4;pointer-events:none;}
+
 #glowOverlay{
   position:absolute;inset:0;z-index:3;pointer-events:none;
   background:transparent;
@@ -205,6 +224,7 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh;}
   <div class="w-box" id="wBox">
     <div id="fillA"></div>
     <div id="fillB"></div>
+    <canvas id="pollFx"></canvas>
     <div id="glowOverlay"></div>
 
     <div class="w-content">
@@ -420,16 +440,73 @@ function render(s){
   } else {timerEl.style.display='none';if(winnerShown)hideWinner();}
 }
 
+
+// ══ Chispas en el borde de la barra cuando cambia + contador que rueda ══
+let pfxRAF=null, pfxParts=[];
+function pfxSpark(pct, haciaDerecha){
+  const cv=document.getElementById('pollFx'); if(!cv) return;
+  const box=cv.parentElement;
+  cv.width=box.offsetWidth||cv.width; cv.height=box.offsetHeight||cv.height;
+  const x=cv.width*pct/100, H=cv.height;
+  const color = haciaDerecha ? [255,180,60] : [200,30,30];
+  for(let i=0;i<16;i++){
+    pfxParts.push({
+      x, y: Math.random()*H,
+      vx: (haciaDerecha?1:-1) * (1.2+Math.random()*3.2),
+      vy: (Math.random()-.5)*2.2,
+      r: 1.2+Math.random()*2.2, a: .9, c: color,
+      d: 0.03+Math.random()*0.03
+    });
+  }
+  if(!pfxRAF) pfxLoop();
+}
+function pfxLoop(){
+  const cv=document.getElementById('pollFx'); if(!cv){ pfxRAF=null; return; }
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  for(let i=pfxParts.length-1;i>=0;i--){
+    const p=pfxParts[i];
+    p.x+=p.vx; p.y+=p.vy; p.vx*=0.95; p.a-=p.d;
+    if(p.a<=0){ pfxParts.splice(i,1); continue; }
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283);
+    ctx.fillStyle=`rgba(${p.c[0]},${p.c[1]},${p.c[2]},${p.a})`; ctx.fill();
+  }
+  // Se apaga solo cuando no queda nada: cero GPU en reposo
+  if(pfxParts.length) pfxRAF=requestAnimationFrame(pfxLoop);
+  else { pfxRAF=null; ctx.clearRect(0,0,cv.width,cv.height); }
+}
+
+// El porcentaje rueda del valor viejo al nuevo en vez de saltar
+const pctRoll = {};
+function rodarPct(el, hasta){
+  if(!el) return;
+  const id = el.id;
+  const desde = pctRoll[id] ?? hasta;
+  pctRoll[id] = hasta;
+  if(desde === hasta){ el.textContent = hasta + '%'; return; }
+  el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  const t0 = performance.now(), dur = 650;
+  (function paso(now){
+    const k = Math.min(1,(now-t0)/dur);
+    const e = 1 - Math.pow(1-k, 3);         // ease-out
+    el.textContent = Math.round(desde + (hasta-desde)*e) + '%';
+    if(k<1) requestAnimationFrame(paso);
+  })(t0);
+}
+
+let lastPA_prev=50;
 function renderTwo(s,total,votes,names){
   const vA=votes[0],vB=votes[1];
   const pA=total===0?50:Math.round(vA/total*100),pB=100-pA;
   document.getElementById('wNameA').textContent=names[0].toUpperCase();
   document.getElementById('wNameB').textContent=names[1].toUpperCase();
-  document.getElementById('wPctA').textContent=pA+'%';document.getElementById('wPctB').textContent=pB+'%';
+  rodarPct(document.getElementById('wPctA'), pA);
+  rodarPct(document.getElementById('wPctB'), pB);
   document.getElementById('wVotesA').textContent=vA;document.getElementById('wVotesB').textContent=vB;
   if(pA!==lastPA){lastPA=pA;const fillA=document.getElementById('fillA');
     if(firstRender){firstRender=false;fillA.style.transition='none';fillA.style.width=pA+'%';requestAnimationFrame(()=>{fillA.style.transition='width 1.4s cubic-bezier(.25,.46,.45,.94)';});}
-    else fillA.style.width=pA+'%';}
+    else { pfxSpark(lastPA_prev, pA>lastPA_prev); fillA.style.width=pA+'%'; }
+    lastPA_prev=pA;}
   const glow=document.getElementById('glowOverlay');
   if(pA>pB)glow.style.boxShadow='inset 100px 0 120px rgba(255,145,20,.25),inset -30px 0 60px rgba(55,2,2,.15)';
   else if(pB>pA)glow.style.boxShadow='inset -100px 0 120px rgba(55,2,2,.3),inset 30px 0 60px rgba(255,145,20,.12)';
