@@ -426,7 +426,7 @@ function doFlash(id){
 // Si existe heart-full.png / heart-half.png / heart-empty.png en el repo (arte IA),
 // se usan; si no, el vector de abajo. Así nunca se queda sin corazón.
 let _heartPngOk = null;
-(function(){ const im=new Image(); im.onload=()=>{_heartPngOk=true;}; im.onerror=()=>{_heartPngOk=false;}; im.src='heart-full.png?v=1'; })();
+(function(){ const im=new Image(); im.onload=()=>{_heartPngOk=true; try{ if(document.getElementById('heartsRow').children.length) renderHearts(lastHp); }catch(e){} }; im.onerror=()=>{_heartPngOk=false;}; im.src='heart-full.png?v=1'; })();
 let _hid=0;
 function heartSVG(filled){
   if(_heartPngOk){
