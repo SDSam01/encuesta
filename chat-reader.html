@@ -66,7 +66,7 @@ input:focus{border-color:rgba(255,185,0,.4);}
   <div class="saved" id="savedCh">✓ Guardado</div>
   <div class="conn-row">
     <span class="cbadge cb-yt" id="dotYT">▶ YouTube</span>
-    <span class="cbadge cb-kick" id="dotKick">⚡ Kick</span>
+    <span class="cbadge cb-kick" id="dotKick" onclick="configKick()" style="cursor:pointer;" title="Clic para cambiar la sala de Kick">⚡ Kick</span>
     <span class="cbadge cb-twitch" id="dotTwitch">🟣 Twitch</span>
     <span class="cbadge cb-tiktok" id="dotTiktok" onclick="toggleTiktok()" style="cursor:pointer;" title="Clic para activar/desactivar TikTok">🎵 TikTok</span>
   </div>
@@ -108,6 +108,9 @@ const KICK_ROOM_ID    = '6043540';
 const TWITCH_CHANNEL  = 'sdsam';
 
 let twitchWs = null, twitchReconnectTimer = null;
+// Kick: estado de conexión y reintento (declarado arriba para que nada lo use antes de existir)
+let kickPusher = null, kickReconnectTimer = null, kickDelay = 5000;
+let kickMsgCount = 0, kickLastMsg = 0;
 
 const LS_CHAT   = 'chat_messages';
 const LS_USERS  = 'chat_users';
@@ -582,6 +585,10 @@ function togglePower() {
     if(reconnectTimer) clearInterval(reconnectTimer);
     if(twitchWs) { try{ twitchWs.close(); }catch(e){} twitchWs = null; }
     if(twitchReconnectTimer) { clearTimeout(twitchReconnectTimer); twitchReconnectTimer = null; }
+    // Kick: cerrar también, si no sigue metiendo mensajes con el lector apagado
+    if(kickPusher) { try{ kickPusher.disconnect(); }catch(e){} kickPusher = null; }
+    if(kickReconnectTimer) { clearTimeout(kickReconnectTimer); kickReconnectTimer = null; }
+    kickDelay = 5000;
     document.getElementById('dotYT').classList.remove('on');
     document.getElementById('dotKick').classList.remove('on');
     document.getElementById('dotTwitch').classList.remove('on');
@@ -600,19 +607,104 @@ function setConnectedUI(on=true) {
 }
 
 function connectKick() {
+  if(kickReconnectTimer){ clearTimeout(kickReconnectTimer); kickReconnectTimer=null; }
+  // Cerrar la conexión anterior para no dejar dos vivas (mensajes duplicados)
+  if(kickPusher){ try{ kickPusher.disconnect(); }catch(e){} kickPusher=null; }
+
+  const roomId = (localStorage.getItem('kick_room_id') || KICK_ROOM_ID).trim();
+
   try {
     Pusher.logToConsole = false;
     const pusher  = new Pusher('32cbd69e4b950bf97679', { cluster:'us2', forceTLS:true, disableStats:true });
-    const channel = pusher.subscribe(`chatrooms.${KICK_ROOM_ID}.v2`);
-    channel.bind('pusher:subscription_succeeded', () => { document.getElementById('dotKick').classList.add('on'); saveStatus(connected); });
+    kickPusher = pusher;
+    const channel = pusher.subscribe(`chatrooms.${roomId}.v2`);
+
+    channel.bind('pusher:subscription_succeeded', () => {
+      document.getElementById('dotKick').classList.add('on');
+      kickMsgCount = 0; kickLastMsg = Date.now();
+      kickDelay = 5000;                       // reset del backoff al conectar bien
+      console.log('[Kick] conectado · sala ' + roomId);
+      saveStatus(connected);
+    });
+
+    // Sala inexistente o mal id: avisar en vez de morir en silencio
+    channel.bind('pusher:subscription_error', (err) => {
+      console.error('[Kick] no se pudo suscribir a la sala ' + roomId + ':', err);
+      document.getElementById('dotKick').classList.remove('on');
+      kickScheduleReconnect();
+    });
+
+    // La conexión se cayó: levantarla igual que hace Twitch
+    pusher.connection.bind('disconnected', () => {
+      document.getElementById('dotKick').classList.remove('on');
+      saveStatus(connected);
+      kickScheduleReconnect();
+    });
+    pusher.connection.bind('unavailable', () => {
+      document.getElementById('dotKick').classList.remove('on');
+      saveStatus(connected);
+      kickScheduleReconnect();
+    });
+    pusher.connection.bind('error', (err) => {
+      console.error('[Kick] error de conexión:', err);
+      kickScheduleReconnect();
+    });
+
     channel.bind('App\\Events\\ChatMessageEvent', (data) => {
       const uid   = 'kick_' + (data?.sender?.id || '');
       const name  = data?.sender?.username || 'Usuario';
       const text  = data?.content || '';
       const isSub = !!(data?.sender?.subscribed_for > 0 || data?.sender?.is_subscribed);
+      kickMsgCount++; kickLastMsg = Date.now();
       pushMessage(uid, name, text, 'kick', isSub);
     });
-  } catch(e) {}
+  } catch(e) {
+    console.error('[Kick] fallo al conectar:', e);
+    kickScheduleReconnect();
+  }
+}
+
+// Clic en el badge de Kick: ver estado y corregir la sala sin tocar código
+function configKick(){
+  const actual = localStorage.getItem('kick_room_id') || KICK_ROOM_ID;
+  const vivo   = document.getElementById('dotKick').classList.contains('on');
+  const hace   = kickLastMsg ? Math.round((Date.now()-kickLastMsg)/1000)+'s' : 'ninguno aún';
+  const info   = `KICK\n\nSala: ${actual}\nEstado: ${vivo ? 'conectado' : 'DESCONECTADO'}\n`
+               + `Mensajes recibidos: ${kickMsgCount}\nÚltimo mensaje: ${hace}\n\n`
+               + `Escribe el ID de sala (chatroom id) o deja igual para no cambiar:`;
+  const nuevo = prompt(info, actual);
+  if(nuevo === null) return;
+  const limpio = String(nuevo).trim();
+  if(!limpio || limpio === actual) return;
+  localStorage.setItem('kick_room_id', limpio);
+  kickDelay = 5000;
+  if(connected) connectKick();
+  setStatus('Kick: sala cambiada a ' + limpio, 'ok');
+}
+
+// Vigilante: si Kick lleva mucho sin mensajes estando "conectado", reconectar
+setInterval(()=>{
+  if(!connected) return;
+  const vivo = document.getElementById('dotKick').classList.contains('on');
+  // 10 min sin un solo mensaje con el badge en verde = conexión zombi
+  if(vivo && kickLastMsg && (Date.now()-kickLastMsg) > 10*60*1000){
+    console.warn('[Kick] 10 min sin mensajes — reconectando por si quedó colgado');
+    kickLastMsg = Date.now();
+    kickDelay = 5000;
+    connectKick();
+  }
+}, 60000);
+
+// Reintento con backoff (5s → 60s), igual que el resto del sistema
+function kickScheduleReconnect(){
+  if(!connected) return;                      // no reconectar si el lector está apagado
+  if(kickReconnectTimer) return;              // ya hay un reintento en camino
+  console.log('[Kick] reintentando en ' + (kickDelay/1000) + 's...');
+  kickReconnectTimer = setTimeout(()=>{
+    kickReconnectTimer = null;
+    kickDelay = Math.min(kickDelay * 2, 60000);
+    connectKick();
+  }, kickDelay);
 }
 
 function connectTwitch() {
