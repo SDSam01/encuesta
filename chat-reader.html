@@ -801,7 +801,7 @@ async function pollTikTok() {
       saveStatus(connected);
     }
   }
-  tiktokRetryTimer = setTimeout(pollTikTok, 2000);
+  tiktokRetryTimer = setTimeout(pollTikTok, 1000);
 }
 pollTikTok();
 

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>SDSam · Panel 2.0</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  background:#0b0b10;color:#eee;font-family:'Inter',sans-serif;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+
+/* ══ Barra de estado ══ */
+#bar{
+  display:flex;align-items:center;gap:7px;padding:6px 9px;
+  background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.07);
+  flex-shrink:0;font-size:10px;
+}
+#bar .brand{font-weight:900;color:#FFD000;letter-spacing:1px;font-size:11px;}
+.dot{
+  display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:20px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  color:rgba(255,255,255,.3);font-weight:700;transition:.2s;white-space:nowrap;
+}
+.dot b{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);display:block;}
+.dot.on{color:#4ade80;border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.08);}
+.dot.on b{background:#4ade80;box-shadow:0 0 6px #4ade80;}
+.spacer{flex:1;}
+#clock{color:rgba(255,255,255,.3);font-variant-numeric:tabular-nums;font-weight:700;}
+
+/* ══ Pestañas ══ */
+#tabs{
+  display:flex;flex-wrap:wrap;gap:3px;padding:6px;flex-shrink:0;
+  background:rgba(255,255,255,.015);border-bottom:1px solid rgba(255,255,255,.06);
+}
+.tab{
+  display:flex;align-items:center;gap:5px;
+  padding:7px 10px;border-radius:8px;cursor:pointer;
+  font-size:11px;font-weight:700;font-family:'Inter',sans-serif;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+  color:rgba(255,255,255,.42);transition:.12s;white-space:nowrap;
+}
+.tab:hover{background:rgba(255,208,0,.1);border-color:rgba(255,208,0,.3);color:#FFD000;}
+.tab.active{
+  background:rgba(255,208,0,.16);border-color:rgba(255,208,0,.55);color:#FFD000;
+  box-shadow:0 0 12px rgba(255,208,0,.15);
+}
+.tab .k{
+  font-size:8px;opacity:.5;background:rgba(0,0,0,.35);
+  padding:1px 4px;border-radius:3px;font-weight:900;
+}
+.tab.live::after{
+  content:'';width:5px;height:5px;border-radius:50%;background:#4ade80;
+  box-shadow:0 0 6px #4ade80;animation:liveBlink 1.6s ease-in-out infinite;
+}
+@keyframes liveBlink{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+/* ══ Área de paneles ══ */
+#stage{flex:1;position:relative;overflow:hidden;background:#0d0d12;}
+.frame{
+  position:absolute;inset:0;width:100%;height:100%;
+  border:0;display:none;background:#0d0d12;
+}
+.frame.show{display:block;}
+
+#loader{
+  position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:10px;color:rgba(255,255,255,.3);font-size:12px;
+  background:#0d0d12;z-index:5;
+}
+#loader.show{display:flex;}
+.spin{
+  width:26px;height:26px;border-radius:50%;
+  border:2px solid rgba(255,208,0,.15);border-top-color:#FFD000;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ══ Pie ══ */
+#foot{
+  display:flex;align-items:center;gap:6px;padding:5px 9px;flex-shrink:0;
+  background:rgba(255,255,255,.02);border-top:1px solid rgba(255,255,255,.06);
+  font-size:9px;color:rgba(255,255,255,.25);
+}
+#foot .hint{letter-spacing:.3px;}
+.mini{
+  padding:3px 8px;border-radius:5px;cursor:pointer;font-size:9px;font-weight:700;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.4);font-family:'Inter',sans-serif;transition:.12s;
+}
+.mini:hover{background:rgba(255,208,0,.12);border-color:rgba(255,208,0,.35);color:#FFD000;}
+</style>
+</head>
+<body>
+
+<div id="bar">
+  <span class="brand">SDSAM 2.0</span>
+  <span class="dot" id="sYT"><b></b>YT</span>
+  <span class="dot" id="sKick"><b></b>Kick</span>
+  <span class="dot" id="sTwitch"><b></b>Twitch</span>
+  <span class="dot" id="sTikTok"><b></b>TikTok</span>
+  <span class="spacer"></span>
+  <span id="clock">--:--</span>
+</div>
+
+<div id="tabs"></div>
+
+<div id="stage">
+  <div id="loader"><div class="spin"></div><span id="loaderTxt">Cargando…</span></div>
+</div>
+
+<div id="foot">
+  <span class="hint">Teclas 1-9 para cambiar · R recarga</span>
+  <span class="spacer"></span>
+  <button class="mini" onclick="recargarActual()">↻ Recargar</button>
+  <button class="mini" onclick="abrirFuera()">⧉ Abrir aparte</button>
+</div>
+
+<script>
+const BASE = 'https://sdsam01.github.io/encuesta/';
+
+// Los paneles. "vivo:true" = se carga al arrancar y nunca se descarga
+// (necesitan correr siempre aunque no los veas).
+const PANELES = [
+  {id:'chat',    nom:'Chat',          ico:'📡', file:'chat-reader.html',       vivo:true},
+  {id:'rep',     nom:'1vs1',          ico:'🎲', file:'rep-control.html',       vivo:true},
+  {id:'poll',    nom:'Encuesta',      ico:'📊', file:'poll-control.html',      vivo:false},
+  {id:'como',    nom:'Comodines',     ico:'🃏', file:'comodines-control.html', vivo:false},
+  {id:'trivia',  nom:'Trivia',        ico:'🧠', file:'trivia-control.html',    vivo:false},
+  {id:'equipo',  nom:'Supervivencia', ico:'💀', file:'equipo-control.html',    vivo:false},
+  {id:'vida',    nom:'Vidas',         ico:'❤️', file:'vida-control.html',      vivo:false},
+  {id:'quiz',    nom:'Quiz',          ico:'❓', file:'quiz-control.html',      vivo:false},
+  {id:'bote',    nom:'Bote',          ico:'💰', file:'bote-control.html',      vivo:false},
+];
+
+let activo = localStorage.getItem('panel_activo') || 'rep';
+const cargados = new Set();
+
+// ══ Construir pestañas ══
+const tabsEl = document.getElementById('tabs');
+PANELES.forEach((p, i) => {
+  const b = document.createElement('button');
+  b.className = 'tab';
+  b.id = 'tab_' + p.id;
+  b.innerHTML = `<span>${p.ico}</span><span>${p.nom}</span>` + (i < 9 ? `<span class="k">${i+1}</span>` : '');
+  b.onclick = () => mostrar(p.id);
+  tabsEl.appendChild(b);
+});
+
+// ══ Crear un iframe ══
+function crearFrame(p){
+  if(cargados.has(p.id)) return document.getElementById('fr_' + p.id);
+  const f = document.createElement('iframe');
+  f.className = 'frame';
+  f.id = 'fr_' + p.id;
+  f.src = BASE + p.file;
+  f.setAttribute('allow', 'autoplay; clipboard-write');
+  document.getElementById('stage').appendChild(f);
+  cargados.add(p.id);
+  return f;
+}
+
+// ══ Cambiar de panel ══
+function mostrar(id){
+  const p = PANELES.find(x => x.id === id);
+  if(!p) return;
+  activo = id;
+  localStorage.setItem('panel_activo', id);
+
+  // Pestañas
+  PANELES.forEach(x => {
+    const t = document.getElementById('tab_' + x.id);
+    if(t) t.classList.toggle('active', x.id === id);
+  });
+
+  // Cargar si hace falta
+  const nuevo = !cargados.has(id);
+  const f = crearFrame(p);
+
+  if(nuevo){
+    const ld = document.getElementById('loader');
+    document.getElementById('loaderTxt').textContent = 'Cargando ' + p.nom + '…';
+    ld.classList.add('show');
+    f.addEventListener('load', () => ld.classList.remove('show'), {once:true});
+    // Si tarda demasiado, quitar el velo igual
+    setTimeout(() => ld.classList.remove('show'), 6000);
+  }
+
+  // Mostrar solo el activo
+  PANELES.forEach(x => {
+    const fr = document.getElementById('fr_' + x.id);
+    if(fr) fr.classList.toggle('show', x.id === id);
+  });
+}
+
+// ══ Precargar los que deben correr siempre ══
+PANELES.filter(p => p.vivo).forEach(p => crearFrame(p));
+
+// ══ Atajos de teclado ══
+document.addEventListener('keydown', (e) => {
+  if(e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if(e.ctrlKey || e.altKey || e.metaKey) return;
+  const n = parseInt(e.key, 10);
+  if(n >= 1 && n <= 9 && PANELES[n-1]) { mostrar(PANELES[n-1].id); return; }
+  if(e.key === 'r' || e.key === 'R') recargarActual();
+});
+
+function recargarActual(){
+  const f = document.getElementById('fr_' + activo);
+  if(f) f.src = f.src;   // recarga forzada
+}
+
+function abrirFuera(){
+  const p = PANELES.find(x => x.id === activo);
+  if(p) window.open(BASE + p.file, '_blank');
+}
+
+// ══ Estado de las plataformas (lee lo que escribe chat-reader) ══
+function pintarEstado(){
+  let s = {};
+  try{ s = JSON.parse(localStorage.getItem('chat_status') || '{}'); }catch(e){}
+  const set = (el, on) => {
+    const d = document.getElementById(el);
+    if(d) d.classList.toggle('on', !!on);
+  };
+  set('sYT',     s.ytConnected);
+  set('sKick',   s.kickConnected);
+  set('sTwitch', s.twitchConnected);
+  set('sTikTok', s.tiktokEnabled || s.tiktokConnected);
+
+  // Marcar con luz verde las pestañas de dinámicas activas
+  const viva = (id, cond) => {
+    const t = document.getElementById('tab_' + id);
+    if(t) t.classList.toggle('live', !!cond);
+  };
+  try{
+    const rep = JSON.parse(localStorage.getItem('rep_state') || '{}');
+    viva('rep', rep.repUserId && !rep.clear);
+  }catch(e){}
+  try{
+    const poll = JSON.parse(localStorage.getItem('poll_state') || '{}');
+    viva('poll', poll.active);
+  }catch(e){}
+  try{
+    const tri = JSON.parse(localStorage.getItem('trivia_state') || '{}');
+    viva('trivia', tri.active);
+  }catch(e){}
+  try{
+    const eq = JSON.parse(localStorage.getItem('equipo_state') || '{}');
+    viva('equipo', Array.isArray(eq.participantes) && eq.participantes.length > 0);
+  }catch(e){}
+}
+setInterval(pintarEstado, 1500);
+pintarEstado();
+
+// ══ Reloj ══
+function reloj(){
+  const d = new Date();
+  document.getElementById('clock').textContent =
+    String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+setInterval(reloj, 10000);
+reloj();
+
+// ══ Arranque ══
+mostrar(activo);
+</script>
+</body>
+</html>
