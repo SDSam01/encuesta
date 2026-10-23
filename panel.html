@@ -100,7 +100,7 @@ body{
   <span class="dot" id="sYT"><b></b>YT</span>
   <span class="dot" id="sKick"><b></b>Kick</span>
   <span class="dot" id="sTwitch"><b></b>Twitch</span>
-  <span class="dot" id="sTikTok"><b></b>TikTok</span>
+  <span class="dot" id="sTikTok" onclick="toggleTikTokPanel()" style="cursor:pointer" title="Clic para activar/desactivar TikTok"><b></b>TikTok</span>
   <span class="spacer"></span>
   <span id="clock">--:--</span>
 </div>
@@ -206,6 +206,13 @@ document.addEventListener('keydown', (e) => {
   if(n >= 1 && n <= 9 && PANELES[n-1]) { mostrar(PANELES[n-1].id); return; }
   if(e.key === 'r' || e.key === 'R') recargarActual();
 });
+
+// El punto TikTok de la barra activa/desactiva TikTok llamando al interruptor del chat-reader
+function toggleTikTokPanel(){
+  const f = document.getElementById('fr_chat');
+  try{ if(f && f.contentWindow && typeof f.contentWindow.toggleTiktok === 'function'){ f.contentWindow.toggleTiktok(); return; } }catch(e){}
+  mostrar('chat');   // si aún no cargó, abrir la pestaña Chat para hacerlo ahí
+}
 
 function recargarActual(){
   const f = document.getElementById('fr_' + activo);
