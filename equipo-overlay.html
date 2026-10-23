@@ -216,10 +216,19 @@ function vozFishDe(idx){
   if(!ttsVoces.length) return '';
   const p = participantes[idx]; const uid = p ? p.userId : ('i'+idx);
   if(vozPorUserFish[uid]) return vozPorUserFish[uid];
-  let turno = parseInt(localStorage.getItem('tts_turno')||'0',10) || 0;
-  vozPorUserFish[uid] = ttsVoces[turno % ttsVoces.length];
-  localStorage.setItem('tts_turno', String((turno+1) % ttsVoces.length));
+  vozPorUserFish[uid] = vozAleatoria();
   return vozPorUserFish[uid];
+}
+// Aleatoria sin repetir: evita las últimas 8 voces usadas (tts_recientes, compartido con el 1vs1)
+function vozAleatoria(){
+  let rec=[]; try{ rec=JSON.parse(localStorage.getItem('tts_recientes')||'[]'); if(!Array.isArray(rec)) rec=[]; }catch(e){ rec=[]; }
+  const evitar = rec.slice(-Math.min(8, ttsVoces.length-1));
+  const libres = ttsVoces.filter(v=>!evitar.includes(v));
+  const pool = libres.length ? libres : ttsVoces;
+  const v = pool[Math.floor(Math.random()*pool.length)];
+  rec.push(v); if(rec.length>20) rec=rec.slice(-20);
+  try{ localStorage.setItem('tts_recientes', JSON.stringify(rec)); }catch(e){}
+  return v;
 }
 
 // ══ TTS: voz FIJA por usuario (cada participante suena distinto) ══
@@ -283,13 +292,21 @@ function procesarCola(){
   const bubble = document.getElementById('bubble');
   document.getElementById('bubbleUser').textContent = (msg.username||'').toUpperCase();
   document.getElementById('bubbleText').textContent = msg.text||'';
-  bubble.classList.add('show');
 
   const card = document.getElementById('card_'+msg.idx);
-  if(card) card.classList.add('talk');
+
+  // El texto se muestra cuando la voz EMPIEZA a sonar (sin delay texto→voz); si tarda, a los 3s igual
+  let terminado = false;
+  let mostrado = false;
+  const mostrar = ()=>{
+    if(mostrado || terminado) return;
+    mostrado = true;
+    bubble.classList.add('show');
+    if(card) card.classList.add('talk');
+  };
+  setTimeout(mostrar, 3000);
 
   const perfil = perfilDe(msg.userId, (p && typeof p.voz==='number') ? p.voz : msg.idx);
-  let terminado = false;
   const finalizar = ()=>{
     if(terminado) return;
     terminado = true;
@@ -304,6 +321,7 @@ function procesarCola(){
     const utt = new SpeechSynthesisUtterance(msg.text||'');
     utt.lang='es-MX'; utt.rate=perfil.rate; utt.pitch=perfil.pitch;
     if(perfil.voice) utt.voice=perfil.voice;
+    mostrar();
     utt.onend = finalizar;
     utt.onerror = finalizar;
     window.speechSynthesis.speak(utt);
@@ -315,12 +333,13 @@ function procesarCola(){
       const vozIdx = (p && typeof p.voz==='number') ? p.voz : msg.idx;
       const url = TTS_BRIDGE + '?t=' + encodeURIComponent(msg.text||'') + '&v=' + encodeURIComponent(vozFishDe(vozIdx));
       const a = new Audio(url); ttsAudio = a;
+      a.onplaying = mostrar;
       a.onended = finalizar;
       a.onerror = ()=>{ if(ttsAudio===a){ ttsAudio=null; hablarNavegador(); } };
       a.play().catch(()=>{ if(ttsAudio===a){ ttsAudio=null; hablarNavegador(); } });
     }
     // Red de seguridad: si nada dispara el final, no dejar la cola trabada
-    setTimeout(finalizar, Math.min(14000, 3200 + (msg.text||'').length*95));
+    setTimeout(finalizar, Math.min(17000, 6200 + (msg.text||'').length*95));   // +3s por la generación de Fish
   }catch(e){
     setTimeout(finalizar, 2600);
   }

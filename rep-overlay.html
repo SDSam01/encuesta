@@ -716,13 +716,22 @@ function pararTTS(){
 // Así nunca se repite hasta que se agoten todas. El turno vive en localStorage
 // para que sobreviva recargas y se comparta con supervivencia.
 let vozAsignadaA = null, vozAsignada = '';
+// Aleatoria sin repetir: evita las últimas 8 voces usadas (tts_recientes, compartido con supervivencia)
+function vozAleatoria(){
+  let rec=[]; try{ rec=JSON.parse(localStorage.getItem('tts_recientes')||'[]'); if(!Array.isArray(rec)) rec=[]; }catch(e){ rec=[]; }
+  const evitar = rec.slice(-Math.min(8, ttsVoces.length-1));
+  const libres = ttsVoces.filter(v=>!evitar.includes(v));
+  const pool = libres.length ? libres : ttsVoces;
+  const v = pool[Math.floor(Math.random()*pool.length)];
+  rec.push(v); if(rec.length>20) rec=rec.slice(-20);
+  try{ localStorage.setItem('tts_recientes', JSON.stringify(rec)); }catch(e){}
+  return v;
+}
 function vozDeRep(){
   if(!ttsVoces.length) return '';
   if(vozAsignadaA === repUserId && vozAsignada) return vozAsignada;   // mismo rep, misma voz
-  let turno = parseInt(localStorage.getItem('tts_turno')||'0',10) || 0;
-  vozAsignada = ttsVoces[turno % ttsVoces.length];
+  vozAsignada = vozAleatoria();
   vozAsignadaA = repUserId;
-  localStorage.setItem('tts_turno', String((turno+1) % ttsVoces.length));
   return vozAsignada;
 }
 
@@ -734,22 +743,27 @@ function speakNavegador(text){
   window.speechSynthesis.speak(utt);
 }
 
-function speakTTS(text){
+// onListo: se llama cuando la voz EMPIEZA a sonar (o si no hay voz), para mostrar
+// el texto en el mismo instante y que no se vea delay entre texto y voz.
+function speakTTS(text, onListo){
   if(!text) return;
   pararTTS();
+  let avisado=false; const listo=()=>{ if(avisado) return; avisado=true; try{ if(onListo) onListo(); }catch(e){} };
 
   // Sin bridge configurado: directo a la voz del navegador
-  if(ttsDisponible === false){ speakNavegador(text); return; }
+  if(ttsDisponible === false){ listo(); speakNavegador(text); return; }
 
   const url = TTS_BRIDGE + '?t=' + encodeURIComponent(text) + '&v=' + encodeURIComponent(vozDeRep());
   const a = new Audio(url);
   ttsAudio = a;
+  a.onplaying = listo;
   a.onerror = () => {            // Fish falló o no hay key: no dejar al rep mudo
-    if(ttsAudio === a){ ttsAudio = null; speakNavegador(text); }
+    if(ttsAudio === a){ ttsAudio = null; listo(); speakNavegador(text); }
   };
   a.play().catch(()=>{
-    if(ttsAudio === a){ ttsAudio = null; speakNavegador(text); }
+    if(ttsAudio === a){ ttsAudio = null; listo(); speakNavegador(text); }
   });
+  setTimeout(listo, 3000);       // red de seguridad: si Fish tarda mucho, mostrar igual
 }
 
 // ── Activate Rep ──
@@ -1046,12 +1060,15 @@ setInterval(()=>{
     }
     // Durante la animación: consumir el mensaje pero NO mostrarlo ni hablarlo
     if(animActive) return;
-    userEl.textContent=(repUsername||s.username||'').toUpperCase();
-    textEl.textContent=s.text;
-    ttsEl.classList.add('show');
-    speakTTS(s.text);
-    if(msgTimeout) clearTimeout(msgTimeout);
-    msgTimeout=setTimeout(()=>ttsEl.classList.remove('show'),5000);
+    const miTs=s.ts;
+    speakTTS(s.text, ()=>{
+      if(lastTts!==miTs) return;                 // ya llegó otro mensaje o un mute
+      userEl.textContent=(repUsername||s.username||'').toUpperCase();
+      textEl.textContent=s.text;
+      ttsEl.classList.add('show');
+      if(msgTimeout) clearTimeout(msgTimeout);
+      msgTimeout=setTimeout(()=>ttsEl.classList.remove('show'),5000);
+    });
   }catch(e){}
 },100);
 
