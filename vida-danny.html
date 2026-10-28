@@ -60,10 +60,6 @@ body.shake{animation:screenShake .5s cubic-bezier(.36,.07,.19,.97);}
   filter:drop-shadow(0 4px 16px rgba(255,0,0,.6)) drop-shadow(0 0 30px rgba(255,0,0,.25));
 }
 .heart-wrap{width:120px;height:120px;transition:transform .1s;}
-/* Latido constante solo en los corazones con vida */
-.heart-wrap .hv.on, .heart-wrap .hpng.on{animation:hBeat 1.35s ease-in-out infinite;transform-origin:50% 55%;}
-@keyframes hBeat{0%,100%{transform:scale(1);}14%{transform:scale(1.07);}28%{transform:scale(1);}42%{transform:scale(1.04);}56%{transform:scale(1);}}
-.heart-wrap .hv.off{opacity:.55;}
 .heart-wrap.hit{animation:heartHit .55s cubic-bezier(.36,.07,.19,.97);}
 @keyframes heartHit{
   0%{transform:scale(1.6) rotate(-12deg);}25%{transform:scale(0.75) rotate(8deg);}
@@ -124,13 +120,8 @@ body.shake{animation:screenShake .5s cubic-bezier(.36,.07,.19,.97);}
 /* ══ 2 — Grieta antes de romperse ══ */
 .crack{
   position:absolute;inset:0;pointer-events:none;opacity:0;
-  background:
-    linear-gradient(98deg,transparent 47%,#fff 48.2%,#fff 50%,transparent 51.5%),
-    linear-gradient(118deg,transparent 54%,rgba(255,255,255,.9) 55%,rgba(255,255,255,.9) 56.5%,transparent 58%),
-    linear-gradient(64deg,transparent 40%,rgba(255,255,255,.85) 41%,rgba(255,255,255,.85) 42.5%,transparent 44%),
-    linear-gradient(150deg,transparent 60%,rgba(255,255,255,.7) 61%,transparent 62.5%);
-  filter:drop-shadow(0 0 6px #fff);
-  clip-path:polygon(50% 8%,48% 30%,55% 42%,46% 58%,52% 72%,47% 90%,50% 92%,54% 74%,49% 60%,57% 44%,51% 30%,53% 8%);
+  background:linear-gradient(105deg,transparent 46%,rgba(255,255,255,.95) 48%,rgba(255,255,255,.95) 51%,transparent 53%),
+             linear-gradient(72deg,transparent 58%,rgba(255,255,255,.8) 60%,transparent 62%);
 }
 .crack.on{animation:crackFlash .28s ease-out;}
 @keyframes crackFlash{0%{opacity:0;}30%{opacity:1;}100%{opacity:0;}}
@@ -240,13 +231,7 @@ function fxLoop(){
       fxCtx.beginPath(); fxCtx.arc(p.x,p.y,p.r*2.6,0,6.283); fxCtx.fill();
     }
     fxCtx.globalAlpha = _a;
-    if(p.shape==='frag'){
-      fxCtx.translate(p.x,p.y); fxCtx.rotate(p.rot); p.rot += p.spin;
-      const r=p.r;
-      fxCtx.beginPath(); fxCtx.moveTo(-r,-r*.4); fxCtx.lineTo(r*.3,-r); fxCtx.lineTo(r,r*.2); fxCtx.lineTo(r*.1,r); fxCtx.lineTo(-r*.8,r*.5); fxCtx.closePath(); fxCtx.fill();
-      fxCtx.strokeStyle='rgba(0,0,0,.35)'; fxCtx.lineWidth=1.5; fxCtx.stroke();
-      fxCtx.fillStyle='rgba(255,255,255,.35)'; fxCtx.beginPath(); fxCtx.arc(-r*.3,-r*.4,r*.22,0,6.283); fxCtx.fill();
-    } else if(p.shape==='sq'){
+    if(p.shape==='sq'){
       fxCtx.translate(p.x,p.y); fxCtx.rotate(p.rot); p.rot += p.spin;
       fxCtx.fillRect(-p.r,-p.r*.7,p.r*2,p.r*1.4);
     } else {
@@ -266,25 +251,6 @@ function heartCenter(idx){
   if(!el) return {x:fxCv.width/2, y:fxCv.height*.78};
   const r = el.getBoundingClientRect();
   return {x:r.left+r.width/2, y:r.top+r.height/2};
-}
-
-// ── Fragmentos de corazón: pedazos del propio corazón salen volando ──
-function fxFragmentos(idx, fuerte){
-  const c = heartCenter(idx);
-  const n = fuerte ? 10 : 6;
-  for(let i=0;i<n;i++){
-    const ang = -Math.PI/2 + (Math.random()-.5)*Math.PI*1.4;   // hacia arriba y lados
-    const sp  = (fuerte?6.5:4.5) * (0.6+Math.random()*0.6);
-    fxParts.push({
-      x:c.x+(Math.random()-.5)*40, y:c.y+(Math.random()-.5)*40,
-      vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp,
-      g:0.32, fr:0.99, r:7+Math.random()*9,
-      rot:Math.random()*6.283, spin:(Math.random()-.5)*.35,
-      color: Math.random()<.5 ? '#ff2a3a' : '#b0001a',
-      life:1, decay:0.009+Math.random()*0.006,
-      shape:'frag', glow:false
-    });
-  }
 }
 
 // ── Partículas rojas al perder vida ──
@@ -404,52 +370,37 @@ function doShake(){
 // ══ FIX: heartSVG con media vida correctamente dividida en x=8 ══
 // Antes: las filas inferiores usaban filled>=1 para todo el ancho → se veía relleno completo
 // Ahora: cada fila se divide en mitad izquierda (filled>=1) y mitad derecha (filled===2)
-// ══ Corazón 2.0: vector con volumen, brillo y latido. Misma firma (filled 0/1/2).
-// Si existe heart-full.png / heart-half.png / heart-empty.png en el repo (arte IA),
-// se usan; si no, el vector de abajo. Así nunca se queda sin corazón.
-let _heartPngOk = null;
-(function(){ const im=new Image(); im.onload=()=>{_heartPngOk=true; try{ if(document.getElementById('heartsRow').children.length) renderHearts(lastHp); }catch(e){} }; im.onerror=()=>{_heartPngOk=false;}; im.src='heart-full.png?v=1'; })();
-let _hid=0;
 function heartSVG(filled){
-  if(_heartPngOk){
-    const f = filled===2?'heart-full.png':filled===1?'heart-half.png':'heart-empty.png';
-    return `<img src="${f}?v=1" width="120" height="120" style="display:block" class="hpng ${filled?'on':'off'}">`;
-  }
-  const id='h'+(_hid++);
-  const on = filled>0;
-  // Forma del corazón (viewBox 0 0 100 90)
-  const path='M50 84 C50 84 8 56 8 30 C8 16 19 8 30 8 C39 8 46 13 50 20 C54 13 61 8 70 8 C81 8 92 16 92 30 C92 56 50 84 50 84 Z';
-  const half='M50 84 C50 84 8 56 8 30 C8 16 19 8 30 8 C39 8 46 13 50 20 L50 84 Z';
-  return `<svg viewBox="0 0 100 90" width="120" height="120" style="display:block;overflow:visible" class="hv ${on?'on':'off'}">
-  <defs>
-    <radialGradient id="${id}g" cx="35%" cy="30%" r="75%">
-      <stop offset="0%"  stop-color="#ff8a8a"/>
-      <stop offset="45%" stop-color="#ff2a3a"/>
-      <stop offset="100%" stop-color="#8a0010"/>
-    </radialGradient>
-    <radialGradient id="${id}d" cx="40%" cy="35%" r="75%">
-      <stop offset="0%"  stop-color="#3a3a42"/>
-      <stop offset="100%" stop-color="#101014"/>
-    </radialGradient>
-    <linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fff" stop-opacity=".85"/>
-      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
-    </linearGradient>
-    <filter id="${id}b" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.2"/></filter>
-    <clipPath id="${id}c"><path d="${path}"/></clipPath>
-  </defs>
-  <!-- sombra en el piso -->
-  <ellipse cx="50" cy="86" rx="26" ry="4" fill="rgba(0,0,0,.45)" filter="url(#${id}b)"/>
-  <!-- base vacía (siempre) -->
-  <path d="${path}" fill="url(#${id}d)" stroke="#2a2a30" stroke-width="1.5"/>
-  <!-- relleno: entero o mitad izquierda -->
-  ${filled===2 ? `<path d="${path}" fill="url(#${id}g)"/>` : filled===1 ? `<path d="${half}" fill="url(#${id}g)"/>` : ''}
-  <!-- borde interior que da volumen -->
-  <path d="${path}" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="2.5" clip-path="url(#${id}c)"/>
-  <!-- brillo de cristal arriba -->
-  ${on ? `<path d="M22 22 C30 10 46 12 50 24 C46 30 34 32 24 30 Z" fill="url(#${id}s)" clip-path="url(#${id}c)"/>
-  <circle cx="33" cy="25" r="4" fill="#fff" opacity=".9"/>` : ''}
-</svg>`;
+  const red='#FF2222', dark='#1a1a1a', hi='#FF7777', dhi='#2a2a2a';
+  const lc  = filled>=1 ? red  : dark;  // color mitad izquierda
+  const rc  = filled===2 ? red  : dark;  // color mitad derecha
+  const lhi = filled>=1 ? hi   : dhi;   // highlight izquierdo
+  const rhi = filled===2 ? hi   : dhi;   // highlight derecho
+  return `<svg viewBox="0 0 16 14" xmlns="http://www.w3.org/2000/svg" width="120" height="120" style="display:block;image-rendering:pixelated">
+    <!-- Humps top row -->
+    <rect x="1"  y="0" width="3" height="2" fill="${lhi}"/>
+    <rect x="4"  y="0" width="4" height="1" fill="${lc}"/>
+    <rect x="8"  y="0" width="4" height="1" fill="${rc}"/>
+    <rect x="12" y="0" width="3" height="2" fill="${rhi}"/>
+    <!-- Upper body rows 1-4 — split at x=8 -->
+    <rect x="0"  y="1" width="8" height="4" fill="${lc}"/>
+    <rect x="8"  y="1" width="8" height="4" fill="${rc}"/>
+    <!-- Middle rows 5-7 — split at x=8 -->
+    <rect x="0"  y="5" width="8" height="3" fill="${lc}"/>
+    <rect x="8"  y="5" width="8" height="3" fill="${rc}"/>
+    <!-- Row 8-9 width=14 (x=1..14) — split at x=8 -->
+    <rect x="1"  y="8" width="7" height="2" fill="${lc}"/>
+    <rect x="8"  y="8" width="7" height="2" fill="${rc}"/>
+    <!-- Row 10-11 width=12 (x=2..13) — split at x=8 -->
+    <rect x="2"  y="10" width="6" height="2" fill="${lc}"/>
+    <rect x="8"  y="10" width="6" height="2" fill="${rc}"/>
+    <!-- Row 12 width=8 (x=4..11) — split at x=8 -->
+    <rect x="4"  y="12" width="4" height="1" fill="${lc}"/>
+    <rect x="8"  y="12" width="4" height="1" fill="${rc}"/>
+    <!-- Row 13 width=4 (x=6..9) — split at x=8 -->
+    <rect x="6"  y="13" width="2" height="1" fill="${lc}"/>
+    <rect x="8"  y="13" width="2" height="1" fill="${rc}"/>
+  </svg>`;
 }
 
 function renderHearts(hp){
@@ -490,7 +441,7 @@ setInterval(()=>{
         doFlash('flashRed');doShake();playHit();const idx=Math.min(2,Math.floor((old-1)/2));
         fxGrieta(idx);                              // 2 — grieta antes de romperse
         fxVigneta(vidaCompleta?780:480);            // 4 — viñeta roja
-        setTimeout(()=>{ fxDano(idx, vidaCompleta); fxFragmentos(idx, vidaCompleta); },90); // partículas + pedazos
+        setTimeout(()=>fxDano(idx, vidaCompleta),90); // partículas rojas
         if(vidaCompleta) fxSalpicadura();           // 8 — SOLO con vida completa
         showWidget('hit',idx,s.dannyHp);
         setTimeout(()=>fxAgonia(s.dannyHp),420);    // 3 — latido si queda última vida
