@@ -197,14 +197,19 @@ function playWin(){
 // ══ Fish Audio por el bridge; si no hay, voz del navegador ══
 const TTS_BRIDGE = 'http://localhost:3000/tts';
 let ttsVoces = [], ttsDisponible = null, ttsAudio = null;
-(function probarTTS(){
+// Se reintenta cada 15 s mientras no haya bridge: si OBS abre el overlay antes de
+// arrancar el bridge, en cuanto arranque se usan las voces de Fish (antes se quedaba
+// con la voz del navegador todo el stream).
+function probarTTS(){
   fetch('http://localhost:3000/tts-estado',{signal:AbortSignal.timeout(2500)})
     .then(r=>r.json()).then(d=>{
       ttsDisponible = !!d.listo;
       if(ttsDisponible) fetch('http://localhost:3000/tts-voces',{signal:AbortSignal.timeout(2500)})
         .then(r=>r.json()).then(v=>{ ttsVoces=Array.isArray(v)?v:[]; }).catch(()=>{});
     }).catch(()=>{ ttsDisponible=false; });
-})();
+}
+probarTTS();
+setInterval(()=>{ if(!ttsDisponible || !ttsVoces.length) probarTTS(); }, 15000);
 function pararTodoTTS(){
   window.speechSynthesis.cancel();
   if(ttsAudio){ try{ ttsAudio.pause(); ttsAudio.src=''; }catch(e){} ttsAudio=null; }

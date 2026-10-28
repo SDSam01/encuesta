@@ -692,8 +692,10 @@ let ttsAudio = null;          // el <audio> que está sonando
 let ttsVoces = [];            // voces de Fish disponibles (las carga el bridge)
 let ttsDisponible = null;     // null = sin probar, true/false = ya sabemos
 
-// Preguntar una vez si el bridge tiene TTS configurado
-(function probarTTS(){
+// Preguntar si el bridge tiene TTS configurado. Se reintenta cada 15 s mientras no
+// haya bridge: si OBS abre el overlay antes de arrancar el bridge, en cuanto arranque
+// se usan las voces de Fish (antes se quedaba con la voz del navegador todo el stream).
+function probarTTS(){
   fetch('http://localhost:3000/tts-estado', {signal:AbortSignal.timeout(2500)})
     .then(r=>r.json())
     .then(d=>{
@@ -704,7 +706,9 @@ let ttsDisponible = null;     // null = sin probar, true/false = ya sabemos
       }
     })
     .catch(()=>{ ttsDisponible = false; });
-})();
+}
+probarTTS();
+setInterval(()=>{ if(!ttsDisponible || !ttsVoces.length) probarTTS(); }, 15000);
 
 function pararTTS(){
   window.speechSynthesis.cancel();
