@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><title>Voces de Fish</title>
+<style>
+body{background:#0d0d12;color:#eee;font-family:system-ui,sans-serif;padding:20px;max-width:960px;margin:0 auto;}
+h1{font-size:18px;color:#FFD000;margin:0 0 4px;}
+.sub{color:#888;font-size:12px;margin-bottom:14px;}
+textarea,input{width:100%;box-sizing:border-box;padding:9px;border-radius:8px;border:1px solid #333;background:#1a1a22;color:#eee;font-size:13px;}
+textarea{height:110px;font-family:monospace;}
+.row{display:flex;gap:8px;margin:10px 0 16px;flex-wrap:wrap;align-items:center;}
+button{padding:8px 14px;border-radius:8px;border:1px solid rgba(255,208,0,.4);background:rgba(255,208,0,.12);color:#FFD000;cursor:pointer;font-weight:700;}
+button:hover{background:rgba(255,208,0,.25);}
+button.sec{border-color:#444;background:#1a1a22;color:#bbb;font-weight:400;}
+.v{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);margin-bottom:4px;font-size:13px;}
+.v.ok{border-color:rgba(74,222,128,.4);} .v.bad{border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.06);} .v.now{border-color:#FFD000;background:rgba(255,208,0,.1);} .v.nueva{border-color:rgba(96,165,250,.5);}
+.n{width:26px;color:#888;font-weight:700;} .id{font-family:monospace;color:#aaa;flex:1;font-size:12px;}
+.st{min-width:80px;text-align:right;font-weight:700;} .ok .st{color:#4ade80;} .bad .st{color:#f87171;}
+.x{padding:3px 8px;font-size:11px;border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.1);color:#f87171;}
+#aviso{padding:10px;border-radius:8px;background:rgba(255,255,255,.04);font-size:13px;color:#ccc;margin-bottom:12px;display:none;white-space:pre-wrap;}
+h2{font-size:14px;color:#aaa;margin:18px 0 8px;letter-spacing:1px;}
+</style></head><body>
+<h1>Voces de Fish</h1>
+<div class="sub">Arranca <b>tiktok-bridge.js</b> primero. Aquí agregas, pruebas y quitas voces; se guardan solas en tts-config.json.</div>
+<div id="aviso"></div>
+
+<h2>1 · PEGA LOS LINKS DE FISH (uno por línea, o separados por comas)</h2>
+<textarea id="links" placeholder="https://fish.audio/m/a6339d4be17240debb46f284713bf3b3/&#10;https://fish.audio/es/m/70fb19852a484f3eb1d040423e2a8be7&#10;...también sirve pegar solo los IDs"></textarea>
+<div class="row">
+  <button onclick="agregar()">➕ Agregar al bridge</button>
+  <span id="detectadas" style="color:#888;font-size:12px"></span>
+</div>
+
+<h2>2 · VOCES CARGADAS <span id="total" style="color:#FFD000"></span></h2>
+<input id="frase" value="Yoooo ponme a mí, Sam, estás jugando pésimo hermano" style="margin-bottom:8px">
+<div class="row">
+  <button onclick="todas()">▶ Probar todas en fila</button>
+  <button class="sec" onclick="parar()">■ Parar</button>
+  <button class="sec" onclick="soloNuevas()">▶ Probar solo las nuevas</button>
+  <button class="sec" onclick="quitarMalas()">🗑 Quitar las que fallaron</button>
+</div>
+<div id="lista">Cargando voces del bridge…</div>
+
+<script>
+const B='http://localhost:3000';
+let voces=[], estado={}, cur=null, corriendo=false, nuevas=new Set();
+
+function aviso(t,color){ const a=document.getElementById('aviso'); a.style.display='block'; a.style.color=color||'#ccc'; a.textContent=t; }
+function extraerIds(txt){ return [...new Set((txt.toLowerCase().match(/[0-9a-f]{32}/g)||[]))]; }
+document.getElementById('links').addEventListener('input',e=>{
+  const ids=extraerIds(e.target.value); const ya=ids.filter(i=>voces.includes(i)).length;
+  document.getElementById('detectadas').textContent = ids.length ? `${ids.length} voces detectadas${ya?` (${ya} ya estaban)`:''}` : '';
+});
+
+async function cargar(){
+  try{ voces=await (await fetch(B+'/tts-voces')).json(); }
+  catch(e){ document.getElementById('lista').textContent='No encuentro el bridge. Arranca tiktok-bridge.js y recarga esta página.'; return; }
+  pintar();
+}
+function pintar(){
+  const L=document.getElementById('lista'); L.innerHTML='';
+  document.getElementById('total').textContent='('+voces.length+')';
+  voces.forEach((v,i)=>{
+    const d=document.createElement('div'); d.className='v'+(nuevas.has(v)?' nueva':''); d.id='v'+i;
+    d.innerHTML=`<span class="n">${i+1}</span><span class="id">${v}</span><span class="st">${estado[v]==='ok'?'ok':estado[v]==='bad'?'FALLA':'—'}</span>
+      <button onclick="una(${i})">▶</button><button class="x" onclick="quitar('${v}')">quitar</button>`;
+    if(estado[v]) d.classList.add(estado[v]);
+    L.appendChild(d);
+  });
+}
+async function agregar(){
+  const ids=extraerIds(document.getElementById('links').value);
+  if(!ids.length){ aviso('No vi ningún ID de voz en lo que pegaste. Los links de Fish se ven así: https://fish.audio/m/<32 letras y números>/','#f87171'); return; }
+  const antes=new Set(voces);
+  try{
+    const r=await (await fetch(B+'/tts-voces-agregar?ids='+ids.join(','))).json();
+    if(!r.ok) throw new Error(r.error||'error');
+    voces=r.voces; ids.forEach(i=>{ if(!antes.has(i)) nuevas.add(i); });
+    const n=ids.filter(i=>!antes.has(i)).length;
+    aviso(`✅ Listo: ${n} voz(es) nueva(s) guardada(s). Total: ${voces.length}. El bridge ya las usa, no hay que reiniciar nada.`,'#4ade80');
+    document.getElementById('links').value=''; document.getElementById('detectadas').textContent='';
+    pintar();
+  }catch(e){ aviso('No se pudo guardar: '+e.message+'\n¿Tienes el bridge nuevo? Esta página necesita la versión con /tts-voces-agregar.','#f87171'); }
+}
+async function quitar(id){
+  try{ const r=await (await fetch(B+'/tts-voces-quitar?ids='+id)).json(); voces=r.voces; nuevas.delete(id); delete estado[id]; pintar(); }
+  catch(e){ aviso('No se pudo quitar: '+e.message,'#f87171'); }
+}
+async function quitarMalas(){
+  const malas=voces.filter(v=>estado[v]==='bad'); if(!malas.length){ aviso('Ninguna marcada como FALLA.'); return; }
+  const r=await (await fetch(B+'/tts-voces-quitar?ids='+malas.join(','))).json(); voces=r.voces; malas.forEach(m=>delete estado[m]); pintar();
+  aviso(`Quitadas ${malas.length} voces que fallaban. Total: ${voces.length}.`,'#4ade80');
+}
+function parar(){ corriendo=false; if(cur){cur.pause();cur=null;} }
+function marcar(i,cls,txt){ const d=document.getElementById('v'+i); if(!d) return; d.className='v '+cls; d.querySelector('.st').textContent=txt; }
+function una(i){ return new Promise(res=>{
+  parar(); const d=document.getElementById('v'+i); d.className='v now'; d.querySelector('.st').textContent='sonando…';
+  const t0=performance.now(); const v=voces[i];
+  const a=new Audio(B+'/tts?t='+encodeURIComponent(document.getElementById('frase').value)+'&v='+v+'&_='+Date.now());
+  cur=a;
+  a.onplaying=()=>{ estado[v]='ok'; marcar(i,'ok',Math.round(performance.now()-t0)+' ms'); };
+  a.onended=()=>{ cur=null; res(); };
+  a.onerror=()=>{ estado[v]='bad'; marcar(i,'bad','FALLA'); cur=null; res(); };
+  a.play().catch(()=>{ estado[v]='bad'; marcar(i,'bad','FALLA'); cur=null; res(); });
+});}
+async function todas(){ corriendo=true; for(let i=0;i<voces.length&&corriendo;i++){ await una(i); await new Promise(r=>setTimeout(r,400)); } }
+async function soloNuevas(){ corriendo=true; for(let i=0;i<voces.length&&corriendo;i++){ if(!nuevas.has(voces[i])) continue; await una(i); await new Promise(r=>setTimeout(r,400)); } }
+cargar();
+</script></body></html>
