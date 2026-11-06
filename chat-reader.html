@@ -179,13 +179,11 @@ function batchPushMessages(msgs) {
   }
   const _claveNorm = _norm(_palabraClave);
 
-  function participa(texto){
-    if(!_claveNorm) return YO_REGEX.test((texto||'').trim());
-    const t = _norm(texto);
+  // ¿Una palabra (ya normalizada) es la clave? Tolera letras repetidas (murcielagooo) y 1 error de tecleo
+  function _esClave(t){
     if(t === _claveNorm) return true;
-    // Tolerar letras repetidas al final (murcielagooo) y 1 error de tecleo
-    const sinRep = t.replace(/(.)\1+$/,'$1');
-    if(sinRep === _claveNorm) return true;
+    const sinRep = t.replace(/(.)\1+/g,'$1');
+    if(sinRep === _claveNorm || sinRep === _claveNorm.replace(/(.)\1+/g,'$1')) return true;
     if(Math.abs(t.length-_claveNorm.length)<=1 && t.length>3){
       let dif=0, i=0, j=0;
       while(i<t.length && j<_claveNorm.length){
@@ -199,11 +197,30 @@ function batchPushMessages(msgs) {
     }
     return false;
   }
+  // La palabra cuenta si aparece EN CUALQUIER PARTE del mensaje ("murcielago yo", "@sam MURCIELAGO!!!"),
+  // no sólo si el mensaje es exactamente la palabra. Así entran todos los que la escriben.
+  function participa(texto){
+    const txt = String(texto||'').trim();
+    if(!_claveNorm){
+      // Modo "yo": el mensaje es sólo yo / yooo / yo yo yo!!
+      return /^(\s*y+o+\s*[!.,~¡]*\s*)+$/i.test(txt);
+    }
+    const todo = _norm(txt);
+    if(todo === _claveNorm) return true;
+    if(todo.includes(_claveNorm)) return true;           // pegada a otras letras también vale
+    // Por palabras: quitar acentos, separar por lo que no sea letra/número
+    const palabras = txt.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/[^a-z0-9ñ]+/i).filter(Boolean);
+    return palabras.some(w => _esClave(w));
+  }
   // Si ya hay un representante activo, NO seguir acumulando yo_pool (reduce delay)
   let repActivo = false;
   try {
     const rs = JSON.parse(localStorage.getItem('rep_state')||'{}');
     repActivo = !!(rs.repUserId && !rs.clear);
+    // Durante la convocatoria (countdown de la palabra) SIEMPRE se anota a todos,
+    // aunque el rep anterior siga activo: antes esto dejaba la captura a ciegas.
+    const segs = parseInt(rs.convocaSegs||0,10) || 0;
+    if(rs.convocaTs && segs && (now - rs.convocaTs) <= (segs+5)*1000) repActivo = false;
   } catch(e) {}
   let yoPool = {};
   try { yoPool = JSON.parse(localStorage.getItem('yo_pool') || '{}'); } catch(e) {}
