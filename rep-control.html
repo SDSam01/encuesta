@@ -143,6 +143,7 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
   <button class="btn-cap" id="cap15" onclick="setCaptura(15)">15s</button>
   <button class="btn-cap" id="cap20" onclick="setCaptura(20)">20s</button>
   <button class="btn-cap" id="cap30" onclick="setCaptura(30)">30s</button>
+  <button class="btn-cap" id="cap45" onclick="setCaptura(45)">45s</button>
   <button class="btn-cap" id="btnRepetir" onclick="toggleRepetir()" title="Si está en SÍ, los que ya salieron pueden volver a salir" style="margin-left:auto">🔁 Repetir: SÍ</button>
 </div>
 
@@ -321,7 +322,7 @@ let capturaSegs = parseInt(localStorage.getItem('rep_captura_segs')||'15',10) ||
 function setCaptura(s){
   capturaSegs = s;
   localStorage.setItem('rep_captura_segs', String(s));
-  [10,15,20,30].forEach(n=>{
+  [10,15,20,30,45].forEach(n=>{
     const b=document.getElementById('cap'+n);
     if(b) b.className = 'btn-cap' + (n===s ? ' on' : '');
   });
