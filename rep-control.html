@@ -143,6 +143,7 @@ h1{font-size:15px;font-weight:700;margin-bottom:3px;}
   <button class="btn-cap" id="cap15" onclick="setCaptura(15)">15s</button>
   <button class="btn-cap" id="cap20" onclick="setCaptura(20)">20s</button>
   <button class="btn-cap" id="cap30" onclick="setCaptura(30)">30s</button>
+  <button class="btn-cap" id="btnRepetir" onclick="toggleRepetir()" title="Si está en SÍ, los que ya salieron pueden volver a salir" style="margin-left:auto">🔁 Repetir: SÍ</button>
 </div>
 
 <!-- ══ Control de Música 1vs1 — justo debajo del rep seleccionado ══ -->
@@ -181,6 +182,21 @@ let recentUsers = {};
 // pastReps — solo en memoria del stream actual
 let pastReps = new Set();
 function savePastReps(){} // no-op, sin persistencia
+// ¿Pueden repetir los que ya salieron? SÍ por defecto (con <200 viewers, excluirlos vaciaba el sorteo).
+let puedenRepetir = (localStorage.getItem('rep_repetir')||'1') === '1';
+function excluido(id){ return !puedenRepetir && pastReps.has(id); }
+function toggleRepetir(){
+  puedenRepetir = !puedenRepetir;
+  localStorage.setItem('rep_repetir', puedenRepetir?'1':'0');
+  pintarRepetir();
+  setStatus(puedenRepetir ? '🔁 Todos entran al sorteo, aunque ya hayan salido' : '🚫 Los que ya salieron este stream no se repiten', 'ok');
+}
+function pintarRepetir(){
+  const b=document.getElementById('btnRepetir'); if(!b) return;
+  b.textContent = puedenRepetir ? '🔁 Repetir: SÍ' : '🚫 Repetir: NO';
+  b.classList.toggle('on', !puedenRepetir);
+  updatePastRepsCount();
+}
 
 // FIX: timeout automático para rep (45 min) — evita que quede pegado indefinidamente
 const REP_AUTO_CLEAR_MS = 45 * 60 * 1000;
@@ -370,7 +386,7 @@ function buscarRep(){
     // Contar cuántos van escribiendo en vivo
     let live = {};
     try{ live = JSON.parse(localStorage.getItem('yo_pool')||'{}'); }catch(e){}
-    const nuevos = Object.entries(live).filter(([id,u])=>u.ts>=startCapture&&!pastReps.has(id)).length;
+    const nuevos = Object.entries(live).filter(([id,u])=>u.ts>=startCapture&&!excluido(id)).length;
     if(remaining>0) setStatus(`🎬 Capturando "yo"... ${remaining}s — ${nuevos} personas`, 'loading');
   }, 1000);
 
@@ -386,12 +402,12 @@ function buscarRep(){
 
     // Solo los "yo" que llegaron DESPUÉS de presionar el botón, sin repetir de este stream
     let active = Object.entries(yoPool)
-      .filter(([id,u])=>u.ts>=startCapture && !pastReps.has(id));
+      .filter(([id,u])=>u.ts>=startCapture && !excluido(id));
 
     if(active.length===0){
       // Fallback: si nadie escribió en esos 4s, tomar los últimos 20 segundos
       active = Object.entries(yoPool)
-        .filter(([id,u])=>now-u.ts<=20000 && !pastReps.has(id));
+        .filter(([id,u])=>now-u.ts<=20000 && !excluido(id));
     }
 
     if(active.length===0){
@@ -435,12 +451,12 @@ function activarModVip(){
 
   // Pool principal: subs activos en ventana, sin haber salido ya
   let activeSubs=Object.entries(recentUsers)
-    .filter(([id,u])=>now-u.lastSeen<=windowSecs*1000&&u.isMember&&!pastReps.has(id));
+    .filter(([id,u])=>now-u.lastSeen<=windowSecs*1000&&u.isMember&&!excluido(id));
 
   // Si pool pequeño, ampliar a 3 minutos
   if(activeSubs.length<3){
     const expanded=Object.entries(recentUsers)
-      .filter(([id,u])=>now-u.lastSeen<=180*1000&&u.isMember&&!pastReps.has(id));
+      .filter(([id,u])=>now-u.lastSeen<=180*1000&&u.isMember&&!excluido(id));
     if(expanded.length>activeSubs.length) activeSubs=expanded;
   }
 
@@ -616,7 +632,7 @@ function setStatus(msg,type){
 
 function updatePastRepsCount(){
   const el=document.getElementById('pastRepsCount');
-  if(el) el.textContent=pastReps.size>0?`🚫 ${pastReps.size} ya salieron este stream — no se repetirán`:'';
+  if(el) el.textContent=pastReps.size>0?(puedenRepetir?`🔁 ${pastReps.size} ya salieron este stream — pueden repetir`:`🚫 ${pastReps.size} ya salieron este stream — no se repetirán`):'';
 }
 
 function resetPastReps(){
@@ -654,6 +670,7 @@ function toggleMusic(){
 
 // Marcar el botón de captura guardado al cargar
 setCaptura(capturaSegs);
+pintarRepetir();
 const _pi=document.getElementById('palabraInput');
 if(_pi){ _pi.addEventListener('input', sugerirTiempo); sugerirTiempo(); }
 </script>
