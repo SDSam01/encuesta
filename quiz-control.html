@@ -165,6 +165,7 @@ function cambiarRep(){
   try{
     const repState = JSON.parse(localStorage.getItem(LS_REP)||'{}');
     repState.clear = Date.now();
+    repState.ts = Date.now();   // regla: toda escritura de rep_state lleva ts
     localStorage.setItem(LS_REP, JSON.stringify(repState));
   }catch(e){}
   currentRepName = 'Buscando nuevo rep...';
