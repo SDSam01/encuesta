@@ -387,8 +387,11 @@ function buscarRep(){
     // Contar cuántos van escribiendo en vivo
     let live = {};
     try{ live = JSON.parse(localStorage.getItem('yo_pool')||'{}'); }catch(e){}
-    const nuevos = Object.entries(live).filter(([id,u])=>u.ts>=startCapture&&!excluido(id)).length;
-    if(remaining>0) setStatus(`🎬 Capturando "yo"... ${remaining}s — ${nuevos} personas`, 'loading');
+    const vivos = Object.entries(live).filter(([id,u])=>u.ts>=startCapture&&!excluido(id));
+    const nuevos = vivos.length;
+    const por = {yt:0,tiktok:0,kick:0,twitch:0}; vivos.forEach(([_,u])=>{ if(por[u.src]!==undefined) por[u.src]++; });
+    const det = ` · YT ${por.yt} · TikTok ${por.tiktok} · Kick ${por.kick}` + (por.twitch?` · Twitch ${por.twitch}`:'');
+    if(remaining>0) setStatus(`🎬 Capturando "${_pal||'yo'}"... ${remaining}s — ${nuevos} personas${det}`, 'loading');
   }, 1000);
 
   // Al terminar la captura, sortear
@@ -430,6 +433,12 @@ function buscarRep(){
     document.getElementById('repLast').textContent = 'Esperando mensaje...';
 
     const candidates = active.map(([_,u])=>u.username).slice(0,30);
+    // Resumen por plataforma de la captura, para saber si TikTok/Kick están entrando
+    try{
+      const porF = {yt:0,tiktok:0,kick:0,twitch:0}; active.forEach(([_,u])=>{ if(porF[u.src]!==undefined) porF[u.src]++; });
+      console.log('[rep] captura', active.length, porF);
+      localStorage.setItem('rep_ultima_captura', JSON.stringify({ts:Date.now(), total:active.length, por:porF}));
+    }catch(e){}
     localStorage.setItem(LS_REP, JSON.stringify({
       ts:Date.now(), trigger:Date.now(), candidates,
       chosen:user.username,
